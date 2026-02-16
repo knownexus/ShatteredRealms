@@ -1,0 +1,114 @@
+@page "/login"
+@using ShatteredRealms.Application.DTOs.Auth
+@using ShatteredRealms.Web.Services
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Login - ShatteredRealms</PageTitle>
+
+<div class="login-container">
+    <div class="login-card">
+        <div class="card shadow-lg">
+            <div class="card-body p-5">
+                <div class="text-center mb-4">
+                    <h2 class="fw-bold">Welcome Back</h2>
+                    <p class="text-muted">Sign in to your account to continue</p>
+                </div>
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        @errorMessage
+                    </div>
+                }
+
+                <EditForm Model="loginRequest" OnValidSubmit="HandleLogin">
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Email Address</label>
+                        <InputText @bind-Value="loginRequest.Email"
+                                   class="form-control form-control-lg"
+                                   placeholder="example@email.com" />
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Password</label>
+                        <InputText @bind-Value="loginRequest.Password"
+                                   type="password"
+                                   class="form-control form-control-lg"
+                                   placeholder="Enter your password" />
+                    </div>
+
+                    <button type="submit"
+                            class="btn btn-primary btn-lg w-100 mb-3"
+                            disabled="@isLoading">
+                        @if (isLoading)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            <span>Signing in...</span>
+                        }
+                        else
+                        {
+                            <span>Sign In</span>
+                        }
+                    </button>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .login-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 2rem;
+    }
+
+    .login-card {
+        max-width: 480px;
+        width: 100%;
+    }
+</style>
+
+@code {
+    private readonly LoginRequest loginRequest = new();
+    private string? errorMessage;
+    private bool isLoading;
+
+    private async Task HandleLogin()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+
+            var result = await AuthService.LoginAsync(loginRequest);
+            if (result != null)
+            {
+                await Task.Delay(100);
+                Navigation.NavigateTo("/users", forceLoad: true);
+            }
+            else
+            {
+                errorMessage = "Invalid credentials. Please check your email and password.";
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            errorMessage = $"Connection error: {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An unexpected error occurred: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

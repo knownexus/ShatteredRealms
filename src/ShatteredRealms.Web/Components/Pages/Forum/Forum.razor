@@ -1,0 +1,189 @@
+@page "/forum"
+@using ShatteredRealms.Application.DTOs.Forum
+@using ShatteredRealms.Domain.Shared
+@using ShatteredRealms.Web.Services
+@using ShatteredRealms.Web.Helpers
+@inject ForumClientService ForumService
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Forum</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Forum</h1>
+    @if (_canManageCategories)
+    {
+        <button class="btn btn-primary" @onclick="ShowCreateModal">New Category</button>
+    }
+</div>
+
+@if (!string.IsNullOrEmpty(_errorMessage))
+{
+    <div class="alert alert-danger">@_errorMessage</div>
+}
+
+@if (_categories == null)
+{
+    <div class="text-center my-5">
+        <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
+        <p class="mt-2">Loading forum...</p>
+    </div>
+}
+else if (_categories.Count == 0)
+{
+    <div class="alert alert-info">No forum categories yet.</div>
+}
+else
+{
+    @foreach (var cat in _categories)
+    {
+        <div class="card mb-3 shadow-sm">
+            <div class="card-body d-flex justify-content-between align-items-start">
+                <div @onclick="() => NavigateToCategory(cat.Id)" style="cursor:pointer; flex:1;">
+                    <h5 class="card-title mb-1">@cat.Name</h5>
+                    <p class="card-text text-muted small mb-1">@cat.Description</p>
+                    <small class="text-muted">
+                        <span class="me-3">@cat.ThreadCount threads</span>
+                        <span>@cat.PostCount posts</span>
+                    </small>
+                </div>
+                @if (_canManageCategories)
+                {
+                    <div class="ms-3 d-flex gap-2 flex-shrink-0">
+                        <button class="btn btn-sm btn-outline-secondary" @onclick="() => ShowEditModal(cat)">Edit</button>
+                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteCategory(cat.Id)">Delete</button>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+}
+
+@if (_showModal)
+{
+    <div class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(_isEdit ? "Edit Category" : "New Category")</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body">
+                    @if (!string.IsNullOrEmpty(_modalError))
+                    {
+                        <div class="alert alert-danger">@_modalError</div>
+                    }
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input @bind="_categoryName" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea @bind="_categoryDescription" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Sort Order</label>
+                        <input @bind="_categorySortOrder" type="number" class="form-control" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+                    <button type="button" class="btn btn-primary" @onclick="SaveCategory">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<ForumCategoryDto>? _categories;
+    private bool   _canManageCategories;
+    private string? _errorMessage;
+    private string? _modalError;
+
+    private bool   _showModal           = false;
+    private bool   _isEdit              = false;
+    private int?   _editingId;
+    private string _categoryName        = string.Empty;
+    private string _categoryDescription = string.Empty;
+    private int    _categorySortOrder   = 0;
+
+    private void NavigateToCategory(int id) => Navigation.NavigateTo($"/forum/category/{id}");
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        if (!await AuthService.IsAuthenticatedAsync())
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        _canManageCategories = await AuthService.HasPermissionAsync(Claims.Permissions.Forum.Category.Create);
+        await LoadCategories();
+        StateHasChanged();
+    }
+
+    private async Task LoadCategories()
+    {
+        try
+        {
+            _categories = await ForumService.GetCategoriesAsync() ?? new();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = ex.Message;
+            _categories = new();
+        }
+    }
+
+    private void ShowCreateModal()
+    {
+        _isEdit = false; _editingId = null;
+        _categoryName = string.Empty; _categoryDescription = string.Empty; _categorySortOrder = 0;
+        _modalError = null; _showModal = true;
+    }
+
+    private void ShowEditModal(ForumCategoryDto cat)
+    {
+        _isEdit = true; _editingId = cat.Id;
+        _categoryName = cat.Name; _categoryDescription = cat.Description; _categorySortOrder = cat.SortOrder;
+        _modalError = null; _showModal = true;
+    }
+
+    private void CloseModal() => _showModal = false;
+
+    private async Task SaveCategory()
+    {
+        _modalError = null;
+        try
+        {
+            Result<ForumCategoryDto> result;
+
+            if (_isEdit && _editingId.HasValue)
+            {
+                result = await ForumService.UpdateCategoryAsync(_editingId.Value,
+                    new UpdateForumCategoryRequest(_categoryName, _categoryDescription, _categorySortOrder));
+            }
+            else
+            {
+                result = await ForumService.CreateCategoryAsync(
+                    new CreateForumCategoryRequest(_categoryName, _categoryDescription, _categorySortOrder));
+            }
+
+            if (result.IsFailure) { _modalError = result.Error.Message; return; }
+
+            await LoadCategories();
+            CloseModal();
+        }
+        catch (Exception ex) { _modalError = ex.Message; }
+    }
+
+    private async Task DeleteCategory(int id)
+    {
+        try   { await ForumService.DeleteCategoryAsync(id); await LoadCategories(); }
+        catch (Exception ex) { _errorMessage = ex.Message; }
+    }
+}

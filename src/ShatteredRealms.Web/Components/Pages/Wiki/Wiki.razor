@@ -1,0 +1,225 @@
+@page "/wiki"
+@using ShatteredRealms.Application.DTOs.Wiki
+@using ShatteredRealms.Domain.Shared
+@using ShatteredRealms.Web.Services
+@inject WikiClientService WikiService
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Wiki</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Wiki</h1>
+    <div class="d-flex gap-2">
+        @if (_canManageCategories)
+        {
+            <button class="btn btn-outline-secondary" @onclick="ShowCategoryModal">New Category</button>
+        }
+        @if (_canCreatePage)
+        {
+            <button class="btn btn-primary" @onclick="NavigateToNewPage">New Page</button>
+        }
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(_errorMessage))
+{
+    <div class="alert alert-danger">@_errorMessage</div>
+}
+
+<div class="row mb-3">
+    <div class="col-md-4">
+        <select class="form-select" @onchange="OnCategoryFilter">
+            <option value="">All Categories</option>
+            @if (_categories != null)
+            {
+                @foreach (var cat in _categories.Categories)
+                {
+                    <option value="@cat.Id">@cat.Name</option>
+                }
+            }
+        </select>
+    </div>
+</div>
+
+@if (_pages == null)
+{
+    <div class="text-center my-5">
+        <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
+    </div>
+}
+else if (_pages.Pages.Count == 0)
+{
+    <div class="alert alert-info">No wiki pages found.</div>
+}
+else
+{
+    <table class="table table-hover">
+        <thead>
+        <tr>
+            <th>Title</th>
+            <th>Categories</th>
+            <th>Author</th>
+            <th>Last Updated</th>
+            <th>Revisions</th>
+            @if (_canDeletePage)
+            {
+                <th></th>
+            }
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var wikiPage in _pages.Pages)
+        {
+            <tr @onclick="() => NavigateToPage(wikiPage.Slug)" style="cursor:pointer;">
+                <td>@wikiPage.Title</td>
+                <td>@string.Join(", ", wikiPage.Categories.Select(c => c.Name))</td>
+                <td>@wikiPage.AuthorName</td>
+                <td>@wikiPage.UpdatedAt.ToLocalTime().ToString("g")</td>
+                <td>@wikiPage.RevisionCount</td>
+                @if (_canDeletePage)
+                {
+                    <td @onclick:stopPropagation="true">
+                        <button class="btn btn-sm btn-outline-danger"
+                                @onclick="() => DeletePage(wikiPage.Id)">Delete
+                        </button>
+                    </td>
+                }
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@if (_showCategoryModal)
+{
+    <div class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">New Category</h5>
+                    <button type="button" class="btn-close" @onclick="CloseCategoryModal"></button>
+                </div>
+                <div class="modal-body">
+                    @if (!string.IsNullOrEmpty(_categoryModalError))
+                    {
+                        <div class="alert alert-danger">@_categoryModalError</div>
+                    }
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input @bind="_categoryName" class="form-control"/>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea @bind="_categoryDescription" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseCategoryModal">Cancel</button>
+                    <button type="button" class="btn btn-primary" @onclick="SaveCategory">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private WikiPagesDto? _pages;
+    private WikiCategoriesDto? _categories;
+    private int? _selectedCategoryId;
+    private bool _canCreatePage;
+    private bool _canDeletePage;
+    private bool _canManageCategories;
+    private string? _errorMessage;
+
+    private bool _showCategoryModal = false;
+    private string _categoryName = string.Empty;
+    private string _categoryDescription = string.Empty;
+    private string? _categoryModalError;
+
+    private void NavigateToNewPage() => Navigation.NavigateTo("/wiki/new");
+    private void NavigateToPage(string slug) => Navigation.NavigateTo($"/wiki/{slug}");
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        if (!await AuthService.IsAuthenticatedAsync())
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        _canCreatePage = await AuthService.HasPermissionAsync(Claims.Permissions.Wiki.Page.Create);
+        _canDeletePage = await AuthService.HasPermissionAsync(Claims.Permissions.Wiki.Page.Delete);
+        _canManageCategories = await AuthService.HasPermissionAsync(Claims.Permissions.Wiki.Category.Manage);
+
+        _categories = await WikiService.GetCategoriesAsync();
+
+        await LoadPages();
+        StateHasChanged();
+    }
+
+    private async Task LoadPages()
+    {
+        try
+        {
+            _pages = await WikiService.GetPagesAsync(_selectedCategoryId);
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = ex.Message;
+            _pages = new WikiPagesDto([]);
+        }
+    }
+
+    private async Task OnCategoryFilter(ChangeEventArgs e)
+    {
+        _selectedCategoryId = int.TryParse(e.Value?.ToString(), out var id) ? id : null;
+        await LoadPages();
+    }
+
+    private async Task DeletePage(int id)
+    {
+        try
+        {
+            var result = await WikiService.DeletePageAsync(id);
+            if (result.IsFailure)
+            {
+                _errorMessage = result.Error.Message;
+                return;
+            }
+
+            await LoadPages();
+        }
+        catch (Exception ex) { _errorMessage = ex.Message; }
+    }
+
+    private void ShowCategoryModal()
+    {
+        _categoryName        = string.Empty;
+        _categoryDescription = string.Empty;
+        _categoryModalError  = null;
+        _showCategoryModal   = true;
+    }
+
+    private void CloseCategoryModal() => _showCategoryModal = false;
+
+    private async Task SaveCategory()
+    {
+        _categoryModalError = null;
+        try
+        {
+            var result = await WikiService.CreateCategoryAsync(
+                new CreateWikiCategoryRequest(_categoryName, _categoryDescription));
+
+            if (result.IsFailure) { _categoryModalError = result.Error.Message; return; }
+
+            _categories = await WikiService.GetCategoriesAsync();
+            CloseCategoryModal();
+            StateHasChanged();
+        }
+        catch (Exception ex) { _categoryModalError = ex.Message; }
+    }
+}

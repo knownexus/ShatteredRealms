@@ -1,0 +1,95 @@
+@page "/permissions"
+@using ShatteredRealms.Application.DTOs.Permissions
+@using ShatteredRealms.Web.Services
+@inject PermissionService PermissionService
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Permissions</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Permissions</h1>
+</div>
+
+@if (permissions == null)
+{
+    <p>Loading...</p>
+}
+else if (!permissions.Any())
+{
+    <div class="alert alert-info">No permissions found.</div>
+}
+else
+{
+    <div class="row">
+        @foreach (var category in permissions.GroupBy(p => p.Category))
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>@category.Key</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var permission in category)
+                                {
+                                    <tr>
+                                        <td><code>@permission.Name</code></td>
+                                        <td>@permission.Description</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger mt-3">@errorMessage</div>
+}
+
+@code {
+    private List<PermissionDto>? permissions;
+    private string? errorMessage;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Check if user is authenticated
+            var isAuthenticated = await AuthService.IsAuthenticatedAsync();
+            if (!isAuthenticated)
+            {
+                Navigation.NavigateTo("/login");
+                return;
+            }
+
+            await LoadPermissions();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadPermissions()
+    {
+        try
+        {
+            permissions = await PermissionService.GetAllPermissionsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+}

@@ -1,0 +1,280 @@
+@page "/wiki/new"
+@page "/wiki/{Slug}"
+@using ShatteredRealms.Application.DTOs.Wiki
+@using ShatteredRealms.Domain.Shared
+@using ShatteredRealms.Web.Services
+@using ShatteredRealms.Web.Helpers
+@inject WikiClientService WikiService
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>@(IsNew ? "New Wiki Page" : (_wikiPage?.Title ?? "Wiki"))</PageTitle>
+
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/wiki">Wiki</a></li>
+        @if (!IsNew && _wikiPage != null)
+        {
+            <li class="breadcrumb-item active">@_wikiPage.Title</li>
+        }
+        else if (IsNew)
+        {
+            <li class="breadcrumb-item active">New Page</li>
+        }
+    </ol>
+</nav>
+
+@if (!string.IsNullOrEmpty(_errorMessage))
+{
+    <div class="alert alert-danger">@_errorMessage</div>
+}
+
+@if (_loading)
+{
+    <div class="text-center my-5">
+        <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
+    </div>
+}
+else if (_isEditing || IsNew)
+{
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>@(IsNew ? "New Page" : "Edit Page")</span>
+            @if (!IsNew)
+            {
+                <button class="btn btn-sm btn-secondary" @onclick="CancelEdit">Cancel</button>
+            }
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">Title</label>
+                <input @bind="_editTitle" class="form-control"/>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Content (Markdown)</label>
+                <textarea @bind="_editContent" class="form-control font-monospace" rows="20"></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Categories</label>
+                @if (_allCategories != null)
+                {
+                    @foreach (var cat in _allCategories.Categories)
+                    {
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox"
+                                   checked="@_selectedCategoryIds.Contains(cat.Id)"
+                                   @onchange="(e) => ToggleCategory(cat.Id, (bool)e.Value!)"/>
+                            <label class="form-check-label">@cat.Name</label>
+                        </div>
+                    }
+                }
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Revision Note</label>
+                <input @bind="_editRevisionNote" class="form-control" placeholder="Describe your changes..."/>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-primary" @onclick="SavePage">Save</button>
+                @if (IsNew)
+                {
+                    <a href="/wiki" class="btn btn-secondary">Cancel</a>
+                }
+            </div>
+        </div>
+    </div>
+}
+else if (_wikiPage != null)
+{
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <h1>@_wikiPage.Title</h1>
+            <small class="text-muted">
+                By @_wikiPage.AuthorName &nbsp;·&nbsp;
+                Last updated @_wikiPage.UpdatedAt.ToLocalTime().ToString("g") &nbsp;·&nbsp;
+                @_wikiPage.RevisionCount revision(s)
+                @if (_wikiPage.Categories.Any())
+                {
+                    <span>&nbsp;·&nbsp; @string.Join(", ", _wikiPage.Categories.Select(c => c.Name))</span>
+                }
+            </small>
+        </div>
+        <div class="d-flex gap-2 flex-shrink-0">
+            @if (_canEdit)
+            {
+                <button class="btn btn-outline-primary" @onclick="StartEdit">Edit</button>
+            }
+            <button class="btn btn-outline-secondary" @onclick="ToggleRevisions">History</button>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            @* Replace with markdown renderer: @((MarkupString)Markdig.Markdown.ToHtml(_wikiPage.CurrentContent)) *@
+            <pre style="white-space:pre-wrap; font-family:inherit;">@_wikiPage.CurrentContent</pre>
+        </div>
+    </div>
+
+    @if (_showRevisions)
+    {
+        <div class="card mt-3">
+            <div class="card-header">Revision History</div>
+            <div class="card-body p-0">
+                @if (_revisions == null)
+                {
+                    <div class="p-3 text-muted">Loading...</div>
+                }
+                else if (_revisions.Revisions.Count == 0)
+                {
+                    <div class="p-3 text-muted">No revisions recorded.</div>
+                }
+                else
+                {
+                    <table class="table table-sm mb-0">
+                        <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Editor</th>
+                            <th>Note</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var rev in _revisions.Revisions)
+                        {
+                            <tr>
+                                <td>@rev.CreatedAt.ToLocalTime().ToString("g")</td>
+                                <td>@rev.EditorName</td>
+                                <td>@rev.RevisionNote</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public string? Slug { get; set; }
+
+    private string? _loadedSlug = "__unloaded__";
+    private WikiPageDto? _wikiPage;
+    private WikiRevisionsDto? _revisions;
+    private WikiCategoriesDto? _allCategories;
+
+    private bool IsNew => Slug == null;
+    private bool _loading = true;
+    private bool _isEditing;
+    private bool _showRevisions;
+    private bool _canEdit;
+
+    private string _editTitle = string.Empty;
+    private string _editContent = string.Empty;
+    private string _editRevisionNote = string.Empty;
+    private List<int> _selectedCategoryIds = [];
+    private string? _errorMessage;
+
+    private void ToggleRevisions() => _showRevisions = !_showRevisions;
+
+    // OnParametersSetAsync fires on first render AND whenever Slug changes,
+    // so navigating from /wiki/new -> /wiki/some-slug correctly reloads data.
+    protected override async Task OnParametersSetAsync()
+    {
+        // Skip if we've already loaded for this slug (avoids double-load on re-renders)
+        if (_loadedSlug == Slug) return;
+        _loadedSlug = Slug;
+
+        _loading = true;
+        _errorMessage = null;
+        _wikiPage = null;
+        _revisions = null;
+        _isEditing = false;
+
+        if (!await AuthService.IsAuthenticatedAsync())
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        _allCategories = await WikiService.GetCategoriesAsync();
+
+        if (!IsNew)
+        {
+            var result = await WikiService.GetPageBySlugAsync(Slug!);
+            if (result.IsFailure)
+            {
+                _errorMessage = result.Error.Message;
+                _loading = false;
+                return;
+            }
+
+            _wikiPage = result.Value;
+            _revisions = await WikiService.GetRevisionsAsync(_wikiPage.Id);
+
+            var currentUserId = await AuthService.GetUserIdAsync();
+            var canEditAny = await AuthService.HasPermissionAsync(Claims.Permissions.Wiki.Page.Update);
+            _canEdit = canEditAny || _wikiPage.AuthorId == currentUserId;
+        }
+        else
+        {
+            if (!await AuthService.HasPermissionAsync(Claims.Permissions.Wiki.Page.Create))
+            {
+                Navigation.NavigateTo("/wiki");
+                return;
+            }
+        }
+
+        _loading = false;
+    }
+
+    private void StartEdit()
+    {
+        _editTitle = _wikiPage!.Title;
+        _editContent         = _wikiPage.CurrentContent;
+        _editRevisionNote    = string.Empty;
+        _selectedCategoryIds = _wikiPage.Categories.Select(c => c.Id).ToList();
+        _isEditing           = true;
+    }
+
+    private void CancelEdit() => _isEditing = false;
+
+    private void ToggleCategory(int id, bool isChecked)
+    {
+        if (isChecked && !_selectedCategoryIds.Contains(id))
+            _selectedCategoryIds.Add(id);
+        else if (!isChecked)
+            _selectedCategoryIds.Remove(id);
+    }
+
+    private async Task SavePage()
+    {
+        _errorMessage = null;
+        try
+        {
+            if (IsNew)
+            {
+                var result = await WikiService.CreatePageAsync(
+                    new CreateWikiPageRequest(_editTitle, _editContent, _editRevisionNote, _selectedCategoryIds));
+
+                if (result.IsFailure) { _errorMessage = result.Error.Message; return; }
+
+                // Reset _loadedSlug so OnParametersSetAsync loads fresh data for the new slug
+                _loadedSlug = null;
+                Navigation.NavigateTo($"/wiki/{result.Value.Slug}");
+            }
+            else
+            {
+                var result = await WikiService.UpdatePageAsync(_wikiPage!.Id,
+                    new UpdateWikiPageRequest(_editTitle, _editContent, _editRevisionNote, _selectedCategoryIds));
+
+                if (result.IsFailure) { _errorMessage = result.Error.Message; return; }
+
+                _wikiPage  = result.Value;
+                _revisions = await WikiService.GetRevisionsAsync(_wikiPage.Id);
+                _isEditing = false;
+            }
+        }
+        catch (Exception ex) { _errorMessage = ex.Message; }
+    }
+}

@@ -1,0 +1,210 @@
+@page "/forum/category/{CategoryId:int}"
+@using ShatteredRealms.Application.DTOs.Forum
+@using ShatteredRealms.Domain.Shared
+@using ShatteredRealms.Web.Services
+@using ShatteredRealms.Web.Helpers
+@inject ForumClientService ForumService
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>@(_category?.Name ?? "Forum")</PageTitle>
+
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/forum">Forum</a></li>
+        <li class="breadcrumb-item active">@_category?.Name</li>
+    </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1>@_category?.Name</h1>
+        @if (!string.IsNullOrEmpty(_category?.Description))
+        {
+            <p class="text-muted">@_category.Description</p>
+        }
+    </div>
+    @if (_canCreateThread)
+    {
+        <button class="btn btn-primary" @onclick="ShowNewThreadModal">New Thread</button>
+    }
+</div>
+
+@if (!string.IsNullOrEmpty(_errorMessage))
+{
+    <div class="alert alert-danger">@_errorMessage</div>
+}
+
+@if (_threads == null)
+{
+    <div class="text-center my-5">
+        <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
+    </div>
+}
+else if (_threads.Count == 0)
+{
+    <div class="alert alert-info">No threads yet. Be the first to post!</div>
+}
+else
+{
+    <table class="table table-hover">
+        <thead>
+        <tr>
+            <th>Thread</th>
+            <th>Author</th>
+            <th>Replies</th>
+            <th>Last Activity</th>
+            @if (_canModerate)
+            {
+                <th>Actions</th>
+            }
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var thread in _threads)
+        {
+            <tr @onclick="() => NavigateToThread(thread.Id)" style="cursor:pointer;">
+                <td>
+                    @if (thread.IsPinned)
+                    {
+                        <span class="badge bg-success me-1">Pinned</span>
+                    }
+                    @if (thread.IsLocked)
+                    {
+                        <span class="badge bg-secondary me-1">Locked</span>
+                    }
+                    @thread.Title
+                </td>
+                <td>@thread.AuthorName</td>
+                <td>@thread.PostCount</td>
+                <td>@thread.UpdatedAt.ToLocalTime().ToString("g")</td>
+                @if (_canModerate)
+                {
+                    <td @onclick:stopPropagation="true">
+                        <button class="btn btn-sm btn-outline-danger"
+                                @onclick="() => DeleteThread(thread.Id)">Delete</button>
+                    </td>
+                }
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@if (_showModal)
+{
+    <div class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">New Thread</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body">
+                    @if (!string.IsNullOrEmpty(_modalError))
+                    {
+                        <div class="alert alert-danger">@_modalError</div>
+                    }
+                    <div class="mb-3">
+                        <label class="form-label">Title</label>
+                        <input @bind="_newThreadTitle" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Post (Markdown supported)</label>
+                        <textarea @bind="_newThreadContent" class="form-control font-monospace" rows="8"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+                    <button type="button" class="btn btn-primary" @onclick="CreateThread">Post Thread</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int CategoryId { get; set; }
+
+    private ForumCategoryDto?      _category;
+    private List<ForumThreadDto>?  _threads;
+    private bool   _canCreateThread;
+    private bool   _canModerate;
+    private string? _errorMessage;
+    private string? _modalError;
+    private bool   _showModal;
+    private string _newThreadTitle   = string.Empty;
+    private string _newThreadContent = string.Empty;
+
+    private void NavigateToThread(int threadId) => Navigation.NavigateTo($"/forum/thread/{threadId}");
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        if (!await AuthService.IsAuthenticatedAsync())
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        _canCreateThread = await AuthService.HasPermissionAsync(Claims.Permissions.Forum.Thread.Create);
+        _canModerate     = await AuthService.HasPermissionAsync(Claims.Permissions.Forum.Thread.Delete);
+
+        await Load();
+        StateHasChanged();
+    }
+
+    private async Task Load()
+    {
+        try
+        {
+            var catResult = await ForumService.GetCategoryAsync(CategoryId);
+            if (catResult.IsFailure)
+            {
+                _errorMessage = catResult.Error.Message;
+                return;
+            }
+
+            _category = catResult.Value;
+            _threads  = await ForumService.GetThreadsAsync(CategoryId) ?? new();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = ex.Message;
+        }
+    }
+
+    private void ShowNewThreadModal()
+    {
+        _newThreadTitle   = string.Empty;
+        _newThreadContent = string.Empty;
+        _modalError       = null;
+        _showModal        = true;
+    }
+
+    private void CloseModal() => _showModal = false;
+
+    private async Task CreateThread()
+    {
+        _modalError = null;
+        try
+        {
+            var result = await ForumService.CreateThreadAsync(
+                new CreateForumThreadRequest(CategoryId, _newThreadTitle, _newThreadContent));
+
+            if (result.IsFailure) { _modalError = result.Error.Message; return; }
+
+            await Load();
+            CloseModal();
+        }
+        catch (Exception ex) { _modalError = ex.Message; }
+    }
+
+    private async Task DeleteThread(int id)
+    {
+        try   { await ForumService.DeleteThreadAsync(id); await Load(); }
+        catch (Exception ex) { _errorMessage = ex.Message; }
+    }
+}

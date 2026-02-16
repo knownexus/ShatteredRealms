@@ -1,0 +1,6 @@
+@ShatteredRealms.API_HostAddress = http://localhost:5098
+
+GET {{ShatteredRealms.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

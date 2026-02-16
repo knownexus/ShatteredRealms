@@ -1,0 +1,236 @@
+@page "/forum/thread/{ThreadId:int}"
+@using ShatteredRealms.Application.DTOs.Forum
+@using ShatteredRealms.Domain.Shared
+@using ShatteredRealms.Web.Services
+@using ShatteredRealms.Web.Helpers
+@inject ForumClientService ForumService
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>@(_thread?.Title ?? "Thread")</PageTitle>
+
+@if (_thread != null)
+{
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/forum">Forum</a></li>
+            <li class="breadcrumb-item"><a href="/forum/category/@_thread.CategoryId">@_thread.CategoryName</a></li>
+            <li class="breadcrumb-item active">@_thread.Title</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex align-items-center gap-2 mb-4">
+        <h1 class="mb-0">@_thread.Title</h1>
+        @if (_thread.IsPinned)
+        {
+            <span class="badge bg-success">Pinned</span>
+        }
+        @if (_thread.IsLocked)
+        {
+            <span class="badge bg-secondary">Locked</span>
+        }
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(_errorMessage))
+{
+    <div class="alert alert-danger">@_errorMessage</div>
+}
+
+@if (_posts == null)
+{
+    <div class="text-center my-5">
+        <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
+    </div>
+}
+else
+{
+    @foreach (var post in _posts)
+    {
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <strong>@post.AuthorName</strong>
+                    <small class="text-muted">@post.CreatedAt.ToLocalTime().ToString("g")</small>
+                </div>
+
+                @if (_editingPostId == post.Id)
+                {
+                    <textarea @bind="_editContent" class="form-control font-monospace mb-2" rows="6"></textarea>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-primary"   @onclick="() => SavePostEdit(post.Id)">Save</button>
+                        <button class="btn btn-sm btn-secondary" @onclick="CancelEdit">Cancel</button>
+                    </div>
+                }
+                else
+                {
+                    @* Replace with: @((MarkupString)Markdig.Markdown.ToHtml(post.Content)) *@
+                    <div style="white-space:pre-wrap;">@post.Content</div>
+
+                    @* Show action buttons if the user can edit or delete this post.
+                       Edit: only the author.
+                       Delete: the author (own post) OR a moderator (any post). *@
+                    @if ((post.AuthorId == _currentUserId && _canEditOwnPost)
+                         || (post.AuthorId == _currentUserId && _canDeleteOwnPost)
+                         || _canModerate)
+                    {
+                        <div class="mt-2 d-flex gap-2">
+                            @if (post.AuthorId == _currentUserId && _canEditOwnPost)
+                            {
+                                <button class="btn btn-sm btn-outline-secondary"
+                                        @onclick="() => StartEditPost(post)">Edit</button>
+                            }
+                            @* Authors can delete their own post; moderators can delete any post *@
+                            @if (post.AuthorId == _currentUserId && _canDeleteOwnPost || _canModerate)
+                            {
+                                <button class="btn btn-sm btn-outline-danger"
+                                        @onclick="() => DeletePost(post.Id, post.AuthorId)">Delete</button>
+                            }
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    }
+
+    @if (_posts.Count == 0)
+    {
+        <div class="alert alert-info">No posts yet.</div>
+    }
+
+    @if (_thread is { IsLocked: false } && _canPost)
+    {
+        <div class="card mt-4">
+            <div class="card-header"><strong>Post a Reply</strong></div>
+            <div class="card-body">
+                @if (!string.IsNullOrEmpty(_replyError))
+                {
+                    <div class="alert alert-danger">@_replyError</div>
+                }
+                <textarea @bind="_replyContent" class="form-control font-monospace mb-2" rows="6"
+                          placeholder="Write your reply (Markdown supported)..."></textarea>
+                <button class="btn btn-primary" @onclick="SubmitReply">Post Reply</button>
+            </div>
+        </div>
+    }
+    else if (_thread is { IsLocked: true })
+    {
+        <div class="alert alert-secondary mt-4">This thread is locked and no longer accepts replies.</div>
+    }
+    else if (!_canPost && _thread is { IsLocked: false })
+    {
+        <div class="alert alert-info mt-4">You don't have permission to reply to threads.</div>
+    }
+}
+
+@code {
+    [Parameter] public int ThreadId { get; set; }
+
+    private ForumThreadDto?     _thread;
+    private List<ForumPostDto>? _posts;
+    private string?  _currentUserId;
+    private bool     _canPost;
+    private bool     _canEditOwnPost;
+    private bool     _canDeleteOwnPost;  // author can delete own post
+    private bool     _canModerate;       // admin can delete any post
+    private string?  _errorMessage;
+    private string   _replyContent  = string.Empty;
+    private string?  _replyError;
+    private int?     _editingPostId;
+    private string   _editContent   = string.Empty;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        if (!await AuthService.IsAuthenticatedAsync())
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        _currentUserId    = await AuthService.GetUserIdAsync();
+        _canPost          = await AuthService.HasPermissionAsync(Claims.Permissions.Forum.Post.Create);
+        _canEditOwnPost   = await AuthService.HasPermissionAsync(Claims.Permissions.Forum.Post.Update);
+        _canDeleteOwnPost = await AuthService.HasPermissionAsync(Claims.Permissions.Forum.Post.Delete);
+        _canModerate      = await AuthService.IsAdminAsync();
+
+        await Load();
+        StateHasChanged();
+    }
+
+    private async Task Load()
+    {
+        try
+        {
+            var result = await ForumService.GetThreadAsync(ThreadId);
+            if (result.IsFailure)
+            {
+                _errorMessage = result.Error.Message;
+                return;
+            }
+
+            _thread = result.Value;
+            _posts  = await ForumService.GetPostsAsync(ThreadId) ?? new();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = ex.Message;
+        }
+    }
+
+    private async Task SubmitReply()
+    {
+        _replyError = null;
+        try
+        {
+            var result = await ForumService.CreatePostAsync(new CreateForumPostRequest(ThreadId, _replyContent));
+            if (result.IsFailure) { _replyError = result.Error.Message; return; }
+            _replyContent = string.Empty;
+            await Load();
+            StateHasChanged();
+        }
+        catch (Exception ex) { _replyError = ex.Message; }
+    }
+
+    private void StartEditPost(ForumPostDto post)
+    {
+        _editingPostId = post.Id;
+        _editContent   = post.Content;
+    }
+
+    private void CancelEdit() => _editingPostId = null;
+
+    private async Task SavePostEdit(int postId)
+    {
+        try
+        {
+            var result = await ForumService.UpdatePostAsync(postId, _editContent);
+            if (result.IsFailure) { _errorMessage = result.Error.Message; return; }
+            _editingPostId = null;
+            await Load();
+            StateHasChanged();
+        }
+        catch (Exception ex) { _errorMessage = ex.Message; }
+    }
+
+    private async Task DeletePost(int postId, string authorId)
+    {
+        _errorMessage = null;
+        try
+        {
+            var result = await ForumService.DeletePostAsync(postId);
+
+            if (result.IsFailure)
+            {
+                _errorMessage = result.Error.Message;
+                return;
+            }
+
+            await Load();
+            StateHasChanged();
+        }
+        catch (Exception ex) { _errorMessage = ex.Message; }
+    }
+}

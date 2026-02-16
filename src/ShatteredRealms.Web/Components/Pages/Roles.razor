@@ -1,0 +1,254 @@
+@page "/roles"
+@using ShatteredRealms.Application.DTOs.Roles
+@using ShatteredRealms.Application.DTOs.Permissions
+@using ShatteredRealms.Web.Services
+@inject RoleService RoleService
+@inject PermissionService PermissionService
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Roles</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Roles</h1>
+    <button class="btn btn-primary" @onclick="ShowCreateModal">Create Role</button>
+</div>
+
+@if (roles == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Permissions</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var role in roles)
+            {
+                <tr>
+                    <td>@role.Name</td>
+                    <td>@role.Description</td>
+                    <td>@role.PermissionIds.Count</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" @onclick="() => ShowEditModal(role)">Edit</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteRole(role.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (showModal)
+{
+    <div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(isEdit ? "Edit Role" : "Create Role")</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body">
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger">@errorMessage</div>
+                    }
+
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input @bind="currentName" class="form-control" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <input @bind="currentDescription" class="form-control" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Permissions</label>
+                        @if (permissions != null)
+                        {
+                            <div class="row">
+                                @foreach (var category in permissions.GroupBy(p => p.Category))
+                                {
+                                    <div class="col-md-6">
+                                        <h6>@category.Key</h6>
+                                        @foreach (var permission in category)
+                                        {
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio"
+                                                       id="perm-@permission.Id"
+                                                       checked="@selectedPermissionIds.Contains(permission.Id)"
+                                                       @onchange="(ChangeEventArgs e) => TogglePermission(permission.Id, (bool)e.Value!)"/>
+                                                <label class="form-check-label" for="perm-@permission.Id">
+                                                    <strong>@permission.Name</strong><br />
+                                                    <small class="text-muted">@permission.Description</small>
+                                                </label>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">Close</button>
+                    <button type="button" class="btn btn-primary" @onclick="SaveRole">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<RoleDto>? roles;
+    private List<PermissionDto>? permissions;
+    private bool showModal = false;
+    private bool isEdit = false;
+    private string? currentRoleId;
+    private string currentName = string.Empty;
+    private string currentDescription = string.Empty;
+    private List<int> selectedPermissionIds = new();
+    private string? errorMessage;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Check if user is authenticated
+            var isAuthenticated = await AuthService.IsAuthenticatedAsync();
+            if (!isAuthenticated)
+            {
+                Navigation.NavigateTo("/login");
+                return;
+            }
+
+            await LoadRoles();
+            await LoadPermissions();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadRoles()
+    {
+        try
+        {
+            roles = await RoleService.GetAllRolesAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private async Task LoadPermissions()
+    {
+        try
+        {
+            permissions = await PermissionService.GetAllPermissionsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private void ShowCreateModal()
+    {
+        isEdit = false;
+        currentRoleId = null;
+        currentName = string.Empty;
+        currentDescription = string.Empty;
+        selectedPermissionIds.Clear();
+        errorMessage = null;
+        showModal = true;
+    }
+
+    private void ShowEditModal(RoleDto role)
+    {
+        isEdit = true;
+        currentRoleId = role.Id;
+        currentName = role.Name;
+        currentDescription = role.Description;
+        selectedPermissionIds = new List<int>(role.PermissionIds);
+        errorMessage = null;
+        showModal = true;
+    }
+
+    private void CloseModal()
+    {
+        showModal = false;
+    }
+
+    private void TogglePermission(int permissionId, bool isChecked)
+    {
+        if (isChecked && !selectedPermissionIds.Contains(permissionId))
+        {
+            selectedPermissionIds.Add(permissionId);
+        }
+        else if (!isChecked && selectedPermissionIds.Contains(permissionId))
+        {
+            selectedPermissionIds.Remove(permissionId);
+        }
+    }
+
+    private async Task SaveRole()
+    {
+        try
+        {
+            errorMessage = null;
+
+            if (isEdit && !string.IsNullOrEmpty(currentRoleId))
+            {
+                var updateRequest = new UpdateRoleRequest
+                {
+                    Name = currentName,
+                    Description = currentDescription,
+                    PermissionIds = selectedPermissionIds
+                };
+
+                await RoleService.UpdateRoleAsync(currentRoleId, updateRequest);
+            }
+            else
+            {
+                var createRequest = new CreateRoleRequest
+                {
+                    Name = currentName,
+                    Description = currentDescription,
+                    PermissionIds = selectedPermissionIds
+                };
+
+                await RoleService.CreateRoleAsync(createRequest);
+            }
+
+            await LoadRoles();
+            CloseModal();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private async Task DeleteRole(string roleId)
+    {
+        try
+        {
+            await RoleService.DeleteRoleAsync(roleId);
+            await LoadRoles();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+}

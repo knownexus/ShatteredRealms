@@ -1,0 +1,319 @@
+@page "/users"
+@using ShatteredRealms.Application.DTOs.Auth
+@using ShatteredRealms.Application.DTOs.Users
+@using ShatteredRealms.Application.DTOs.Roles
+@using ShatteredRealms.Web.Services
+@inject UserService UserService
+@inject RoleService RoleService
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Users</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Users</h1>
+    <button class="btn btn-primary" @onclick="ShowCreateModal">Create User</button>
+</div>
+
+@if (!string.IsNullOrEmpty(errorMessage) && !string.IsNullOrEmpty(errorCode))
+{
+    <div class="alert alert-danger">
+        <strong>Error:</strong> @errorMessage
+        <br />
+        <small>@errorCode</small>
+    </div>
+}
+
+@if (users == null)
+{
+    <div class="text-center my-5">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Loading users...</p>
+    </div>
+}
+else if (users.Count == 0)
+{
+    <div class="alert alert-info">No users found.</div>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Roles</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in users)
+            {
+                <tr>
+                    <td>@user.Email</td>
+                    <td>@user.FirstName</td>
+                    <td>@user.LastName</td>
+                    <td>@string.Join(", ", user.Roles)</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" @onclick="() => ShowEditModal(user)">Edit</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteUser(user.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (showModal)
+{
+    <div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(isEdit ? "Edit User" : "Create User")</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body">
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger">@errorMessage</div>
+                    }
+
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input @bind="currentEmail" class="form-control" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">First Name</label>
+                        <input @bind="currentFirstName" class="form-control" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Last Name</label>
+                        <input @bind="currentLastName" class="form-control" />
+                    </div>
+
+                    @if (!isEdit)
+                    {
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <input @bind="currentPassword" type="password" class="form-control" />
+                        </div>
+                    }
+
+                    <div class="mb-3">
+                        <label class="form-label">Roles</label>
+                        @if (roles != null)
+                        {
+                            @foreach (var role in roles)
+                            {
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox"
+                                           checked="@selectedRoleIds.Contains(role.Id)"
+                                           @onchange="(ChangeEventArgs e) => ToggleRole(role.Id, (bool)e.Value!)"/>
+                                    <label class="form-check-label">@role.Name</label>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">Close</button>
+                    <button type="button" class="btn btn-primary" @onclick="SaveUser">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<UserDto>? users;
+    private List<RoleDto>? roles;
+    private bool showModal = false;
+    private bool isEdit = false;
+    private string? currentUserId;
+    private string currentEmail = string.Empty;
+    private string currentFirstName = string.Empty;
+    private string currentLastName = string.Empty;
+    private string currentPassword = string.Empty;
+    private List<string> selectedRoleIds = new();
+    private string? errorCode;
+    private string? errorMessage;
+
+    // Snapshot of values when the edit modal was opened
+    private string _originalEmail = string.Empty;
+    private string _originalFirstName = string.Empty;
+    private string _originalLastName = string.Empty;
+    private List<string> _originalRoleIds = new();
+
+    private bool HasChanges =>
+        currentEmail != _originalEmail ||
+        currentFirstName != _originalFirstName ||
+        currentLastName != _originalLastName ||
+        !selectedRoleIds.OrderBy(x => x).SequenceEqual(_originalRoleIds.OrderBy(x => x));
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var isAuthenticated = await AuthService.IsAuthenticatedAsync();
+            if (!isAuthenticated)
+            {
+                Navigation.NavigateTo("/login");
+                return;
+            }
+
+            await LoadUsers();
+            await LoadRoles();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadUsers()
+    {
+        try
+        {
+            users = await UserService.GetAllUsersAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load users: {ex.Message}";
+            users = new List<UserDto>();
+        }
+    }
+
+    private async Task LoadRoles()
+    {
+        try
+        {
+            roles = await RoleService.GetAllRolesAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private void ShowCreateModal()
+    {
+        isEdit = false;
+        currentUserId = null;
+        currentEmail = string.Empty;
+        currentFirstName = string.Empty;
+        currentLastName = string.Empty;
+        currentPassword = string.Empty;
+        selectedRoleIds.Clear();
+        errorMessage = null;
+        showModal = true;
+    }
+
+    private void ShowEditModal(UserDto user)
+    {
+        isEdit = true;
+        currentUserId = user.Id;
+        currentEmail = user.Email;
+        currentFirstName = user.FirstName;
+        currentLastName = user.LastName;
+        selectedRoleIds = roles?.Where(r => user.Roles.Contains(r.Name)).Select(r => r.Id).ToList() ?? new();
+
+        // Snapshot original values
+        _originalEmail = currentEmail;
+        _originalFirstName = currentFirstName;
+        _originalLastName = currentLastName;
+        _originalRoleIds = selectedRoleIds.ToList(); // copy, not reference
+
+        errorMessage = null;
+        showModal = true;
+    }
+
+    private void CloseModal()
+    {
+        showModal = false;
+    }
+
+    private void ToggleRole(string roleId, bool isChecked)
+    {
+        if (isChecked && !selectedRoleIds.Contains(roleId))
+            selectedRoleIds.Add(roleId);
+        else if (!isChecked && selectedRoleIds.Contains(roleId))
+            selectedRoleIds.Remove(roleId);
+    }
+
+    private async Task SaveUser()
+    {
+        try
+        {
+            errorMessage = null;
+
+            if (isEdit && !string.IsNullOrEmpty(currentUserId))
+            {
+                if (!HasChanges)
+                {
+                    CloseModal();
+                    return;
+                }
+
+                var updateRequest = new UpdateUserRequest
+                {
+                    Email     = currentEmail,
+                    FirstName = currentFirstName,
+                    LastName  = currentLastName,
+                    RoleIds   = selectedRoleIds
+                };
+
+                var result = await UserService.UpdateUserAsync(currentUserId, updateRequest);
+
+                if (result.IsFailure)
+                {
+                    errorCode = result.Error.Code.ToString();
+                    errorMessage = result.Error.Message;
+                    return; // keep modal open
+                }
+            }
+            else
+            {
+                var createRequest = new CreateUserRequest
+                {
+                    Email     = currentEmail,
+                    FirstName = currentFirstName,
+                    LastName  = currentLastName,
+                    Password  = currentPassword,
+                    RoleIds   = selectedRoleIds
+                };
+
+                await UserService.CreateUserAsync(createRequest);
+            }
+
+            await LoadUsers();
+            CloseModal();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private async Task DeleteUser(string userId)
+    {
+        try
+        {
+            var result = await UserService.DeleteUserAsync(userId);
+            if (result.IsFailure)
+            {
+                errorCode = result.Error.Code.ToString();
+                errorMessage = result.Error.Message;
+                return;
+            }
+            await LoadUsers();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+}
