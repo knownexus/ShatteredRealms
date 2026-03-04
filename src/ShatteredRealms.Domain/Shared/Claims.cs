@@ -125,26 +125,26 @@ public static class Claims
     public static readonly IReadOnlyList<PermissionDef> PermissionCatalog = new[]
     {
           // index 0-5  - Users
-          new PermissionDef(Permissions.Users.ViewOwn,               "View own profile",                  "Users")
-        , new PermissionDef(Permissions.Users.UpdateOwn,             "Update own profile",                "Users")
+          new PermissionDef(Permissions.Users.Create,                "Create users",                      "Users")
+        , new PermissionDef(Permissions.Users.ViewOwn,               "View own profile",                  "Users")
         , new PermissionDef(Permissions.Users.View,                  "View any user",                     "Users")
-        , new PermissionDef(Permissions.Users.Create,                "Create users",                      "Users")
+        , new PermissionDef(Permissions.Users.UpdateOwn,             "Update own profile",                "Users")
         , new PermissionDef(Permissions.Users.Update,                "Update any user",                   "Users")
         , new PermissionDef(Permissions.Users.Delete,                "Delete users",                      "Users")
           // index 6-15 - Character
-        , new PermissionDef(Permissions.Characters.ViewOwn,          "View own characters",               "Characters")
         , new PermissionDef(Permissions.Characters.CreateOwn,        "Create own characters",             "Characters")
         , new PermissionDef(Permissions.Characters.Create,           "Create character",                  "Characters")
-        , new PermissionDef(Permissions.Characters.UpdateOwn,        "Update own character name/nation",  "Characters")
+        , new PermissionDef(Permissions.Characters.ViewOwn,          "View own characters",               "Characters")
         , new PermissionDef(Permissions.Characters.View,             "View any character",                "Characters")
+        , new PermissionDef(Permissions.Characters.UpdateOwn,        "Update own character name/nation",  "Characters")
         , new PermissionDef(Permissions.Characters.Update,           "Update any character",              "Characters")
         , new PermissionDef(Permissions.Characters.Delete,           "Delete any character",              "Characters")
         , new PermissionDef(Permissions.Characters.DeleteOwn,        "Delete own character",              "Characters")
         , new PermissionDef(Permissions.Characters.AssignPosition,   "Assign societal/military position", "Characters")
         , new PermissionDef(Permissions.Characters.AssignExperience, "Assign experience/level",           "Characters")
           // index 16-20 - Roles
-        , new PermissionDef(Permissions.Roles.View,                  "View roles",                        "Role")
         , new PermissionDef(Permissions.Roles.Create,                "Create roles",                      "Role")
+        , new PermissionDef(Permissions.Roles.View,                  "View roles",                        "Role")
         , new PermissionDef(Permissions.Roles.Update,                "Update roles",                      "Role")
         , new PermissionDef(Permissions.Roles.Delete,                "Delete roles",                      "Role")
         , new PermissionDef(Permissions.Roles.Assign,                "Assign roles to users",             "Role")
@@ -156,23 +156,23 @@ public static class Claims
         , new PermissionDef(Permissions.Forum.Category.Update,  "Update forum categories",  "Forum")
         , new PermissionDef(Permissions.Forum.Category.Delete,  "Delete forum categories",  "Forum")
         , new PermissionDef(Permissions.Forum.Thread.Create,    "Create forum threads",     "Forum")
+        , new PermissionDef(Permissions.Forum.Thread.UpdateOwn, "Update own forum thread",  "Forum")
         , new PermissionDef(Permissions.Forum.Thread.Update,    "Update any forum thread",  "Forum")
+        , new PermissionDef(Permissions.Forum.Thread.DeleteOwn, "Delete own forum thread",  "Forum")
         , new PermissionDef(Permissions.Forum.Thread.Delete,    "Delete any forum thread",  "Forum")
         , new PermissionDef(Permissions.Forum.Thread.Lock,      "Lock/unlock forum threads","Forum")
         , new PermissionDef(Permissions.Forum.Thread.Pin,       "Pin/unpin forum threads",  "Forum")
         , new PermissionDef(Permissions.Forum.Post.Create,      "Create posts in threads",  "Forum")
-        , new PermissionDef(Permissions.Forum.Post.Update,      "Update any forum post",    "Forum")
-        , new PermissionDef(Permissions.Forum.Post.Delete,      "Delete any forum post",    "Forum")
-        , new PermissionDef(Permissions.Forum.Thread.UpdateOwn, "Update own forum thread",  "Forum")
-        , new PermissionDef(Permissions.Forum.Thread.DeleteOwn, "Delete own forum thread",  "Forum")
         , new PermissionDef(Permissions.Forum.Post.UpdateOwn,   "Update own forum post",    "Forum")
+        , new PermissionDef(Permissions.Forum.Post.Update,      "Update any forum post",    "Forum")
         , new PermissionDef(Permissions.Forum.Post.DeleteOwn,   "Delete own forum post",    "Forum")
+        , new PermissionDef(Permissions.Forum.Post.Delete,      "Delete any forum post",    "Forum")
           // index 38-43 - Wiki
         , new PermissionDef(Permissions.Wiki.Page.Create,    "Create wiki pages",            "Wiki")
+        , new PermissionDef(Permissions.Wiki.Page.UpdateOwn, "Update own wiki page",         "Wiki")
         , new PermissionDef(Permissions.Wiki.Page.Update,    "Update any wiki page",         "Wiki")
-        , new PermissionDef(Permissions.Wiki.Page.UpdateOwn, "Update any wiki page",         "Wiki")
-        , new PermissionDef(Permissions.Wiki.Page.Delete,    "Delete wiki pages",            "Wiki")
         , new PermissionDef(Permissions.Wiki.Page.DeleteOwn, "Delete own wiki pages",        "Wiki")
+        , new PermissionDef(Permissions.Wiki.Page.Delete,    "Delete wiki pages",            "Wiki")
         , new PermissionDef(Permissions.Wiki.Category.Manage,"Create/update wiki categories","Wiki")
     };
 
@@ -191,12 +191,11 @@ public static class Claims
           , Permissions.Characters.ViewOwn
           , Permissions.Characters.CreateOwn
           , Permissions.Characters.UpdateOwn
+          , Permissions.Characters.DeleteOwn
           , Permissions.Characters.View
           , Permissions.Characters.Update
           , Permissions.Characters.AssignPosition
           , Permissions.Characters.AssignExperience
-          , Permissions.Roles.View
-          , Permissions.PermissionControl.View
           , Permissions.Forum.Thread.Create
           , Permissions.Forum.Thread.UpdateOwn
           , Permissions.Forum.Thread.DeleteOwn
@@ -217,6 +216,9 @@ public static class Claims
           , Permissions.Characters.ViewOwn
           , Permissions.Characters.CreateOwn
           , Permissions.Characters.UpdateOwn
+          , Permissions.Characters.DeleteOwn
+          , Permissions.Forum.Thread.Create
+          , Permissions.Forum.Thread.UpdateOwn
           , Permissions.Forum.Post.Create
           , Permissions.Forum.Post.UpdateOwn
           , Permissions.Forum.Post.DeleteOwn

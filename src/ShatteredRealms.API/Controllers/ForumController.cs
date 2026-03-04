@@ -262,7 +262,7 @@ public sealed class ForumController : ControllerBase
         var role = User.GetUserRole();
         Result result;
 
-        if (role == Claims.Roles.AdminName || role == Claims.Roles.SystemName)
+        if (role is Claims.Roles.AdminName or Claims.Roles.SystemName)
         {
           result = await _mediator.Send(new DeleteForumPostAsAdminCommand(postId), cancellationToken);
         }
