@@ -258,5 +258,9 @@ public static class DomainErrors
         public static readonly Error CannotEditOthers = new("Wiki.CannotEditOthers"
                                                           , "You cannot edit others' wiki pages"
                                                           , (int)HttpStatusCode.Forbidden);
+
+        public static readonly Error PageCreationFailed = new("Wiki.PageCreationFailed"
+                                                           , "Failed to create wiki page"
+                                                           , (int)HttpStatusCode.InternalServerError);
     }
 }

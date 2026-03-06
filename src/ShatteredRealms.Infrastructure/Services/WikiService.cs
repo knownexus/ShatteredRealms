@@ -87,50 +87,58 @@ public class WikiService : IWikiService
                                                          , CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Creating wiki page '{Title}' by user {UserId}", req.Title, userId);
-
-        var slug = GenerateSlug(req.Title);
-        if (await _context.WikiPage.AnyAsync(p => p.Slug == slug))
+        try
         {
-            _logger.LogWarning("Cannot create page: slug '{Slug}' already exists", slug);
-            return Result.Failure<WikiPageDto>(DomainErrors.Wiki.SlugAlreadyExists);
+
+            var slug = GenerateSlug(req.Title);
+            if (await _context.WikiPage.AnyAsync(p => p.Slug == slug))
+            {
+                _logger.LogWarning("Cannot create page: slug '{Slug}' already exists", slug);
+                return Result.Failure<WikiPageDto>(DomainErrors.Wiki.SlugAlreadyExists);
+            }
+
+            var now = DateTime.UtcNow;
+
+            var page = new WikiPage
+            {
+                Title          = req.Title,
+                Slug           = slug,
+                CurrentContent = req.Content,
+                AuthorId       = userId,
+                CreatedAt      = now,
+                UpdatedAt      = now,
+            };
+
+            _context.WikiPage.Add(page);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            _logger.LogDebug("Wiki page '{Title}' saved, creating first revision", req.Title);
+
+            _context.WikiRevision.Add(new WikiRevision
+            {
+                WikiPageId   = page.Id,
+                Content      = req.Content,
+                EditorId     = userId,
+                RevisionNote = req.RevisionNote,
+                CreatedAt    = now
+            });
+
+            foreach (var catId in req.CategoryIds)
+            {
+                _context.WikiPageCategory.Add(new WikiPageCategory { WikiPageId = page.Id, WikiCategoryId = catId });
+            }
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            var loaded = await LoadPage(page.Id);
+            _logger.LogInformation("Wiki page '{Title}' created successfully with ID {PageId}", req.Title, page.Id);
+            return Result.Success(ToDto(loaded!));
         }
-
-        var now = DateTime.UtcNow;
-
-        var page = new WikiPage
+        catch (Exception e)
         {
-            Title          = req.Title,
-            Slug           = slug,
-            CurrentContent = req.Content,
-            AuthorId       = userId,
-            CreatedAt      = now,
-            UpdatedAt      = now,
-        };
-
-        _context.WikiPage.Add(page);
-        await _context.SaveChangesAsync();
-
-        _logger.LogDebug("Wiki page '{Title}' saved, creating first revision", req.Title);
-
-        _context.WikiRevision.Add(new WikiRevision
-        {
-            WikiPageId   = page.Id,
-            Content      = req.Content,
-            EditorId     = userId,
-            RevisionNote = req.RevisionNote,
-            CreatedAt    = now
-        });
-
-        foreach (var catId in req.CategoryIds)
-        {
-            _context.WikiPageCategory.Add(new WikiPageCategory { WikiPageId = page.Id, WikiCategoryId = catId });
+            _logger.LogError("Wiki page '{Title}' creation failed with error: {errorMessage}", req.Title, e.Message);
+            return Result.Failure<WikiPageDto>(DomainErrors.Wiki.PageCreationFailed);
         }
-
-        await _context.SaveChangesAsync();
-
-        var loaded = await LoadPage(page.Id);
-        _logger.LogInformation("Wiki page '{Title}' created successfully with ID {PageId}", req.Title, page.Id);
-        return Result.Success(ToDto(loaded!));
     }
 
     public async Task<Result<WikiPageDto>> UpdatePageAsync(int id, string userId, UpdateWikiPageRequest req
