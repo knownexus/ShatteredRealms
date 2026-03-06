@@ -11,6 +11,7 @@ public class User : IdentityUser
     public ICollection<UserEmergencyContact> UserEmergencyContact { get; set; } = new List<UserEmergencyContact>();
     public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
     public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+    public ICollection<ActivityLog.ActivityLog> ActivityLogs { get; set; } = new List<ActivityLog.ActivityLog>();
 
     public static Result Validate(User user)
     {

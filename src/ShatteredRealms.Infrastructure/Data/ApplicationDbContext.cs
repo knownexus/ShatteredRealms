@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using ShatteredRealms.Domain.Entities;
+using ShatteredRealms.Domain.Entities.ActivityLog;
 using ShatteredRealms.Domain.Entities.Forum;
 using ShatteredRealms.Domain.Entities.User;
 using ShatteredRealms.Domain.Entities.Wiki;
@@ -9,20 +10,20 @@ using ShatteredRealms.Domain.Shared;
 
 namespace ShatteredRealms.Infrastructure.Data;
 
-public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-    : IdentityDbContext<
-        User,
-        Role,
-        string,
-        IdentityUserClaim<string>,
-        UserRole,
-        IdentityUserLogin<string>,
-        Permission,
-        IdentityUserToken<string>
-    >(options)
+public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<
+                                                                                       User,
+                                                                                       Role,
+                                                                                       string,
+                                                                                       IdentityUserClaim<string>,
+                                                                                       UserRole,
+                                                                                       IdentityUserLogin<string>,
+                                                                                       Permission,
+                                                                                       IdentityUserToken<string>
+                                                                                    >(options)
 {
-    public DbSet<RefreshToken>         RefreshToken         { get; set; }
-    public DbSet<EmergencyContact>     EmergencyContact     { get; set; }
+    public DbSet<RefreshToken> RefreshToken { get; set; }
+    public DbSet<ActivityLog> ActivityLog { get; set; }
+    public DbSet<EmergencyContact> EmergencyContact { get; set; }
     public DbSet<UserEmergencyContact> UserEmergencyContact { get; set; }
     public DbSet<ForumCategory> ForumCategory { get; set; }
     public DbSet<ForumThread> ForumThread { get; set; }
@@ -65,6 +66,16 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             e.HasOne(ur => ur.Role)
              .WithMany(r => r.UserRoles)
              .HasForeignKey(ur => ur.RoleId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<ActivityLog>(e =>
+        {
+            e.ToTable("ActivityLog");
+            e.HasKey(al => al.Id);
+            e.HasOne(al => al.User)
+             .WithMany(u => u.ActivityLogs)
+             .HasForeignKey(al => al.UserId)
              .OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -220,7 +231,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     {
         builder.Entity<Role>().HasData(
             new Role { Id = Claims.Roles.SystemId,        Name = Claims.Roles.SystemName,        NormalizedName = Claims.Roles.SystemName.ToUpper(),        Description = Claims.Roles.SystemDescription,        Priority = 100, IsSystem = true  },
-            new Role { Id = Claims.Roles.AdminId,         Name = Claims.Roles.AdminName,         NormalizedName = Claims.Roles.AdminName.ToUpper(),         Description = Claims.Roles.AdminDescription,         Priority = 90,  IsSystem = true  },
+            new Role { Id = Claims.Roles.AdminId,         Name = Claims.Roles.AdminName,         NormalizedName = Claims.Roles.AdminName.ToUpper(),         Description = Claims.Roles.AdminDescription,         Priority = 90,  IsSystem = false  },
+            new Role { Id = Claims.Roles.AnalystId,       Name = Claims.Roles.AnalystName,       NormalizedName = Claims.Roles.AnalystName.ToUpper(),       Description = Claims.Roles.AnalystDescription,       Priority = 80,  IsSystem = false  },
             new Role { Id = Claims.Roles.EventOrganizerId,Name = Claims.Roles.EventOrganizerName,NormalizedName = Claims.Roles.EventOrganizerName.ToUpper(),Description = Claims.Roles.EventOrganizerDescription,Priority = 50,  IsSystem = false },
             new Role { Id = Claims.Roles.UserId,          Name = Claims.Roles.UserName,          NormalizedName = Claims.Roles.UserName.ToUpper(),          Description = Claims.Roles.UserDescription,          Priority = 10,  IsSystem = false }
         );
@@ -238,8 +250,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         {
             (Claims.Roles.SystemId,        Claims.RolePermissions.System,         IdOffset: 100),
             (Claims.Roles.AdminId,         Claims.RolePermissions.Admin,          IdOffset: 200),
-            (Claims.Roles.EventOrganizerId,Claims.RolePermissions.EventOrganizer, IdOffset: 300),
-            (Claims.Roles.UserId,          Claims.RolePermissions.User,           IdOffset: 400),
+            (Claims.Roles.AnalystId,       Claims.RolePermissions.Analyst,        IdOffset: 300),
+            (Claims.Roles.EventOrganizerId,Claims.RolePermissions.EventOrganizer, IdOffset: 400),
+            (Claims.Roles.UserId,          Claims.RolePermissions.User,           IdOffset: 500),
         };
 
         var rows = roleMappings

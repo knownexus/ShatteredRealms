@@ -12,7 +12,7 @@ public static class Claims
 
         public const string SystemName         = "System";
         public const string AdminName          = "Admin";
-        public const string AnalystName            = "AnalystName";
+        public const string AnalystName            = "Analyst";
         public const string EventOrganizerName = "EventOrganizer";
         public const string UserName           = "User";
 

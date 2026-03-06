@@ -103,6 +103,13 @@ public static class DatabaseSeeder
             roleId: Claims.Roles.AdminId);
 
         await CreateUserIfNotExists(context, userManager,
+                                    email: "analyst@shatteredrealms.com",
+                                    firstName: "Analyst", lastName: "User",
+                                    password: configuration["SeedPasswords:Analyst"] ??
+                                              throw new InvalidOperationException("SeedPasswords:Analyst not configured"),
+                                    roleId: Claims.Roles.AnalystId);
+
+        await CreateUserIfNotExists(context, userManager,
             email: "organizer@shatteredrealms.com",
             firstName: "Event", lastName: "Organizer",
             password: configuration["SeedPasswords:EventOrganizer"] ?? throw new InvalidOperationException("SeedPasswords:EventOrganizer not configured"),
