@@ -8,15 +8,18 @@ public static class Claims
         public const string AdminId          = "00000000-0000-0000-0000-000000000002";
         public const string EventOrganizerId = "00000000-0000-0000-0000-000000000003";
         public const string UserId           = "00000000-0000-0000-0000-000000000004";
+        public const string AnalystId        = "00000000-0000-0000-0000-000000000005";
 
-        public const string SystemName        = "System";
-        public const string AdminName         = "Admin";
+        public const string SystemName         = "System";
+        public const string AdminName          = "Admin";
+        public const string AnalystName            = "AnalystName";
         public const string EventOrganizerName = "EventOrganizer";
-        public const string UserName          = "User";
+        public const string UserName           = "User";
 
         public const string SystemDescription         = "Internal system role, unrestricted";
         public const string AdminDescription          = "Full administrative access";
-        public const string EventOrganizerDescription = "Can manage characters, assign positions/experience";
+        public const string AnalystDescription        = "Report Access";
+        public const string EventOrganizerDescription = "Can manage events, characters, assign positions/experience";
         public const string UserDescription           = "Standard registered user";
     }
 
@@ -57,39 +60,71 @@ public static class Claims
             public const string Assign = "Role.Assign";
         }
 
+        public static class ActivityLog
+        {
+            public const string View =   "ActivityLog.View";
+            public const string Update = "ActivityLog.Update";
+            public const string Delete = "ActivityLog.Delete";
+        }
+
+        public static class Reports
+        {
+            public const string View = "Reports.View";
+            public const string Create = "Reports.Create";
+            public const string CreateAll = "Reports.CreateAll";
+        }
+
+        public static class Announcements
+        {
+            public const string View = "Announcements.View";
+            public const string Create = "Announcements.Create";
+            public const string Update = "Announcements.Update";
+            public const string Delete = "Announcements.Delete";
+        }
+
         public static class PermissionControl
         {
             public const string View   = "PermissionControl.View";
             public const string Assign = "PermissionControl.Assign";
         }
 
+        public static class Videos
+        {
+            public const string View = "Videos.View";
+            public const string Create = "Videos.Create";
+            public const string Update = "Videos.Update";
+            public const string Delete = "Videos.Delete";
+            public const string DeleteOwn = "Videos.DeleteOwn";
+            public const string Approve = "Videos.Approve";
+        }
+
         public static class Forum
         {
             public static class Category
             {
-                public const string Create = "forum.category.create";
-                public const string Update = "forum.category.edit";
-                public const string Delete = "forum.category.delete";
+                public const string Create = "Forum.Category.Create";
+                public const string Update = "Forum.Category.Update";
+                public const string Delete = "Forum.Category.Delete";
             }
 
             public static class Thread
             {
-                public const string Lock      = "forum.thread.lock";
-                public const string Create    = "forum.thread.create";
-                public const string Update    = "forum.thread.update";
-                public const string Delete    = "forum.thread.delete";
-                public const string Pin       = "forum.thread.pin";
-                public const string UpdateOwn = "forum.thread.updateOwn";
-                public const string DeleteOwn = "forum.thread.deleteOwn";
+                public const string Lock      = "Forum.Thread.Lock";
+                public const string Create    = "Forum.Thread.Create";
+                public const string Update    = "Forum.Thread.Update";
+                public const string Delete    = "Forum.Thread.Delete";
+                public const string Pin       = "Forum.Thread.Pin";
+                public const string UpdateOwn = "Forum.Thread.UpdateOwn";
+                public const string DeleteOwn = "Forum.Thread.DeleteOwn";
             }
 
             public static class Post
             {
-                public const string Create    = "forum.post.create";
-                public const string Update    = "forum.post.edit";
-                public const string Delete    = "forum.post.delete";
-                public const string UpdateOwn = "forum.post.editOwn";
-                public const string DeleteOwn = "forum.post.deleteOwn";
+                public const string Create    = "Forum.Post.Create";
+                public const string Update    = "Forum.Post.Update";
+                public const string Delete    = "Forum.Post.Delete";
+                public const string UpdateOwn = "Forum.Post.UpdateOwn";
+                public const string DeleteOwn = "Forum.Post.DeleteOwn";
             }
         }
 
@@ -97,16 +132,16 @@ public static class Claims
         {
             public static class Category
             {
-                public const string Manage = "wiki.category.manage";
+                public const string Manage = "Wiki.Category.Manage";
             }
 
             public static class Page
             {
-                public const string Create    = "wiki.page.create";
-                public const string Update    = "wiki.page.edit";
-                public const string Delete    = "wiki.page.delete";
-                public const string UpdateOwn = "wiki.page.editOwn";
-                public const string DeleteOwn = "wiki.page.deleteOwn";
+                public const string Create    = "Wiki.Page.Create";
+                public const string Update    = "Wiki.Page.Update";
+                public const string Delete    = "Wiki.Page.Delete";
+                public const string UpdateOwn = "Wiki.Page.UpdateOwn";
+                public const string DeleteOwn = "Wiki.Page.DeleteOwn";
             }
 
         }
@@ -174,6 +209,26 @@ public static class Claims
         , new PermissionDef(Permissions.Wiki.Page.DeleteOwn, "Delete own wiki pages",        "Wiki")
         , new PermissionDef(Permissions.Wiki.Page.Delete,    "Delete wiki pages",            "Wiki")
         , new PermissionDef(Permissions.Wiki.Category.Manage,"Create/update wiki categories","Wiki")
+          // index 44 - 49 - Videos
+        , new PermissionDef(Permissions.Videos.View,     "View video",          "Videos")
+        , new PermissionDef(Permissions.Videos.Create,   "Upload video",        "Videos")
+        , new PermissionDef(Permissions.Videos.Update,   "Update video details","Videos")
+        , new PermissionDef(Permissions.Videos.Delete,   "Delete video",        "Videos")
+        , new PermissionDef(Permissions.Videos.DeleteOwn,"Delete own video",    "Videos")
+        , new PermissionDef(Permissions.Videos.Approve,  "Approve video",       "Videos")
+          // Index 50 - 52 - Activity Logs
+        , new PermissionDef(Permissions.ActivityLog.View,    "View activity logs",   "ActivityLogs")
+        , new PermissionDef(Permissions.ActivityLog.Update,  "Edit activity logs",   "ActivityLogs")
+        , new PermissionDef(Permissions.ActivityLog.Delete,  "Delete activity logs", "ActivityLogs")
+          // Index 53 - 55 - Reports
+        , new PermissionDef(Permissions.Reports.View,      "View Reports",             "ActivityLogs")
+        , new PermissionDef(Permissions.Reports.Create,    "Generate specific report", "ActivityLogs")
+        , new PermissionDef(Permissions.Reports.CreateAll, "Generate all reports",     "ActivityLogs")
+          // Index 56 - 59 - Announcements
+        , new PermissionDef(Permissions.Announcements.View, "View announcements",           "Announcements")
+        , new PermissionDef(Permissions.Announcements.Create, "Create a new announcements", "Announcements")
+        , new PermissionDef(Permissions.Announcements.Update, "Edit an announcement",       "Announcements")
+        , new PermissionDef(Permissions.Announcements.Delete, "Delete an announcement",     "Announcements")
     };
 
     public static class RolePermissions
@@ -207,6 +262,22 @@ public static class Claims
           , Permissions.Wiki.Page.Create
           , Permissions.Wiki.Page.UpdateOwn
           , Permissions.Wiki.Page.DeleteOwn
+          , Permissions.Announcements.View
+          , Permissions.Announcements.Create
+          , Permissions.Announcements.Update
+          , Permissions.Announcements.Delete
+          ,  Permissions.Videos.View
+          ,  Permissions.Videos.Create
+          ,  Permissions.Videos.Update
+          ,  Permissions.Videos.Delete
+          ,  Permissions.Videos.Approve
+        };
+
+        public static readonly IReadOnlyList<string> Analyst = new[]
+        {
+              Permissions.Reports.View
+            , Permissions.Reports.Create
+            , Permissions.Reports.CreateAll
         };
 
         public static readonly IReadOnlyList<string> User = new[]
@@ -225,6 +296,10 @@ public static class Claims
           , Permissions.Wiki.Page.Create
           , Permissions.Wiki.Page.UpdateOwn
           , Permissions.Wiki.Page.DeleteOwn
+          , Permissions.Videos.View
+          , Permissions.Videos.Create
+          , Permissions.Videos.DeleteOwn
+
         };
     }
 }
