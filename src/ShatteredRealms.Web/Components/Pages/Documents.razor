@@ -1,0 +1,381 @@
+@page "/documents"
+@using ShatteredRealms.Application.DTOs.Documents
+@using ShatteredRealms.Web.Services
+@inject DocumentClientService DocumentService
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Documents — ShatteredRealms</PageTitle>
+
+<div class="documents-page">
+    <div class="documents-header">
+        <div>
+            <h1 class="documents-title">Documents</h1>
+            <p class="documents-subtitle">Community resources, guides, and files</p>
+        </div>
+        @if (_canUpload)
+        {
+            <label class="btn-gold-outline upload-label">
+                @if (_uploading)
+                {
+                    <span>Uploading…</span>
+                }
+                else
+                {
+                    <span>↑ Upload Document</span>
+                    <InputFile OnChange="OnFileSelected" accept=".pdf,.docx" style="display:none" />
+                }
+            </label>
+        }
+    </div>
+
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <div class="alert alert-danger">@_error</div>
+    }
+    @if (!string.IsNullOrEmpty(_uploadError))
+    {
+        <div class="alert alert-danger">@_uploadError</div>
+    }
+    @if (!string.IsNullOrEmpty(_uploadSuccess))
+    {
+        <div class="alert alert-success">@_uploadSuccess</div>
+    }
+
+    @if (_loading)
+    {
+        <div class="documents-loading">
+            <div class="loading-orb"></div>
+            <span>Loading documents…</span>
+        </div>
+    }
+    else if (_documents.Count == 0)
+    {
+        <div class="documents-empty">
+            <div class="empty-icon">📄</div>
+            <p>No documents have been uploaded yet.</p>
+        </div>
+    }
+    else
+    {
+        <div class="documents-table-wrap">
+            <table class="documents-table">
+                <thead>
+                    <tr>
+                        <th>File</th>
+                        <th>Type</th>
+                        <th>Size</th>
+                        <th>Uploaded by</th>
+                        <th>Date</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var doc in _documents)
+                    {
+                        <tr class="doc-row">
+                            <td class="doc-name">
+                                <span class="doc-icon">@FileIcon(doc.ContentType)</span>
+                                @doc.OriginalFileName
+                            </td>
+                            <td class="doc-type">@FileTypeName(doc.ContentType)</td>
+                            <td class="doc-size">@FormatSize(doc.FileSizeBytes)</td>
+                            <td class="doc-uploader">@doc.UploadedByName</td>
+                            <td class="doc-date">@doc.UploadedAt.ToString("MMM d, yyyy")</td>
+                            <td class="doc-actions">
+                                <a class="btn-download" href="@DocumentService.GetDownloadUrl(doc.Id)" target="_blank" download="@doc.OriginalFileName">
+                                    ↓ Download
+                                </a>
+                                @if (_canDelete)
+                                {
+                                    <button class="btn-delete" @onclick="() => ConfirmDelete(doc)" title="Delete">×</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@if (_deleteTarget is not null)
+{
+    <div class="modal-backdrop" @onclick="CancelDelete">
+        <div class="modal-panel" @onclick:stopPropagation>
+            <div class="modal-header">
+                <h2>Delete Document</h2>
+                <button class="modal-close" @onclick="CancelDelete">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-family: var(--font-body); color: var(--text-muted);">
+                    Are you sure you want to delete <strong style="color: var(--text)">@_deleteTarget.OriginalFileName</strong>?
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" @onclick="CancelDelete">Cancel</button>
+                <button class="btn-danger" @onclick="DeleteDocument" disabled="@_deleting">
+                    @(_deleting ? "Deleting…" : "Delete")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .documents-page { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+
+    .documents-header {
+        display: flex; align-items: flex-end; justify-content: space-between;
+        margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;
+    }
+    .documents-title { font-family: var(--font-heading); font-size: 2rem; color: var(--gold); margin: 0 0 0.25rem; }
+    .documents-subtitle { font-family: var(--font-body); color: var(--text-muted); margin: 0; font-size: 0.95rem; }
+
+    .btn-gold-outline {
+        padding: 0.55rem 1.3rem; border: 1px solid var(--gold);
+        background: transparent; color: var(--gold); border-radius: 6px;
+        font-family: var(--font-heading); font-size: 0.82rem; font-weight: 700;
+        letter-spacing: 0.06em; cursor: pointer; transition: background 0.15s, color 0.15s;
+        display: inline-flex; align-items: center; gap: 0.4rem;
+    }
+    .btn-gold-outline:hover { background: var(--gold); color: #07090f; }
+    .upload-label { cursor: pointer; }
+
+    .alert { padding: 0.75rem 1rem; border-radius: 6px; font-family: var(--font-body); font-size: 0.88rem; margin-bottom: 1rem; }
+    .alert-danger { background: rgba(255,69,58,0.12); border: 1px solid rgba(255,69,58,0.3); color: #ff453a; }
+    .alert-success { background: rgba(52,199,89,0.1); border: 1px solid rgba(52,199,89,0.3); color: #34c759; }
+
+    .documents-loading {
+        display: flex; align-items: center; gap: 1rem;
+        justify-content: center; padding: 4rem;
+        color: var(--text-muted); font-family: var(--font-body);
+    }
+    .loading-orb {
+        width: 22px; height: 22px;
+        border: 2px solid rgba(201,168,76,0.2);
+        border-top-color: var(--gold);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+    @@keyframes spin { to { transform: rotate(360deg); } }
+
+    .documents-empty {
+        text-align: center; padding: 5rem 2rem;
+        color: var(--text-muted); font-family: var(--font-body);
+        display: flex; flex-direction: column; align-items: center; gap: 1rem;
+    }
+    .empty-icon { font-size: 3rem; }
+
+    .documents-table-wrap {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .documents-table {
+        width: 100%; border-collapse: collapse;
+        font-family: var(--font-body); font-size: 0.88rem;
+    }
+    .documents-table thead tr {
+        border-bottom: 1px solid var(--border);
+        background: rgba(255,255,255,0.03);
+    }
+    .documents-table th {
+        padding: 0.85rem 1.25rem; text-align: left;
+        font-family: var(--font-heading); font-size: 0.72rem;
+        letter-spacing: 0.08em; color: var(--text-muted);
+        text-transform: uppercase; font-weight: 600;
+    }
+    .doc-row { border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.1s; }
+    .doc-row:last-child { border-bottom: none; }
+    .doc-row:hover { background: rgba(255,255,255,0.02); }
+    .documents-table td { padding: 0.9rem 1.25rem; color: var(--text); vertical-align: middle; }
+
+    .doc-name { display: flex; align-items: center; gap: 0.6rem; font-weight: 500; max-width: 320px; }
+    .doc-icon { font-size: 1.1rem; flex-shrink: 0; }
+    .doc-type, .doc-size, .doc-uploader, .doc-date { color: var(--text-muted); white-space: nowrap; }
+    .doc-actions { display: flex; align-items: center; gap: 0.6rem; white-space: nowrap; }
+
+    .btn-download {
+        padding: 0.3rem 0.85rem;
+        border: 1px solid rgba(201,168,76,0.3);
+        background: rgba(201,168,76,0.08); color: var(--gold);
+        border-radius: 5px; font-family: var(--font-body); font-size: 0.8rem;
+        text-decoration: none; transition: background 0.15s;
+        white-space: nowrap;
+    }
+    .btn-download:hover { background: rgba(201,168,76,0.18); }
+
+    .btn-delete {
+        padding: 0.3rem 0.6rem;
+        border: 1px solid rgba(255,69,58,0.3);
+        background: transparent; color: rgba(255,69,58,0.7);
+        border-radius: 5px; font-size: 1rem; cursor: pointer;
+        transition: all 0.15s; line-height: 1;
+    }
+    .btn-delete:hover { border-color: #ff453a; color: #ff453a; background: rgba(255,69,58,0.1); }
+
+    /* Modal */
+    .modal-backdrop {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+        display: flex; align-items: center; justify-content: center; z-index: 1000;
+    }
+    .modal-panel {
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: 12px; width: min(440px, 95vw);
+    }
+    .modal-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 1.25rem 1.75rem; border-bottom: 1px solid var(--border);
+    }
+    .modal-header h2 { font-family: var(--font-heading); font-size: 1.1rem; color: var(--text); margin: 0; }
+    .modal-close { background: none; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer; }
+    .modal-body { padding: 1.5rem 1.75rem; }
+    .modal-footer {
+        display: flex; justify-content: flex-end; gap: 0.75rem;
+        padding: 1rem 1.75rem 1.5rem; border-top: 1px solid var(--border);
+    }
+    .btn-secondary {
+        padding: 0.6rem 1.2rem; background: rgba(255,255,255,0.06);
+        border: 1px solid var(--border); color: var(--text-muted);
+        border-radius: 6px; font-family: var(--font-body); cursor: pointer;
+    }
+    .btn-danger {
+        padding: 0.6rem 1.5rem; background: rgba(255,69,58,0.9);
+        color: #fff; border: none; border-radius: 6px;
+        font-family: var(--font-heading); font-size: 0.85rem; font-weight: 700; cursor: pointer;
+    }
+    .btn-danger:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    @@media (max-width: 700px) {
+        .doc-type, .doc-uploader { display: none; }
+        .documents-table th:nth-child(2),
+        .documents-table th:nth-child(4) { display: none; }
+    }
+</style>
+
+@code {
+    private List<DocumentDto> _documents = new();
+    private bool _loading = true;
+    private bool _canUpload;
+    private bool _canDelete;
+    private string? _error;
+    private string? _uploadError;
+    private string? _uploadSuccess;
+    private bool _uploading;
+
+    private DocumentDto? _deleteTarget;
+    private bool _deleting;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        if (!await AuthService.IsAuthenticatedAsync())
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        _canUpload = await AuthService.HasPermissionAsync(Domain.Shared.Claims.Permissions.Documents.Upload);
+        _canDelete = await AuthService.HasPermissionAsync(Domain.Shared.Claims.Permissions.Documents.Delete);
+
+        await LoadDocuments();
+        StateHasChanged();
+    }
+
+    private async Task LoadDocuments()
+    {
+        _loading = true;
+        var result = await DocumentService.GetAllAsync();
+        _loading = false;
+
+        if (result.IsSuccess) _documents = result.Value;
+        else _error = result.Error.Message;
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        _uploadError = null;
+        _uploadSuccess = null;
+        var file = e.File;
+
+        var ext = Path.GetExtension(file.Name).ToLowerInvariant();
+        if (ext is not (".pdf" or ".docx"))
+        {
+            _uploadError = "Only PDF and DOCX files are allowed.";
+            StateHasChanged();
+            return;
+        }
+        if (file.Size > 20 * 1024 * 1024)
+        {
+            _uploadError = "File size must not exceed 20 MB.";
+            StateHasChanged();
+            return;
+        }
+
+        _uploading = true;
+        StateHasChanged();
+
+        await using var stream = file.OpenReadStream(maxAllowedSize: 20 * 1024 * 1024);
+        var result = await DocumentService.UploadAsync(stream, file.Name, file.ContentType, file.Size);
+        _uploading = false;
+
+        if (result.IsSuccess)
+        {
+            _uploadSuccess = $"{result.Value.OriginalFileName} uploaded successfully.";
+            await LoadDocuments();
+        }
+        else
+        {
+            _uploadError = result.Error.Message;
+        }
+
+        StateHasChanged();
+    }
+
+    private void ConfirmDelete(DocumentDto doc)
+    {
+        _deleteTarget = doc;
+        _deleting = false;
+    }
+
+    private void CancelDelete() => _deleteTarget = null;
+
+    private async Task DeleteDocument()
+    {
+        if (_deleteTarget is null) return;
+        _deleting = true;
+        var result = await DocumentService.DeleteAsync(_deleteTarget.Id);
+        _deleting = false;
+        _deleteTarget = null;
+
+        if (result.IsSuccess) await LoadDocuments();
+        else _error = result.Error.Message;
+
+        StateHasChanged();
+    }
+
+    private static string FileIcon(string contentType) => contentType switch
+    {
+        "application/pdf" => "📕",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" => "📘",
+        _ => "📄",
+    };
+
+    private static string FileTypeName(string contentType) => contentType switch
+    {
+        "application/pdf" => "PDF",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" => "DOCX",
+        _ => "File",
+    };
+
+    private static string FormatSize(long bytes)
+    {
+        if (bytes >= 1024 * 1024) return $"{bytes / (1024.0 * 1024):F1} MB";
+        if (bytes >= 1024) return $"{bytes / 1024.0:F0} KB";
+        return $"{bytes} B";
+    }
+}

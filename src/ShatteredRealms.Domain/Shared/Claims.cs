@@ -96,6 +96,13 @@ public static class Claims
             public const string Delete = "Announcements.Delete";
         }
 
+        public static class Documents
+        {
+            public const string View   = "Documents.View";
+            public const string Upload = "Documents.Upload";
+            public const string Delete = "Documents.Delete";
+        }
+
         public static class PermissionControl
         {
             public const string View   = "PermissionControl.View";
@@ -252,6 +259,10 @@ public static class Claims
         , new PermissionDef(Permissions.Events.Delete,          "Delete any event",               "Events")
         , new PermissionDef(Permissions.Events.Register,        "Mark self as going to an event", "Events")
         , new PermissionDef(Permissions.Events.ManageAttendees, "Remove attendees from an event", "Events")
+          // Index 67 - 69 - Documents
+        , new PermissionDef(Permissions.Documents.View,   "View and download documents", "Documents")
+        , new PermissionDef(Permissions.Documents.Upload, "Upload documents",            "Documents")
+        , new PermissionDef(Permissions.Documents.Delete, "Delete documents",            "Documents")
     };
 
     public static class RolePermissions
@@ -300,6 +311,9 @@ public static class Claims
           , Permissions.Events.Delete
           , Permissions.Events.Register
           , Permissions.Events.ManageAttendees
+          , Permissions.Documents.View
+          , Permissions.Documents.Upload
+          , Permissions.Documents.Delete
         };
 
         public static readonly IReadOnlyList<string> Analyst = new[]
@@ -331,6 +345,7 @@ public static class Claims
           , Permissions.Announcements.View
           , Permissions.Events.View
           , Permissions.Events.Register
+          , Permissions.Documents.View
         };
 
         public static readonly IReadOnlyList<string> Unverified = new[]

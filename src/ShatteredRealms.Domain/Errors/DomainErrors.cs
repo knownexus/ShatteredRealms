@@ -264,6 +264,18 @@ public static class DomainErrors
             "Announcement.NotFound", "Announcement not found", (int)HttpStatusCode.NotFound);
     }
 
+    public static class Document
+    {
+        public static readonly Error NotFound = new(
+            "Document.NotFound", "Document not found", (int)HttpStatusCode.NotFound);
+
+        public static readonly Error InvalidFileType = new(
+            "Document.InvalidFileType", "Only PDF and DOCX files are allowed", (int)HttpStatusCode.BadRequest);
+
+        public static readonly Error FileTooLarge = new(
+            "Document.FileTooLarge", "File size must not exceed 20 MB", (int)HttpStatusCode.BadRequest);
+    }
+
     public static class Forum
     {
         public static readonly Error CategoryNotFound = new("Forum.CategoryNotFound"

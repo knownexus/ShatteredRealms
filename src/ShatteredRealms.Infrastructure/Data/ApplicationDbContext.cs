@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using ShatteredRealms.Domain.Entities;
 using ShatteredRealms.Domain.Entities.ActivityLog;
 using ShatteredRealms.Domain.Entities.Announcement;
+using ShatteredRealms.Domain.Entities.Document;
 using ShatteredRealms.Domain.Entities.Event;
 using ShatteredRealms.Domain.Entities.Forum;
 using ShatteredRealms.Domain.Entities.User;
@@ -37,6 +38,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Event> Event { get; set; }
     public DbSet<EventAttendee> EventAttendee { get; set; }
     public DbSet<Announcement> Announcement { get; set; }
+    public DbSet<Document> Document { get; set; }
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -121,6 +123,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         ConfigureWiki(builder);
         ConfigureEvents(builder);
         ConfigureAnnouncements(builder);
+        ConfigureDocuments(builder);
 
         SeedRoles(builder);
         SeedPermissions(builder);
@@ -284,6 +287,23 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
              .OnDelete(DeleteBehavior.Restrict)
              .IsRequired(false);
             e.HasQueryFilter(a => !a.IsDeleted);
+        });
+    }
+
+    private static void ConfigureDocuments(ModelBuilder builder)
+    {
+        builder.Entity<Document>(e =>
+        {
+            e.ToTable("Document");
+            e.HasKey(d => d.Id);
+            e.Property(d => d.OriginalFileName).IsRequired().HasMaxLength(512);
+            e.Property(d => d.StoredFileName).IsRequired().HasMaxLength(512);
+            e.Property(d => d.ContentType).IsRequired().HasMaxLength(256);
+            e.HasOne(d => d.UploadedBy)
+             .WithMany()
+             .HasForeignKey(d => d.UploadedById)
+             .OnDelete(DeleteBehavior.Restrict);
+            e.HasQueryFilter(d => !d.IsDeleted);
         });
     }
 
