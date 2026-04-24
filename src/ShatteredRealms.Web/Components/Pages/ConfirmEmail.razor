@@ -1,0 +1,135 @@
+@page "/confirm-email"
+@using ShatteredRealms.Web.Services
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Confirm Email - ShatteredRealms</PageTitle>
+
+<div class="login-container">
+    <div class="login-card">
+        <div class="card">
+            <div class="card-body p-5 text-center">
+
+                @if (_loading)
+                {
+                    <div style="width:3rem;height:3rem;margin:0 auto 1rem;">
+                        <div class="spinner-border" role="status" style="width:3rem;height:3rem;">
+                            <span class="visually-hidden">Confirming...</span>
+                        </div>
+                    </div>
+                    <p class="text-muted">Confirming your email address...</p>
+                }
+                else if (_confirmed)
+                {
+                    <div class="confirm-icon mb-3" aria-hidden="true">
+                        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="24" cy="24" r="22" stroke="#c9a84c" stroke-width="1.5" opacity="0.5"/>
+                            <path d="M14 24l7 7 13-14" stroke="#c9a84c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h2 class="mb-2">Email Confirmed</h2>
+                    <p class="text-muted mb-4">Your account is now active. You can sign in.</p>
+                    <a href="/login" class="btn btn-primary">Sign In</a>
+                }
+                else
+                {
+                    <div class="confirm-icon mb-3" aria-hidden="true">
+                        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="24" cy="24" r="22" stroke="#c0392b" stroke-width="1.5" opacity="0.6"/>
+                            <path d="M17 17l14 14M31 17l-14 14" stroke="#c0392b" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <h2 class="mb-2" style="color:var(--text-bright)">Confirmation Failed</h2>
+                    <p class="text-muted mb-3">@(_errorMessage ?? "The confirmation link is invalid or has expired.")</p>
+
+                    @if (_resendSent)
+                    {
+                        <div class="alert alert-success mt-3">
+                            A new confirmation link has been sent if that address is registered.
+                        </div>
+                        <a href="/login" class="btn btn-secondary mt-3">Back to Sign In</a>
+                    }
+                    else
+                    {
+                        <div class="text-start mt-3 mb-3">
+                            <label class="form-label">Your email address</label>
+                            <input @bind="_emailForResend" type="email" class="form-control"
+                                   placeholder="Enter your email to resend" />
+                        </div>
+                        <div class="d-flex gap-2 justify-content-center">
+                            <a href="/login" class="btn btn-secondary">Sign In</a>
+                            <button class="btn btn-primary" @onclick="ResendConfirmation"
+                                    disabled="@_resendLoading">
+                                @if (_resendLoading)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2"></span>
+                                }
+                                Resend Link
+                            </button>
+                        </div>
+                    }
+                }
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .confirm-icon {
+        width: 64px;
+        height: 64px;
+        margin: 0 auto;
+    }
+    .confirm-icon svg { width: 100%; height: 100%; }
+</style>
+
+@code {
+    [SupplyParameterFromQuery] private string? UserId { get; set; }
+    [SupplyParameterFromQuery] private string? Token  { get; set; }
+
+    private bool _loading       = true;
+    private bool _confirmed;
+    private bool _resendLoading;
+    private bool _resendSent;
+    private string? _errorMessage;
+    private string _emailForResend = string.Empty;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        if (string.IsNullOrWhiteSpace(UserId) || string.IsNullOrWhiteSpace(Token))
+        {
+            _loading = false;
+            _errorMessage = "The confirmation link is missing required information.";
+            StateHasChanged();
+            return;
+        }
+
+        var (success, error) = await AuthService.ConfirmEmailAsync(UserId, Token);
+        _loading = false;
+        _confirmed = success;
+        _errorMessage = error;
+
+        StateHasChanged();
+    }
+
+    private async Task ResendConfirmation()
+    {
+        if (string.IsNullOrWhiteSpace(_emailForResend))
+        {
+            return;
+        }
+
+        _resendLoading = true;
+        StateHasChanged();
+
+        await AuthService.ResendConfirmationAsync(_emailForResend.Trim());
+
+        _resendLoading = false;
+        _resendSent = true;
+        StateHasChanged();
+    }
+}

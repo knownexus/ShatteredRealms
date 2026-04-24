@@ -16,13 +16,13 @@ public class AuthIntegrationTests : IntegrationTestBase
     // -------------------------------------------------------------------------
 
     [Fact]
-    public async Task Register_WithValidData_ShouldReturnTokens()
+    public async Task Register_WithValidData_ShouldReturnOk()
     {
         // Arrange
         var client  = CreateClient();
         var request = new RegisterRequest
         {
-            Email     = $"newuser_{System.Guid.NewGuid()}@example.com", // unique per run
+            Email     = $"newuser_{System.Guid.NewGuid()}@example.com",
             Password  = "Password123!",
             FirstName = "New",
             LastName  = "User"
@@ -34,11 +34,9 @@ public class AuthIntegrationTests : IntegrationTestBase
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var auth = await response.Content.ReadFromJsonAsync<AuthResponse>();
+        var auth = await response.Content.ReadFromJsonAsync<RegisterResponse>();
         auth.Should().NotBeNull();
-        auth!.AccessToken.Should().NotBeNullOrEmpty();
-        auth.RefreshToken.Should().NotBeNullOrEmpty();
-        auth.User.Email.Should().Be(request.Email);
+        auth!.Message.Should().NotBeEmpty();
     }
 
     [Fact]

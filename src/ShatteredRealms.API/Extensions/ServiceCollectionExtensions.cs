@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Serilog;
 using ShatteredRealms.API.Authorization;
 using ShatteredRealms.Application.Interfaces;
@@ -13,6 +13,7 @@ using ShatteredRealms.Domain.Entities.User;
 using ShatteredRealms.Domain.Shared;
 using ShatteredRealms.Domain.ValueObjects;
 using ShatteredRealms.Infrastructure.Data;
+using ShatteredRealms.Application.Settings;
 using ShatteredRealms.Infrastructure.Handlers.Auth;
 using ShatteredRealms.Infrastructure.Services;
 
@@ -132,9 +133,13 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddApplicationServices(this IServiceCollection services)
+    public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
     {
+        services.Configure<ConfirmationSettings>(
+            configuration.GetSection(ConfirmationSettings.SectionName));
+
         // Infrastructure services (called by MediatR handlers)
+        services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IRoleService, RoleService>();
@@ -174,15 +179,9 @@ public static class ServiceCollectionExtensions
                 Description = "Enter your JWT token in the format: Bearer {your token}",
             });
 
-            options.AddSecurityRequirement(new OpenApiSecurityRequirement
+            options.AddSecurityRequirement(doc => new OpenApiSecurityRequirement
             {
-                {
-                    new OpenApiSecurityScheme
-                    {
-                        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" },
-                    },
-                    Array.Empty<string>()
-                },
+                { new OpenApiSecuritySchemeReference("Bearer"), new List<string>() },
             });
         });
 

@@ -1,10 +1,13 @@
 using FluentAssertions;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using NSubstitute;
 using ShatteredRealms.Application.DTOs.Auth;
 using ShatteredRealms.Application.DTOs.Users;
 using ShatteredRealms.Application.Features.Auth.Commands;
 using ShatteredRealms.Application.Interfaces;
 using ShatteredRealms.Application.Mappers;
+using ShatteredRealms.Application.Settings;
 using ShatteredRealms.Domain.Entities;
 using ShatteredRealms.Domain.Errors;
 using ShatteredRealms.Domain.Shared;
@@ -18,8 +21,8 @@ namespace ShatteredRealms.Application.Tests.Handlers.Auth;
 public sealed class RegisterCommandHandlerTests
 {
     private readonly IUserService _userService = Substitute.For<IUserService>();
-    private readonly ITokenService _tokenService = Substitute.For<ITokenService>();
-    private readonly IPermissionService _permissionService = Substitute.For<IPermissionService>();
+    private readonly IEmailService _emailService = Substitute.For<IEmailService>();
+    private readonly IConfiguration _configuration = Substitute.For<IConfiguration>();
     private readonly ApplicationDbContext _context;
     private readonly RegisterCommandHandler _handler;
 
@@ -29,7 +32,11 @@ public sealed class RegisterCommandHandlerTests
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
         _context = new ApplicationDbContext(options);
-        _handler = new RegisterCommandHandler(_userService, _tokenService, _permissionService, _context);
+
+        var confirmationSettings = Substitute.For<IOptionsMonitor<ConfirmationSettings>>();
+        confirmationSettings.CurrentValue.Returns(new ConfirmationSettings { RequireEmailConfirmation = false });
+        confirmationSettings.Get(Arg.Any<string>()).Returns(new ConfirmationSettings { RequireEmailConfirmation = false });
+        _handler = new RegisterCommandHandler(_userService, _emailService, _configuration, confirmationSettings);
     }
 
     [Fact]
@@ -43,20 +50,13 @@ public sealed class RegisterCommandHandlerTests
                     .Returns(Result.Success(user));
         _userService.GetUserRolesAsync(user.Id, Arg.Any<CancellationToken>())
                     .Returns(Result.Success(new List<string> { "User" }));
-        _permissionService.GetUserPermissionsAsync(user.Id, Arg.Any<CancellationToken>())
-                          .Returns(Result.Create(new List<string>()));
-        _tokenService.GenerateAccessToken(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<List<string>>(), Arg.Any<List<string>>())
-                     .Returns("access-token");
-        _tokenService.GenerateRefreshToken()
-                     .Returns("refresh-token");
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.AccessToken.Should().Be("access-token");
-        result.Value.User.Email.Should().Be(user.Email);
+        result.Value.Message.Should().NotBeEmpty();
     }
 
     [Fact]
@@ -75,4 +75,6 @@ public sealed class RegisterCommandHandlerTests
         result.IsFailure.Should().BeTrue();
         result.Error.Should().Be(DomainErrors.User.AlreadyExists);
     }
+
+    // Uses FakeOptionsMonitor from LoginCommandHandlerTests
 }

@@ -1,0 +1,480 @@
+@page "/profile"
+@using ShatteredRealms.Application.DTOs.Auth
+@using ShatteredRealms.Application.DTOs.Users
+@using ShatteredRealms.Web.Services
+@inject UserService UserService
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+
+<PageTitle>My Profile — ShatteredRealms</PageTitle>
+
+<div class="profile-page">
+
+    @if (_loading)
+    {
+        <div class="profile-loading">
+            <div class="loading-orb"></div>
+            <span>Loading profile…</span>
+        </div>
+    }
+    else if (_profile is null)
+    {
+        <div class="alert alert-danger">Failed to load profile. Please try again.</div>
+    }
+    else
+    {
+        <!-- Identity card -->
+        <div class="identity-card">
+            <div class="identity-avatar">
+                <span class="avatar-initials">@Initials</span>
+                <div class="avatar-ring"></div>
+            </div>
+            <div class="identity-info">
+                <h1 class="identity-name">@_profile.FirstName @_profile.LastName</h1>
+                <p class="identity-email">@_profile.Email</p>
+                <div class="identity-roles">
+                    @foreach (var role in _profile.Roles)
+                    {
+                        <span class="role-badge">@role</span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-sections">
+
+            <!-- Personal information -->
+            <section class="profile-card">
+                <div class="profile-card-header">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="section-icon">
+                        <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+                    </svg>
+                    <h2>Personal Information</h2>
+                </div>
+
+                @if (!string.IsNullOrEmpty(_profileSuccess))
+                {
+                    <div class="alert alert-success">@_profileSuccess</div>
+                }
+                @if (!string.IsNullOrEmpty(_profileError))
+                {
+                    <div class="alert alert-danger">@_profileError</div>
+                }
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">First Name</label>
+                        <input class="form-control" type="text" @bind="_profileForm.FirstName" placeholder="First name" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Last Name</label>
+                        <input class="form-control" type="text" @bind="_profileForm.LastName" placeholder="Last name" />
+                    </div>
+                    <div class="form-group form-group--full">
+                        <label class="form-label">Email Address</label>
+                        <input class="form-control" type="email" @bind="_profileForm.Email" placeholder="email@example.com" />
+                    </div>
+                </div>
+
+                <div class="profile-card-footer">
+                    <button class="btn btn-gold" @onclick="SaveProfile" disabled="@_savingProfile">
+                        @if (_savingProfile)
+                        {
+                            <span class="btn-spinner"></span>
+                            <span>Saving…</span>
+                        }
+                        else
+                        {
+                            <span>Save Changes</span>
+                        }
+                    </button>
+                </div>
+            </section>
+
+            <!-- Change password -->
+            <section class="profile-card">
+                <div class="profile-card-header">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="section-icon">
+                        <path d="M18 8h-1V6c0-2.8-2.2-5-5-5S7 3.2 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.7 1.4-3.1 3.1-3.1 1.7 0 3.1 1.4 3.1 3.1v2z"/>
+                    </svg>
+                    <h2>Change Password</h2>
+                </div>
+
+                @if (!string.IsNullOrEmpty(_passwordSuccess))
+                {
+                    <div class="alert alert-success">@_passwordSuccess</div>
+                }
+                @if (!string.IsNullOrEmpty(_passwordError))
+                {
+                    <div class="alert alert-danger">@_passwordError</div>
+                }
+
+                <div class="form-grid">
+                    <div class="form-group form-group--full">
+                        <label class="form-label">Current Password</label>
+                        <input class="form-control" type="password" @bind="_passwordForm.CurrentPassword" placeholder="Enter current password" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">New Password</label>
+                        <input class="form-control" type="password" @bind="_passwordForm.NewPassword" placeholder="New password" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Confirm New Password</label>
+                        <input class="form-control" type="password" @bind="_confirmPassword" placeholder="Repeat new password" />
+                    </div>
+                </div>
+
+                <div class="profile-card-footer">
+                    <button class="btn btn-gold" @onclick="ChangePassword" disabled="@_savingPassword">
+                        @if (_savingPassword)
+                        {
+                            <span class="btn-spinner"></span>
+                            <span>Updating…</span>
+                        }
+                        else
+                        {
+                            <span>Update Password</span>
+                        }
+                    </button>
+                </div>
+            </section>
+
+        </div>
+    }
+</div>
+
+<style>
+    .profile-page {
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 2rem 1rem 4rem;
+    }
+
+    /* Loading */
+    .profile-loading {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 4rem;
+        justify-content: center;
+        color: var(--text-muted);
+        font-family: var(--font-body);
+    }
+    .loading-orb {
+        width: 24px;
+        height: 24px;
+        border: 2px solid rgba(201,168,76,0.2);
+        border-top-color: var(--gold);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+    @@keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Identity card */
+    .identity-card {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 2rem 2.5rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .identity-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(201,168,76,0.04) 0%, transparent 60%);
+        pointer-events: none;
+    }
+
+    .identity-avatar {
+        position: relative;
+        flex-shrink: 0;
+    }
+    .avatar-initials {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #1a1e2a, #0d1219);
+        border: 2px solid var(--gold);
+        font-family: var(--font-heading);
+        font-size: 1.6rem;
+        font-weight: 600;
+        color: var(--gold);
+        letter-spacing: 0.05em;
+    }
+    .avatar-ring {
+        position: absolute;
+        inset: -4px;
+        border-radius: 50%;
+        border: 1px solid rgba(201,168,76,0.2);
+        pointer-events: none;
+    }
+
+    .identity-info {
+        flex: 1;
+        min-width: 0;
+    }
+    .identity-name {
+        font-family: var(--font-heading);
+        font-size: 1.6rem;
+        color: var(--text);
+        margin: 0 0 0.3rem;
+        font-weight: 600;
+    }
+    .identity-email {
+        font-family: var(--font-body);
+        color: var(--text-muted);
+        margin: 0 0 0.8rem;
+        font-size: 0.95rem;
+    }
+    .identity-roles {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    .role-badge {
+        display: inline-block;
+        padding: 0.2rem 0.7rem;
+        border-radius: 20px;
+        background: rgba(201,168,76,0.08);
+        border: 1px solid rgba(201,168,76,0.25);
+        color: var(--gold);
+        font-family: var(--font-body);
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+
+    /* Sections grid */
+    .profile-sections {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    /* Profile cards */
+    .profile-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .profile-card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1.25rem 1.75rem;
+        border-bottom: 1px solid var(--border);
+        background: rgba(201,168,76,0.03);
+    }
+    .profile-card-header h2 {
+        font-family: var(--font-heading);
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text);
+        margin: 0;
+        letter-spacing: 0.04em;
+    }
+    .section-icon {
+        width: 18px;
+        height: 18px;
+        color: var(--gold);
+        flex-shrink: 0;
+    }
+
+    /* Form grid */
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.25rem;
+        padding: 1.75rem;
+    }
+    .form-group--full {
+        grid-column: 1 / -1;
+    }
+
+    .profile-card-footer {
+        padding: 1rem 1.75rem 1.5rem;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    /* Gold button */
+    .btn-gold {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.6rem 1.5rem;
+        background: linear-gradient(135deg, #c9a84c, #a8883c);
+        color: #07090f;
+        border: none;
+        border-radius: 6px;
+        font-family: var(--font-heading);
+        font-size: 0.85rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn-gold:hover:not(:disabled) {
+        opacity: 0.9;
+        transform: translateY(-1px);
+    }
+    .btn-gold:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
+
+    /* Button spinner */
+    .btn-spinner {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(7,9,15,0.3);
+        border-top-color: #07090f;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+    }
+
+    /* Alerts */
+    .alert {
+        margin: 0 1.75rem 0.5rem;
+        padding: 0.75rem 1rem;
+        border-radius: 6px;
+        font-family: var(--font-body);
+        font-size: 0.9rem;
+    }
+    .alert-success {
+        background: rgba(52,199,89,0.08);
+        border: 1px solid rgba(52,199,89,0.25);
+        color: #34c759;
+    }
+    .alert-danger {
+        background: rgba(255,59,48,0.08);
+        border: 1px solid rgba(255,59,48,0.25);
+        color: #ff3b30;
+    }
+
+    @@media (max-width: 600px) {
+        .identity-card { flex-direction: column; text-align: center; }
+        .identity-roles { justify-content: center; }
+        .form-grid { grid-template-columns: 1fr; }
+        .form-group--full { grid-column: 1; }
+    }
+</style>
+
+@code {
+    private UserDto? _profile;
+    private bool _loading = true;
+
+    private UpdateOwnProfileRequest _profileForm = new();
+    private bool _savingProfile;
+    private string? _profileSuccess;
+    private string? _profileError;
+
+    private ChangePasswordRequest _passwordForm = new();
+    private string _confirmPassword = string.Empty;
+    private bool _savingPassword;
+    private string? _passwordSuccess;
+    private string? _passwordError;
+
+    private string Initials => _profile is null ? "?" :
+        $"{(_profile.FirstName.Length > 0 ? _profile.FirstName[0] : '?')}{(_profile.LastName.Length > 0 ? _profile.LastName[0] : '?')}".ToUpper();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        var isAuth = await AuthService.IsAuthenticatedAsync();
+        if (!isAuth)
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        await LoadProfile();
+        StateHasChanged();
+    }
+
+    private async Task LoadProfile()
+    {
+        _loading = true;
+        var result = await UserService.GetOwnProfileAsync();
+        _loading = false;
+
+        if (result.IsSuccess)
+        {
+            _profile = result.Value;
+            _profileForm = new UpdateOwnProfileRequest
+            {
+                FirstName = _profile.FirstName,
+                LastName  = _profile.LastName,
+                Email     = _profile.Email,
+            };
+        }
+    }
+
+    private async Task SaveProfile()
+    {
+        _profileSuccess = null;
+        _profileError   = null;
+        _savingProfile  = true;
+
+        var result = await UserService.UpdateOwnProfileAsync(_profileForm);
+        _savingProfile = false;
+
+        if (result.IsSuccess)
+        {
+            _profile        = result.Value;
+            _profileSuccess = "Profile updated successfully.";
+        }
+        else
+        {
+            _profileError = result.Error.Message;
+        }
+    }
+
+    private async Task ChangePassword()
+    {
+        _passwordSuccess = null;
+        _passwordError   = null;
+
+        if (_passwordForm.NewPassword != _confirmPassword)
+        {
+            _passwordError = "New password and confirmation do not match.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_passwordForm.CurrentPassword) ||
+            string.IsNullOrWhiteSpace(_passwordForm.NewPassword))
+        {
+            _passwordError = "All password fields are required.";
+            return;
+        }
+
+        _savingPassword = true;
+        var result = await UserService.ChangePasswordAsync(_passwordForm);
+        _savingPassword = false;
+
+        if (result.IsSuccess)
+        {
+            _passwordSuccess         = "Password changed successfully.";
+            _passwordForm            = new ChangePasswordRequest();
+            _confirmPassword         = string.Empty;
+        }
+        else
+        {
+            _passwordError = result.Error.Message;
+        }
+    }
+}

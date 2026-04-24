@@ -15,4 +15,7 @@ public interface IUserService
     Task<bool> CheckPasswordAsync(User user, string password);
     Task<Result> DeleteUserAsync(string userId, CancellationToken cancellationToken = default);
     Task<Result<List<string>>> GetUserRolesAsync(string userId, CancellationToken cancellationToken = default);
+    Task<string> GenerateEmailConfirmationTokenAsync(User user, CancellationToken cancellationToken = default);
+    Task<Result> ConfirmEmailAsync(string userId, string token, CancellationToken cancellationToken = default);
+    Task<Result> ChangePasswordAsync(string userId, string currentPassword, string newPassword, CancellationToken cancellationToken = default);
 }

@@ -1,7 +1,187 @@
-﻿@page "/"
+@page "/"
+@using ShatteredRealms.Web.Services
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
 
-<PageTitle>Home</PageTitle>
+<PageTitle>ShatteredRealms</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="home-hero">
+    <div class="home-hero__emblem">
+        <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <polygon points="60,8 112,34 112,86 60,112 8,86 8,34" stroke="#c9a84c" stroke-width="1.5" fill="none" opacity="0.4"/>
+            <polygon points="60,20 100,40 100,80 60,100 20,80 20,40" stroke="#c9a84c" stroke-width="1" fill="none" opacity="0.25"/>
+            <line x1="60" y1="8"  x2="60" y2="112" stroke="#c9a84c" stroke-width="0.5" opacity="0.15"/>
+            <line x1="8" y1="34" x2="112" y2="86" stroke="#c9a84c" stroke-width="0.5" opacity="0.15"/>
+            <line x1="112" y1="34" x2="8" y2="86" stroke="#c9a84c" stroke-width="0.5" opacity="0.15"/>
+            <circle cx="60" cy="60" r="18" stroke="#c9a84c" stroke-width="1.5" fill="none" opacity="0.6"/>
+            <circle cx="60" cy="60" r="6" fill="#c9a84c" opacity="0.8"/>
+        </svg>
+    </div>
 
-Welcome to your new app.
+    <h1 class="home-hero__title">ShatteredRealms</h1>
+    <p class="home-hero__sub">The world awaits. Enter the realm.</p>
+
+    @if (_isAuthenticated)
+    {
+        <div class="home-hero__actions">
+            <a href="/forum" class="btn btn-primary">Enter Forum</a>
+            <a href="/wiki" class="btn btn-secondary">Browse Wiki</a>
+        </div>
+    }
+    else
+    {
+        <div class="home-hero__actions">
+            <a href="/login" class="btn btn-primary">Sign In</a>
+        </div>
+    }
+</div>
+
+<div class="home-grid">
+    <div class="home-feature-card">
+        <div class="home-feature-card__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+            </svg>
+        </div>
+        <h3>Forum</h3>
+        <p>Engage with the community. Discuss lore, strategy, and the latest events across all realms.</p>
+    </div>
+
+    <div class="home-feature-card">
+        <div class="home-feature-card__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+            </svg>
+        </div>
+        <h3>Wiki</h3>
+        <p>Discover the chronicles of ShatteredRealms. Lore, guides, and history — written by the community.</p>
+    </div>
+
+    <div class="home-feature-card">
+        <div class="home-feature-card__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+        </div>
+        <h3>Secure Access</h3>
+        <p>Role-based permissions ensure the right people have access to the right realms of power.</p>
+    </div>
+</div>
+
+<style>
+    .home-hero {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 4rem 2rem 3rem;
+        position: relative;
+    }
+
+    .home-hero__emblem {
+        width: 96px;
+        height: 96px;
+        margin-bottom: 2rem;
+        animation: emblem-spin 30s linear infinite;
+        opacity: 0.9;
+    }
+
+    @@keyframes emblem-spin {
+        from { transform: rotate(0deg); }
+        to   { transform: rotate(360deg); }
+    }
+
+    .home-hero__title {
+        font-family: 'Cinzel Decorative', serif;
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        font-weight: 700;
+        background: linear-gradient(135deg, #e8c76a 0%, #c9a84c 50%, #9a6e28 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: 0.04em;
+        margin-bottom: 0.75rem;
+    }
+
+    .home-hero__sub {
+        font-family: 'Crimson Pro', Georgia, serif;
+        font-size: 1.2rem;
+        color: #5e7189;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        margin-bottom: 2.5rem;
+    }
+
+    .home-hero__actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .home-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.5rem;
+        padding: 0 0 3rem;
+        max-width: 960px;
+        margin: 0 auto;
+        width: 100%;
+    }
+
+    .home-feature-card {
+        background: #0d1219;
+        border: 1px solid #1c2a3e;
+        border-radius: 12px;
+        padding: 2rem 1.75rem;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .home-feature-card:hover {
+        border-color: rgba(201, 168, 76, 0.35);
+        box-shadow: 0 4px 24px rgba(0,0,0,0.5), 0 0 20px rgba(201,168,76,0.08);
+    }
+
+    .home-feature-card__icon {
+        width: 40px;
+        height: 40px;
+        color: #c9a84c;
+        margin-bottom: 1.25rem;
+        opacity: 0.85;
+    }
+
+    .home-feature-card__icon svg {
+        width: 100%;
+        height: 100%;
+    }
+
+    .home-feature-card h3 {
+        font-family: 'Cinzel', serif;
+        font-size: 0.9rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #d8cdb8;
+        margin-bottom: 0.75rem;
+    }
+
+    .home-feature-card p {
+        font-family: 'Crimson Pro', Georgia, serif;
+        font-size: 1rem;
+        color: #5e7189;
+        line-height: 1.6;
+        margin: 0;
+    }
+</style>
+
+@code {
+    private bool _isAuthenticated;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        _isAuthenticated = await AuthService.IsAuthenticatedAsync();
+        StateHasChanged();
+    }
+}

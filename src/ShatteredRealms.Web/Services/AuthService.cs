@@ -39,18 +39,77 @@ public class AuthService
         }
     }
 
-    public async Task<AuthResponse?> LoginAsync(LoginRequest request)
+    public async Task<(bool success, bool requiresEmailConfirmation, string? errorCode, string? errorMessage)> RegisterAsync(RegisterRequest request)
     {
-        var response = await _httpClient.PostAsJsonAsync("api/auth/login", request);
-        if (!response.IsSuccessStatusCode)
+        var response = await _httpClient.PostAsJsonAsync("api/auth/register", request);
+        if (response.IsSuccessStatusCode)
         {
-            return null;
+            var data = await response.Content.ReadFromJsonAsync<RegisterResponse>();
+            return (true, data?.RequiresEmailConfirmation ?? false, null, null);
         }
 
-        var authResponse = await response.Content.ReadFromJsonAsync<AuthResponse>();
+        try
+        {
+            var json = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+            var title  = json.TryGetProperty("title",  out var t) ? t.GetString() : null;
+            var detail = json.TryGetProperty("detail", out var d) ? d.GetString() : null;
+            return (false, false, title, detail ?? "Registration failed. Please try again.");
+        }
+        catch
+        {
+            return (false, false, null, "Registration failed. Please try again.");
+        }
+    }
+
+    public async Task<(bool success, string? errorMessage)> ConfirmEmailAsync(string userId, string token)
+    {
+        var response = await _httpClient.PostAsJsonAsync("api/auth/confirm-email",
+            new { userId, token });
+
+        if (response.IsSuccessStatusCode)
+        {
+            return (true, null);
+        }
+
+        try
+        {
+            var json = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+            var detail = json.TryGetProperty("detail", out var d) ? d.GetString() : null;
+            return (false, detail ?? "Email confirmation failed. The link may have expired.");
+        }
+        catch
+        {
+            return (false, "Email confirmation failed. The link may have expired.");
+        }
+    }
+
+    public async Task ResendConfirmationAsync(string email)
+    {
+        await _httpClient.PostAsJsonAsync("api/auth/resend-confirmation", new { email });
+    }
+
+    public async Task<(AuthResponse? response, string? errorTitle, string? errorDetail)> LoginAsync(LoginRequest request)
+    {
+        var httpResponse = await _httpClient.PostAsJsonAsync("api/auth/login", request);
+        if (!httpResponse.IsSuccessStatusCode)
+        {
+            try
+            {
+                var json = await httpResponse.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+                var title  = json.TryGetProperty("title",  out var t) ? t.GetString() : null;
+                var detail = json.TryGetProperty("detail", out var d) ? d.GetString() : null;
+                return (null, title, detail);
+            }
+            catch
+            {
+                return (null, null, "Sign in failed. Please try again.");
+            }
+        }
+
+        var authResponse = await httpResponse.Content.ReadFromJsonAsync<AuthResponse>();
         if (authResponse == null)
         {
-            return null;
+            return (null, null, "Sign in failed. Please try again.");
         }
 
         _cache.AccessToken = authResponse.AccessToken;
@@ -63,7 +122,7 @@ public class AuthService
         }
 
         _authStateService.NotifyAuthStateChanged();
-        return authResponse;
+        return (authResponse, null, null);
     }
 
     public async Task LogoutAsync()

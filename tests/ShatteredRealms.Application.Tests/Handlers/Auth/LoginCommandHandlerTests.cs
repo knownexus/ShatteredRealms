@@ -1,7 +1,9 @@
 using FluentAssertions;
+using Microsoft.Extensions.Options;
 using NSubstitute;
 using ShatteredRealms.Application.Features.Auth.Commands;
 using ShatteredRealms.Application.Interfaces;
+using ShatteredRealms.Application.Settings;
 using ShatteredRealms.Domain.Entities;
 using ShatteredRealms.Domain.Errors;
 using ShatteredRealms.Domain.Shared;
@@ -35,7 +37,11 @@ public sealed class LoginCommandHandlerTests
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
         _context = new ApplicationDbContext(options);
-        _handler = new LoginCommandHandler(_userService, _tokenService, _permissionService, _context);
+
+        var confirmationSettings = Substitute.For<IOptionsMonitor<ConfirmationSettings>>();
+        confirmationSettings.CurrentValue.Returns(new ConfirmationSettings { RequireEmailConfirmation = false });
+        confirmationSettings.Get(Arg.Any<string>()).Returns(new ConfirmationSettings { RequireEmailConfirmation = false });
+        _handler = new LoginCommandHandler(_userService, _tokenService, _permissionService, _context, confirmationSettings);
     }
 
     [Fact]

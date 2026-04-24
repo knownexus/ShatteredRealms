@@ -7,6 +7,7 @@ using ShatteredRealms.Application.DTOs.Auth;
 using ShatteredRealms.Application.DTOs.Users;
 using ShatteredRealms.Application.Features.Users.Commands;
 using ShatteredRealms.Application.Features.Users.Queries;
+using ShatteredRealms.Application.DTOs.Users;
 using ShatteredRealms.Domain.Shared;
 using ShatteredRealms.Infrastructure.Data;
 
@@ -100,10 +101,10 @@ public sealed class UsersController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = result.Value.Id }, result.Value);
     }
 
-    /// <summary>Updates calling user. Requires Update own users permission.</summary>
+    /// <summary>Updates the calling user's own name and email. Roles are preserved.</summary>
     [RequirePermission(Claims.Permissions.Users.UpdateOwn)]
     [HttpPut("self")]
-    public async Task<ActionResult<UserDto>> UpdateOwn([FromBody] UpdateUserRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<UserDto>> UpdateOwn([FromBody] UpdateOwnProfileRequest request, CancellationToken cancellationToken)
     {
         var callingUser = User.GetUserId();
         if (string.IsNullOrEmpty(callingUser))
@@ -111,15 +112,43 @@ public sealed class UsersController : ControllerBase
             return Problem(detail: "User ID cannot be null or empty", statusCode: 400, title: "Invalid User ID");
         }
 
-        _logger.LogDebug("UpdateOwn user - requested by UserId: {UserId}", callingUser);
+        _logger.LogDebug("UpdateOwn profile - UserId: {UserId}", callingUser);
 
-        var result = await _mediator.Send(new UpdateUserCommand(callingUser, request.Email, request.FirstName, request.LastName, request.RoleIds), cancellationToken);
+        var result = await _mediator.Send(
+            new UpdateOwnProfileCommand(callingUser, request.Email, request.FirstName, request.LastName),
+            cancellationToken);
+
         if (result.IsFailure)
         {
             return Problem(result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title);
         }
 
         return Ok(result.Value);
+    }
+
+    /// <summary>Changes the calling user's password.</summary>
+    [RequirePermission(Claims.Permissions.Users.UpdateOwn)]
+    [HttpPost("self/change-password")]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request, CancellationToken cancellationToken)
+    {
+        var callingUser = User.GetUserId();
+        if (string.IsNullOrEmpty(callingUser))
+        {
+            return Problem(detail: "User ID cannot be null or empty", statusCode: 400, title: "Invalid User ID");
+        }
+
+        _logger.LogDebug("ChangePassword - UserId: {UserId}", callingUser);
+
+        var result = await _mediator.Send(
+            new ChangePasswordCommand(callingUser, request.CurrentPassword, request.NewPassword),
+            cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title);
+        }
+
+        return NoContent();
     }
 
     /// <summary>Updates an existing user. Requires Update users permission.</summary>

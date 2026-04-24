@@ -20,7 +20,7 @@ public sealed class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
-    public async Task<ActionResult<AuthResponse>> Register(
+    public async Task<ActionResult<RegisterResponse>> Register(
         [FromBody] RegisterRequest request,
         CancellationToken cancellationToken)
     {
@@ -34,8 +34,36 @@ public sealed class AuthController : ControllerBase
             return Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title);
         }
 
-        _logger.LogInformation("Registration successful - UserId: {UserId}", result.Value.User.Id);
+        _logger.LogInformation("Registration successful for {Email}", request.Email);
         return Ok(result.Value);
+    }
+
+    [HttpPost("confirm-email")]
+    public async Task<IActionResult> ConfirmEmail(
+        [FromBody] ConfirmEmailRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(
+            new ConfirmEmailCommand(request.UserId, request.Token),
+            cancellationToken);
+
+        if (result.IsFailure)
+        {
+            _logger.LogDebug("Email confirmation failed - Code: {Code} {Title}", result.Error.Code, result.Error.Title);
+            return Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title);
+        }
+
+        return Ok(new { message = "Email confirmed successfully. You may now sign in." });
+    }
+
+    [HttpPost("resend-confirmation")]
+    public async Task<IActionResult> ResendConfirmation(
+        [FromBody] ResendConfirmationRequest request,
+        CancellationToken cancellationToken)
+    {
+        // Always return 200 — never reveal whether an email address is registered
+        await _mediator.Send(new ResendConfirmationEmailCommand(request.Email), cancellationToken);
+        return Ok(new { message = "If that address is registered and unconfirmed, a new link has been sent." });
     }
 
     [HttpPost("login")]

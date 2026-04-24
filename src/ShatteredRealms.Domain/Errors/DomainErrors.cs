@@ -152,6 +152,11 @@ public static class DomainErrors
                                                                "Refresh Token was not valid",
                                                                (int)HttpStatusCode.Unauthorized);
 
+        public static readonly Error EmailNotConfirmed = new(
+                                                             "Authentication.EmailNotConfirmed",
+                                                             "Please confirm your email address before signing in",
+                                                             (int)HttpStatusCode.Forbidden);
+
         public static readonly Error NoRoles = new(
                                                    "Authentication.NoRoles",
                                                    "No Roles were returned",

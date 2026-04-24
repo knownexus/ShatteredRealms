@@ -17,7 +17,7 @@ namespace ShatteredRealms.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.0")
+                .HasAnnotation("ProductVersion", "10.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -1875,6 +1875,7 @@ namespace ShatteredRealms.Infrastructure.Migrations
                         new
                         {
                             Id = "00000000-0000-0000-0000-000000000001",
+                            ConcurrencyStamp = "b1000000-0000-0000-0000-000000000001",
                             Description = "Internal system role, unrestricted",
                             IsSystem = true,
                             Name = "System",
@@ -1884,6 +1885,7 @@ namespace ShatteredRealms.Infrastructure.Migrations
                         new
                         {
                             Id = "00000000-0000-0000-0000-000000000002",
+                            ConcurrencyStamp = "b1000000-0000-0000-0000-000000000002",
                             Description = "Full administrative access",
                             IsSystem = false,
                             Name = "Admin",
@@ -1893,6 +1895,7 @@ namespace ShatteredRealms.Infrastructure.Migrations
                         new
                         {
                             Id = "00000000-0000-0000-0000-000000000005",
+                            ConcurrencyStamp = "b1000000-0000-0000-0000-000000000005",
                             Description = "Report Access",
                             IsSystem = false,
                             Name = "Analyst",
@@ -1902,6 +1905,7 @@ namespace ShatteredRealms.Infrastructure.Migrations
                         new
                         {
                             Id = "00000000-0000-0000-0000-000000000003",
+                            ConcurrencyStamp = "b1000000-0000-0000-0000-000000000003",
                             Description = "Can manage events, characters, assign positions/experience",
                             IsSystem = false,
                             Name = "EventOrganizer",
@@ -1911,6 +1915,7 @@ namespace ShatteredRealms.Infrastructure.Migrations
                         new
                         {
                             Id = "00000000-0000-0000-0000-000000000004",
+                            ConcurrencyStamp = "b1000000-0000-0000-0000-000000000004",
                             Description = "Standard registered user",
                             IsSystem = false,
                             Name = "User",

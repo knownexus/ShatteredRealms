@@ -12,7 +12,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddApplicationDatabase(builder.Configuration, builder.Environment);
 builder.Services.AddApplicationIdentity();
 builder.Services.AddJwtAuthentication(builder.Configuration);
-builder.Services.AddApplicationServices();
+builder.Services.AddApplicationServices(builder.Configuration);
 builder.Services.AddSwaggerDocumentation();
 builder.Services.AddApplicationCors();
 

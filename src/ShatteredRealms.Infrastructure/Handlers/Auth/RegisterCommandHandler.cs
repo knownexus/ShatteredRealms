@@ -1,51 +1,73 @@
 using MediatR;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using ShatteredRealms.Application.DTOs.Auth;
+using ShatteredRealms.Application.DTOs.Users;
 using ShatteredRealms.Application.Features.Auth.Commands;
 using ShatteredRealms.Application.Interfaces;
-using ShatteredRealms.Application.Mappers;
-using ShatteredRealms.Domain.Entities;
-using ShatteredRealms.Domain.Errors;
+using ShatteredRealms.Application.Settings;
 using ShatteredRealms.Domain.Shared;
-using ShatteredRealms.Infrastructure.Data;
 
 namespace ShatteredRealms.Infrastructure.Handlers.Auth;
 
-public sealed class RegisterCommandHandler : IRequestHandler<RegisterCommand, Result<AuthResponse>>
+public sealed class RegisterCommandHandler : IRequestHandler<RegisterCommand, Result<RegisterResponse>>
 {
     private readonly IUserService _userService;
-    private readonly ITokenService _tokenService;
-    private readonly IPermissionService _permissionService;
-    private readonly ApplicationDbContext _context;
+    private readonly IEmailService _emailService;
+    private readonly IConfiguration _configuration;
+    private readonly IOptionsMonitor<ConfirmationSettings> _confirmationSettings;
 
     public RegisterCommandHandler(
         IUserService userService,
-        ITokenService tokenService,
-        IPermissionService permissionService,
-        ApplicationDbContext context)
+        IEmailService emailService,
+        IConfiguration configuration,
+        IOptionsMonitor<ConfirmationSettings> confirmationSettings)
     {
         _userService = userService;
-        _tokenService = tokenService;
-        _permissionService = permissionService;
-        _context = context;
+        _emailService = emailService;
+        _configuration = configuration;
+        _confirmationSettings = confirmationSettings;
     }
 
-    public async Task<Result<AuthResponse>> Handle(RegisterCommand request, CancellationToken cancellationToken)
+    public async Task<Result<RegisterResponse>> Handle(RegisterCommand request, CancellationToken cancellationToken)
     {
-        var createRequest = new Application.DTOs.Users.CreateUserRequest
+        var createRequest = new CreateUserRequest
         {
-            Email = request.Email,
-            Password = request.Password,
+            Email     = request.Email,
+            Password  = request.Password,
             FirstName = request.FirstName,
-            LastName = request.LastName,
+            LastName  = request.LastName,
         };
 
         var userResult = await _userService.CreateUserAsync(createRequest, cancellationToken);
         if (userResult.IsFailure)
         {
-            return Result.Failure<AuthResponse>(userResult.Error);
+            return Result.Failure<RegisterResponse>(userResult.Error);
         }
 
-        return await AuthHelpers.GenerateAuthResponseAsync(
-            userResult.Value, _userService, _tokenService, _permissionService, _context, cancellationToken);
+        var user = userResult.Value;
+
+        // Read CurrentValue at request time so live appsettings changes take effect immediately
+        if (!_confirmationSettings.CurrentValue.RequireEmailConfirmation)
+        {
+            // Auto-confirm so the user can sign in immediately; keeps EmailConfirmed consistent
+            var autoToken = await _userService.GenerateEmailConfirmationTokenAsync(user, cancellationToken);
+            await _userService.ConfirmEmailAsync(user.Id, autoToken, cancellationToken);
+
+            return Result.Success(new RegisterResponse(
+                "Account created successfully. You can now sign in.",
+                RequiresEmailConfirmation: false));
+        }
+
+        var token = await _userService.GenerateEmailConfirmationTokenAsync(user, cancellationToken);
+        var webBaseUrl = _configuration["WebBaseUrl"] ?? "https://localhost:7001";
+        var link = $"{webBaseUrl}/confirm-email?userId={user.Id}&token={Uri.EscapeDataString(token)}";
+
+        await _emailService.SendEmailConfirmationAsync(
+            user.Email!, $"{user.FirstName} {user.LastName}", link, cancellationToken);
+
+        return Result.Success(new RegisterResponse(
+            "Account created. Please check your email for a confirmation link.",
+            RequiresEmailConfirmation: true));
     }
 }

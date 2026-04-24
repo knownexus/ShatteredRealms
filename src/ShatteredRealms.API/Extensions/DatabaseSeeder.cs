@@ -31,40 +31,36 @@ public static class DatabaseSeeder
         var userManager = services.GetRequiredService<UserManager<User>>();
         var configuration = services.GetRequiredService<IConfiguration>();
 
-        await SeedRolePermissionsAsync(context);
+        await SeedPermissionsAsync(context);
         await SeedUsersAsync(context, userManager, configuration);
     }
 
-    private static async Task SeedRolePermissionsAsync(ApplicationDbContext context)
+    private static async Task SeedPermissionsAsync(ApplicationDbContext context)
     {
-        var mapping = new Dictionary<string, IReadOnlyList<string>>
-        {
-            [Claims.Roles.SystemId]         = Claims.RolePermissions.System,
-            [Claims.Roles.AdminId]          = Claims.RolePermissions.Admin,
-            [Claims.Roles.EventOrganizerId] = Claims.RolePermissions.EventOrganizer,
-            [Claims.Roles.UserId]           = Claims.RolePermissions.User,
-        };
+        var catalog = Claims.PermissionCatalog.ToDictionary(x => x.ClaimValue);
 
-        var allDefinitions = await context.Set<Permission>()
-            .GroupBy(p => p.ClaimValue)
-            .Select(g => g.OrderBy(p => p.Id).First())
-            .ToDictionaryAsync(p => p.ClaimValue!);
+        var mapping = new List<(string RoleId, IReadOnlyList<string> ClaimValues)>
+        {
+            (Claims.Roles.SystemId, Claims.RolePermissions.System),
+            (Claims.Roles.AdminId, Claims.RolePermissions.Admin),
+            (Claims.Roles.AnalystId, Claims.RolePermissions.Analyst),
+            (Claims.Roles.EventOrganizerId, Claims.RolePermissions.EventOrganizer),
+            (Claims.Roles.UserId, Claims.RolePermissions.User),
+        };
 
         foreach (var (roleId, claimValues) in mapping)
         {
-            var existing = await context.Set<Permission>()
-                .Where(p => p.RoleId == roleId)
-                .Select(p => p.ClaimValue)
-                .ToHashSetAsync();
-
             foreach (var claimValue in claimValues)
             {
-                if (existing.Contains(claimValue))
+                if (!catalog.TryGetValue(claimValue, out var def))
                 {
                     continue;
                 }
 
-                if (!allDefinitions.TryGetValue(claimValue, out var def))
+                var exists = await context.Set<Permission>()
+                    .AnyAsync(p => p.RoleId == roleId && p.ClaimValue == claimValue);
+
+                if (exists)
                 {
                     continue;
                 }
@@ -72,10 +68,10 @@ public static class DatabaseSeeder
                 context.Set<Permission>().Add(new Permission
                 {
                     RoleId = roleId,
-                    ClaimType = def.ClaimType,
-                    ClaimValue = def.ClaimValue,
+                    ClaimType = "permission",
+                    ClaimValue = claimValue,
                     Description = def.Description,
-                    Category = def.Category,
+                    Category = def.Category
                 });
             }
         }

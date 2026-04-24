@@ -119,6 +119,45 @@ public sealed class UserService : IUserService
     public async Task<bool> CheckPasswordAsync(User user, string password)
         => await _userManager.CheckPasswordAsync(user, password);
 
+    public async Task<string> GenerateEmailConfirmationTokenAsync(User user, CancellationToken cancellationToken = default)
+        => await _userManager.GenerateEmailConfirmationTokenAsync(user);
+
+    public async Task<Result> ChangePasswordAsync(string userId, string currentPassword, string newPassword, CancellationToken cancellationToken = default)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return Result.Failure(DomainErrors.User.NotFound);
+        }
+
+        var result = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+        if (!result.Succeeded)
+        {
+            var description = string.Join(", ", result.Errors.Select(e => e.Description));
+            return Result.Failure(new Error("Password.ChangeFailed", description, (int)System.Net.HttpStatusCode.BadRequest));
+        }
+
+        return Result.Success();
+    }
+
+    public async Task<Result> ConfirmEmailAsync(string userId, string token, CancellationToken cancellationToken = default)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return Result.Failure(DomainErrors.User.NotFound);
+        }
+
+        var result = await _userManager.ConfirmEmailAsync(user, token);
+        if (!result.Succeeded)
+        {
+            var description = string.Join(", ", result.Errors.Select(e => e.Description));
+            return Result.Failure(new Error("EmailConfirmation.Failed", description, (int)System.Net.HttpStatusCode.BadRequest));
+        }
+
+        return Result.Success();
+    }
+
     public async Task<Result<User>> UpdateUserAsync(string userId, UpdateUserRequest request, CancellationToken cancellationToken = default)
     {
         if (request.RoleIds.Any(id => id == Claims.Roles.SystemId))

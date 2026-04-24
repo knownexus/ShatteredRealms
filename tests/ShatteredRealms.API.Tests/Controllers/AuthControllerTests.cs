@@ -18,6 +18,11 @@ public sealed class AuthControllerTests
     private readonly ILogger<AuthController> _logger = Substitute.For<ILogger<AuthController>>();
     private readonly AuthController _controller;
 
+    private static RegisterResponse BuildRegisterResponse() => new(
+        "Registration successful",
+        false
+    );
+
     private static AuthResponse BuildAuthResponse(string userId = "user-1") => new()
     {
         AccessToken = "access-token",
@@ -50,7 +55,7 @@ public sealed class AuthControllerTests
     {
         // Arrange
         var request = new RegisterRequest { Email = "new@example.com", Password = "Pass123!", FirstName = "New", LastName = "User" };
-        var response = BuildAuthResponse();
+        var response = BuildRegisterResponse();
 
         _mediator.Send(Arg.Any<RegisterCommand>(), Arg.Any<CancellationToken>())
                  .Returns(Result.Success(response));
@@ -77,7 +82,7 @@ public sealed class AuthControllerTests
         var request = new RegisterRequest { Email = "existing@example.com", Password = "Pass123!", FirstName = "New", LastName = "User" };
 
         _mediator.Send(Arg.Any<RegisterCommand>(), Arg.Any<CancellationToken>())
-                 .Returns(Result.Failure<AuthResponse>(DomainErrors.Authentication.AlreadyExists));
+                 .Returns(Result.Failure<RegisterResponse>(DomainErrors.Authentication.AlreadyExists));
 
         // Act
         var result = await _controller.Register(request, CancellationToken.None);

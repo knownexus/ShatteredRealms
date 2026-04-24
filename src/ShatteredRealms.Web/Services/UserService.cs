@@ -85,4 +85,55 @@ public class UserService
                                                  problem?.Detail ?? "No detail provided",
                                                  (int)response.StatusCode));
     }
+
+    public async Task<Result<UserDto>> GetOwnProfileAsync()
+    {
+        var response = await _httpClient.GetAsync("api/users/self");
+        if (response.IsSuccessStatusCode)
+        {
+            var dto = await response.Content.ReadFromJsonAsync<UserDto>();
+            return dto is not null
+                ? Result.Success(dto)
+                : Result.Failure<UserDto>(new Error("Profile.LoadFailed", "Failed to read profile response", (int)HttpStatusCode.InternalServerError));
+        }
+
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        return Result.Failure<UserDto>(new Error(
+            problem?.Title ?? "Unknown error occurred",
+            problem?.Detail ?? "No detail provided",
+            (int)response.StatusCode));
+    }
+
+    public async Task<Result<UserDto>> UpdateOwnProfileAsync(UpdateOwnProfileRequest request)
+    {
+        var response = await _httpClient.PutAsJsonAsync("api/users/self", request);
+        if (response.IsSuccessStatusCode)
+        {
+            var dto = await response.Content.ReadFromJsonAsync<UserDto>();
+            return dto is not null
+                ? Result.Success(dto)
+                : Result.Failure<UserDto>(new Error("Profile.UpdateFailed", "Failed to read updated profile response", (int)HttpStatusCode.InternalServerError));
+        }
+
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        return Result.Failure<UserDto>(new Error(
+            problem?.Title ?? "Unknown error occurred",
+            problem?.Detail ?? "No detail provided",
+            (int)response.StatusCode));
+    }
+
+    public async Task<Result> ChangePasswordAsync(ChangePasswordRequest request)
+    {
+        var response = await _httpClient.PostAsJsonAsync("api/users/self/change-password", request);
+        if (response.IsSuccessStatusCode)
+        {
+            return Result.Success();
+        }
+
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        return Result.Failure(new Error(
+            problem?.Title ?? "Unknown error occurred",
+            problem?.Detail ?? "No detail provided",
+            (int)response.StatusCode));
+    }
 }
