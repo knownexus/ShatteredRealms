@@ -96,18 +96,25 @@ The application automatically seeds the following data on first run:
 
 **Admin User**
 - Email: `admin@shatteredrealms.com`
-- Password: `Admin@123`
+- Password: `Admin@123!`
 - Role: Admin (all permissions)
 
 **EventOrganizer User**
-- Email: `eventorganizer@shatteredrealms.com`
-- Password: `EventOrganizer@123`
+- Email: `organizer@shatteredrealms.com`
+- Password: `Organizer@123!`
 - Role: EventOrganizer
 - Can manage characters, wiki, forum moderation, videos, and announcements
 
+**Analyst User**
+
+- Email: `analyst@shatteredrealms.com`
+- Password: `Analyst@123!`
+- Role: Analyst
+- Can manage characters, wiki, forum moderation, videos, and announcements
+
 **Regular User**
-- Email: `user@shatteredrealms.com`
-- Password: `User@123`
+- Email: `testuser@shatteredrealms.com`
+- Password: `TestUser@123!`
 - Role: User
 - Can view and edit their own profile, characters, and contribute to forum/wiki
 

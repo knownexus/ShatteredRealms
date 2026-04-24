@@ -78,7 +78,7 @@ Files:
 ### Database
 
 SQL Server. Connection string in `appsettings.json` is dev-only (`sa / P@$$w0rd`). DB is seeded on first run with default users:
-- `admin@shatteredrealms.com` / `Admin@123`
+- `admin@shatteredrealms.com` / `Admin@123!`
 - `user@shatteredrealms.com` / `User@123`
 
 ### Testing
