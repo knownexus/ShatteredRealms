@@ -1,0 +1,642 @@
+@page "/events/{Id:int}"
+@using ShatteredRealms.Application.DTOs.Events
+@using ShatteredRealms.Web.Services
+@inject EventClientService EventService
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>@(_event?.Title ?? "Event") — ShatteredRealms</PageTitle>
+
+<div class="event-detail-page">
+    @if (_loading)
+    {
+        <div class="detail-loading">
+            <div class="loading-orb"></div>
+            <span>Loading event…</span>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <div class="detail-error">
+            <p>@_error</p>
+            <button class="btn-back" @onclick='() => Navigation.NavigateTo("/events")'>← Back to Events</button>
+        </div>
+    }
+    else if (_event is not null)
+    {
+        @if (!string.IsNullOrEmpty(_event.BannerImagePath))
+        {
+            <div class="event-hero" style="background-image: url('@EventService.GetBannerUrl(_event.BannerImagePath)')"></div>
+        }
+        else
+        {
+            <div class="event-hero event-hero--placeholder"></div>
+        }
+
+        <div class="event-detail-body">
+            <div class="event-detail-header">
+                <button class="btn-back" @onclick='() => Navigation.NavigateTo("/events")'>← Events</button>
+                <div class="event-detail-actions">
+                    @if (_canUpdate)
+                    {
+                        <button class="btn-outline" @onclick="ShowEditModal">Edit Event</button>
+                    }
+                    @if (_canDelete)
+                    {
+                        <button class="btn-danger-outline" @onclick="ConfirmDelete">Delete</button>
+                    }
+                </div>
+            </div>
+
+            <div class="event-detail-content">
+                <div class="event-detail-main">
+                    <h1 class="event-detail-title">@_event.Title</h1>
+
+                    @if (!string.IsNullOrEmpty(_actionError))
+                    {
+                        <div class="alert alert-danger">@_actionError</div>
+                    }
+
+                    <div class="event-detail-meta-row">
+                        <div class="meta-item">
+                            <span class="meta-icon">📅</span>
+                            <div>
+                                <div class="meta-label">Date</div>
+                                <div class="meta-value">@_event.StartsAt.ToString("dddd, MMMM d, yyyy")</div>
+                            </div>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-icon">⏰</span>
+                            <div>
+                                <div class="meta-label">Time</div>
+                                <div class="meta-value">@_event.StartsAt.ToString("HH:mm") – @_event.EndsAt.ToString("HH:mm")</div>
+                            </div>
+                        </div>
+                        @if (!string.IsNullOrEmpty(_event.Location))
+                        {
+                            <div class="meta-item">
+                                <span class="meta-icon">📍</span>
+                                <div>
+                                    <div class="meta-label">Location</div>
+                                    <div class="meta-value">@_event.Location</div>
+                                </div>
+                            </div>
+                        }
+                        <div class="meta-item">
+                            <span class="meta-icon">👥</span>
+                            <div>
+                                <div class="meta-label">Attendees</div>
+                                <div class="meta-value">
+                                    @_event.AttendeeCount
+                                    @if (_event.MemberCap.HasValue)
+                                    {
+                                        <span class="cap-indicator"> / @_event.MemberCap</span>
+                                    }
+                                    going
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (_canRegister)
+                    {
+                        <div class="going-section">
+                            @if (_event.IsGoing)
+                            {
+                                <button class="btn-going btn-going--active" @onclick="CancelRegistration" disabled="@_toggling">
+                                    @(_toggling ? "Updating…" : "✓ Going — Cancel")
+                                </button>
+                            }
+                            else
+                            {
+                                var atCap = _event.MemberCap.HasValue && _event.AttendeeCount >= _event.MemberCap.Value;
+                                <button class="btn-going" @onclick="Register" disabled="@(_toggling || atCap)">
+                                    @if (_toggling)
+                                    {
+                                        <span>Updating…</span>
+                                    }
+                                    else if (atCap)
+                                    {
+                                        <span>Event Full</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Mark as Going</span>
+                                    }
+                                </button>
+                            }
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(_event.Description))
+                    {
+                        <div class="event-description">
+                            <h2 class="section-heading">About this Event</h2>
+                            <div class="description-body">@_event.Description</div>
+                        </div>
+                    }
+                </div>
+
+                <aside class="event-detail-sidebar">
+                    <div class="sidebar-card">
+                        <div class="sidebar-card-header">Capacity</div>
+                        @if (_event.MemberCap.HasValue)
+                        {
+                            var pct = Math.Min(100, (int)((double)_event.AttendeeCount / _event.MemberCap.Value * 100));
+                            <div class="capacity-bar-wrap">
+                                <div class="capacity-bar">
+                                    <div class="capacity-fill" style="width: @pct%"></div>
+                                </div>
+                                <div class="capacity-label">@_event.AttendeeCount / @_event.MemberCap slots filled</div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="capacity-unlimited">Unlimited capacity</div>
+                        }
+                    </div>
+
+                    @if (_canUpdate)
+                    {
+                        <div class="sidebar-card">
+                            <div class="sidebar-card-header">Banner Image</div>
+                            <InputFile OnChange="OnBannerSelected" accept=".jpg,.jpeg,.png,.webp" class="file-input" />
+                            @if (_uploadingBanner)
+                            {
+                                <div class="upload-status">Uploading…</div>
+                            }
+                            @if (!string.IsNullOrEmpty(_bannerError))
+                            {
+                                <div class="alert alert-danger mt-2">@_bannerError</div>
+                            }
+                        </div>
+                    }
+                </aside>
+            </div>
+        </div>
+    }
+</div>
+
+@if (_showEditModal && _event is not null)
+{
+    <div class="modal-backdrop" @onclick="CloseEditModal">
+        <div class="modal-panel" @onclick:stopPropagation>
+            <div class="modal-header">
+                <h2>Edit Event</h2>
+                <button class="modal-close" @onclick="CloseEditModal">×</button>
+            </div>
+            <div class="modal-body">
+                @if (!string.IsNullOrEmpty(_editError))
+                {
+                    <div class="alert alert-danger">@_editError</div>
+                }
+                <div class="form-group">
+                    <label class="form-label">Title</label>
+                    <input class="form-control" @bind="_editForm.Title" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control" rows="4" @bind="_editForm.Description"></textarea>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Start</label>
+                        <input class="form-control" type="datetime-local" @bind="_editForm.StartsAt" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">End</label>
+                        <input class="form-control" type="datetime-local" @bind="_editForm.EndsAt" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Location (optional)</label>
+                        <input class="form-control" @bind="_editForm.Location" placeholder="Place or URL" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Capacity cap (optional)</label>
+                        <input class="form-control" type="number" @bind="_editForm.MemberCap" min="1" placeholder="Unlimited" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" @onclick="CloseEditModal">Cancel</button>
+                <button class="btn-gold" @onclick="SaveEdit" disabled="@_saving">
+                    @(_saving ? "Saving…" : "Save Changes")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (_showDeleteConfirm)
+{
+    <div class="modal-backdrop" @onclick="() => _showDeleteConfirm = false">
+        <div class="modal-panel modal-panel--narrow" @onclick:stopPropagation>
+            <div class="modal-header">
+                <h2>Delete Event</h2>
+                <button class="modal-close" @onclick="() => _showDeleteConfirm = false">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-family: var(--font-body); color: var(--text-muted);">
+                    Are you sure you want to delete <strong style="color: var(--text)">@_event?.Title</strong>? This action cannot be undone.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" @onclick="() => _showDeleteConfirm = false">Cancel</button>
+                <button class="btn-danger" @onclick="DeleteEvent" disabled="@_deleting">
+                    @(_deleting ? "Deleting…" : "Delete Event")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .event-detail-page { min-height: 100vh; }
+
+    .detail-loading {
+        display: flex; align-items: center; gap: 1rem;
+        justify-content: center; padding: 8rem;
+        color: var(--text-muted); font-family: var(--font-body);
+    }
+    .loading-orb {
+        width: 22px; height: 22px;
+        border: 2px solid rgba(201,168,76,0.2);
+        border-top-color: var(--gold);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+    @@keyframes spin { to { transform: rotate(360deg); } }
+
+    .detail-error {
+        max-width: 600px; margin: 4rem auto; padding: 2rem;
+        text-align: center; color: var(--text-muted); font-family: var(--font-body);
+    }
+
+    .event-hero {
+        width: 100%; height: 320px;
+        background-size: cover; background-position: center;
+    }
+    .event-hero--placeholder {
+        background: linear-gradient(135deg, #0d1219 0%, #12161e 50%, #0a0e15 100%);
+        position: relative;
+    }
+    .event-hero--placeholder::after {
+        content: '';
+        position: absolute; inset: 0;
+        background: radial-gradient(ellipse at 30% 50%, rgba(201,168,76,0.06) 0%, transparent 70%);
+    }
+
+    .event-detail-body {
+        max-width: 1100px; margin: 0 auto; padding: 2rem 1rem 4rem;
+    }
+
+    .event-detail-header {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;
+    }
+    .event-detail-actions { display: flex; gap: 0.75rem; align-items: center; }
+
+    .btn-back {
+        background: none; border: none; color: var(--text-muted);
+        font-family: var(--font-body); font-size: 0.9rem; cursor: pointer;
+        padding: 0; transition: color 0.15s;
+    }
+    .btn-back:hover { color: var(--gold); }
+
+    .btn-outline {
+        padding: 0.5rem 1.1rem;
+        border: 1px solid var(--border);
+        background: transparent; color: var(--text-muted);
+        border-radius: 6px; font-family: var(--font-body);
+        font-size: 0.85rem; cursor: pointer; transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+
+    .btn-danger-outline {
+        padding: 0.5rem 1.1rem;
+        border: 1px solid rgba(255,69,58,0.4);
+        background: transparent; color: rgba(255,69,58,0.8);
+        border-radius: 6px; font-family: var(--font-body);
+        font-size: 0.85rem; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-danger-outline:hover { border-color: #ff453a; color: #ff453a; background: rgba(255,69,58,0.08); }
+
+    .event-detail-content {
+        display: grid; grid-template-columns: 1fr 280px; gap: 2.5rem; align-items: start;
+    }
+
+    .event-detail-title {
+        font-family: var(--font-heading);
+        font-size: 2rem; color: var(--gold);
+        margin: 0 0 1.5rem;
+        line-height: 1.2;
+    }
+
+    .event-detail-meta-row {
+        display: flex; flex-wrap: wrap; gap: 1.5rem;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border);
+    }
+    .meta-item { display: flex; align-items: flex-start; gap: 0.6rem; }
+    .meta-icon { font-size: 1.1rem; margin-top: 2px; }
+    .meta-label { font-family: var(--font-body); font-size: 0.72rem; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; }
+    .meta-value { font-family: var(--font-body); font-size: 0.95rem; color: var(--text); margin-top: 2px; }
+    .cap-indicator { color: var(--text-muted); }
+
+    .going-section { margin-bottom: 2rem; }
+    .btn-going {
+        padding: 0.75rem 2rem;
+        border: 1px solid var(--gold);
+        background: transparent; color: var(--gold);
+        border-radius: 8px; font-family: var(--font-heading);
+        font-size: 0.9rem; font-weight: 700; letter-spacing: 0.06em;
+        cursor: pointer; transition: all 0.15s;
+    }
+    .btn-going:hover:not(:disabled) { background: var(--gold); color: #07090f; }
+    .btn-going--active {
+        background: rgba(201,168,76,0.12);
+    }
+    .btn-going--active:hover:not(:disabled) { background: rgba(255,69,58,0.12); border-color: rgba(255,69,58,0.5); color: #ff453a; }
+    .btn-going:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .section-heading {
+        font-family: var(--font-heading); font-size: 1.1rem; color: var(--text);
+        margin: 0 0 1rem; font-weight: 600;
+    }
+    .description-body {
+        font-family: var(--font-body); color: var(--text-muted);
+        line-height: 1.7; white-space: pre-wrap; font-size: 0.95rem;
+    }
+
+    /* Sidebar */
+    .event-detail-sidebar { display: flex; flex-direction: column; gap: 1rem; }
+    .sidebar-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 1.25rem;
+    }
+    .sidebar-card-header {
+        font-family: var(--font-heading); font-size: 0.78rem; color: var(--text-muted);
+        letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.9rem;
+    }
+    .capacity-bar-wrap { display: flex; flex-direction: column; gap: 0.5rem; }
+    .capacity-bar {
+        height: 6px; background: rgba(255,255,255,0.08);
+        border-radius: 3px; overflow: hidden;
+    }
+    .capacity-fill {
+        height: 100%; background: linear-gradient(90deg, var(--gold), #a8883c);
+        border-radius: 3px; transition: width 0.3s;
+    }
+    .capacity-label { font-family: var(--font-body); font-size: 0.8rem; color: var(--text-muted); }
+    .capacity-unlimited { font-family: var(--font-body); font-size: 0.85rem; color: var(--text-muted); }
+
+    .file-input {
+        width: 100%; font-family: var(--font-body); font-size: 0.82rem;
+        color: var(--text-muted);
+    }
+    .upload-status {
+        font-family: var(--font-body); font-size: 0.82rem; color: var(--text-muted);
+        margin-top: 0.5rem;
+    }
+    .mt-2 { margin-top: 0.5rem; }
+
+    /* Modal (shared) */
+    .alert { padding: 0.75rem 1rem; border-radius: 6px; font-family: var(--font-body); font-size: 0.88rem; }
+    .alert-danger { background: rgba(255,69,58,0.12); border: 1px solid rgba(255,69,58,0.3); color: #ff453a; }
+
+    .modal-backdrop {
+        position: fixed; inset: 0;
+        background: rgba(0,0,0,0.6);
+        display: flex; align-items: center; justify-content: center;
+        z-index: 1000;
+    }
+    .modal-panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        width: min(600px, 95vw);
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    .modal-panel--narrow { width: min(440px, 95vw); }
+    .modal-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 1.25rem 1.75rem;
+        border-bottom: 1px solid var(--border);
+    }
+    .modal-header h2 { font-family: var(--font-heading); font-size: 1.1rem; color: var(--text); margin: 0; }
+    .modal-close { background: none; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer; }
+    .modal-body { padding: 1.5rem 1.75rem; display: flex; flex-direction: column; gap: 1rem; }
+    .modal-footer {
+        display: flex; justify-content: flex-end; gap: 0.75rem;
+        padding: 1rem 1.75rem 1.5rem;
+        border-top: 1px solid var(--border);
+    }
+
+    .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .form-label { font-family: var(--font-body); font-size: 0.82rem; color: var(--text-muted); letter-spacing: 0.04em; }
+    .form-control {
+        background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+        color: var(--text); border-radius: 6px; padding: 0.55rem 0.8rem;
+        font-family: var(--font-body); font-size: 0.9rem;
+        transition: border-color 0.15s;
+    }
+    .form-control:focus { outline: none; border-color: rgba(201,168,76,0.5); }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+    .btn-secondary {
+        padding: 0.6rem 1.2rem;
+        background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+        color: var(--text-muted); border-radius: 6px;
+        font-family: var(--font-body); cursor: pointer;
+    }
+    .btn-gold {
+        padding: 0.6rem 1.5rem;
+        background: linear-gradient(135deg, #c9a84c, #a8883c);
+        color: #07090f; border: none; border-radius: 6px;
+        font-family: var(--font-heading); font-size: 0.85rem;
+        font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer;
+    }
+    .btn-gold:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn-danger {
+        padding: 0.6rem 1.5rem;
+        background: rgba(255,69,58,0.9); color: #fff; border: none; border-radius: 6px;
+        font-family: var(--font-heading); font-size: 0.85rem;
+        font-weight: 700; cursor: pointer;
+    }
+    .btn-danger:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    @@media (max-width: 768px) {
+        .event-detail-content { grid-template-columns: 1fr; }
+        .event-hero { height: 200px; }
+        .form-grid { grid-template-columns: 1fr; }
+    }
+</style>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private EventDto? _event;
+    private bool _loading = true;
+    private string? _error;
+    private string? _actionError;
+
+    private bool _canUpdate;
+    private bool _canDelete;
+    private bool _canRegister;
+
+    private bool _toggling;
+    private bool _uploadingBanner;
+    private string? _bannerError;
+
+    private bool _showEditModal;
+    private bool _saving;
+    private string? _editError;
+    private UpdateEventRequest _editForm = new();
+
+    private bool _showDeleteConfirm;
+    private bool _deleting;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        if (!await AuthService.IsAuthenticatedAsync())
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        _canUpdate   = await AuthService.HasPermissionAsync(Domain.Shared.Claims.Permissions.Events.Update);
+        _canDelete   = await AuthService.HasPermissionAsync(Domain.Shared.Claims.Permissions.Events.Delete);
+        _canRegister = await AuthService.HasPermissionAsync(Domain.Shared.Claims.Permissions.Events.Register);
+
+        await LoadEvent();
+        StateHasChanged();
+    }
+
+    private async Task LoadEvent()
+    {
+        _loading = true;
+        var result = await EventService.GetByIdAsync(Id);
+        _loading = false;
+
+        if (result.IsSuccess) _event = result.Value;
+        else _error = result.Error.Message;
+    }
+
+    private async Task Register()
+    {
+        _actionError = null;
+        _toggling = true;
+        var result = await EventService.RegisterAsync(Id);
+        _toggling = false;
+
+        if (result.IsSuccess) await LoadEvent();
+        else _actionError = result.Error.Message;
+
+        StateHasChanged();
+    }
+
+    private async Task CancelRegistration()
+    {
+        _actionError = null;
+        _toggling = true;
+        var result = await EventService.CancelRegistrationAsync(Id);
+        _toggling = false;
+
+        if (result.IsSuccess) await LoadEvent();
+        else _actionError = result.Error.Message;
+
+        StateHasChanged();
+    }
+
+    private async Task OnBannerSelected(InputFileChangeEventArgs e)
+    {
+        _bannerError = null;
+        _uploadingBanner = true;
+        StateHasChanged();
+
+        var file = e.File;
+        var ext = Path.GetExtension(file.Name).ToLowerInvariant();
+        if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp"))
+        {
+            _bannerError = "Only JPG, PNG, and WebP images are allowed.";
+            _uploadingBanner = false;
+            StateHasChanged();
+            return;
+        }
+        if (file.Size > 5 * 1024 * 1024)
+        {
+            _bannerError = "Image must be under 5 MB.";
+            _uploadingBanner = false;
+            StateHasChanged();
+            return;
+        }
+
+        await using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+        var result = await EventService.UploadBannerAsync(Id, stream, file.Name, file.ContentType);
+        _uploadingBanner = false;
+
+        if (result.IsSuccess) await LoadEvent();
+        else _bannerError = result.Error.Message;
+
+        StateHasChanged();
+    }
+
+    private void ShowEditModal()
+    {
+        if (_event is null) return;
+        _editForm = new UpdateEventRequest
+        {
+            Title       = _event.Title,
+            Description = _event.Description,
+            StartsAt    = _event.StartsAt,
+            EndsAt      = _event.EndsAt,
+            Location    = _event.Location,
+            MemberCap   = _event.MemberCap,
+        };
+        _editError = null;
+        _showEditModal = true;
+    }
+
+    private void CloseEditModal() => _showEditModal = false;
+
+    private async Task SaveEdit()
+    {
+        _editError = null;
+        _saving = true;
+        var result = await EventService.UpdateAsync(Id, _editForm);
+        _saving = false;
+
+        if (result.IsSuccess)
+        {
+            _showEditModal = false;
+            _event = result.Value;
+        }
+        else
+        {
+            _editError = result.Error.Message;
+        }
+    }
+
+    private void ConfirmDelete() => _showDeleteConfirm = true;
+
+    private async Task DeleteEvent()
+    {
+        _deleting = true;
+        var result = await EventService.DeleteAsync(Id);
+        _deleting = false;
+
+        if (result.IsSuccess) Navigation.NavigateTo("/events");
+        else
+        {
+            _showDeleteConfirm = false;
+            _actionError = result.Error.Message;
+        }
+    }
+}

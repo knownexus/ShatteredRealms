@@ -81,6 +81,13 @@ public static class ServiceCollectionExtensions
         .AddHttpMessageHandler<AuthTokenHandler>()
         .AddDevelopmentCertificateHandler();
 
+        services.AddHttpClient<EventClientService>(client =>
+        {
+            client.BaseAddress = new Uri(apiBaseAddress);
+        })
+        .AddHttpMessageHandler<AuthTokenHandler>()
+        .AddDevelopmentCertificateHandler();
+
         return services;
     }
 

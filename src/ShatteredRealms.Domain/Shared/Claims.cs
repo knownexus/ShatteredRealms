@@ -78,6 +78,16 @@ public static class Claims
             public const string CreateAll = "Reports.CreateAll";
         }
 
+        public static class Events
+        {
+            public const string View            = "Events.View";
+            public const string Create          = "Events.Create";
+            public const string Update          = "Events.Update";
+            public const string Delete          = "Events.Delete";
+            public const string Register        = "Events.Register";
+            public const string ManageAttendees = "Events.ManageAttendees";
+        }
+
         public static class Announcements
         {
             public const string View = "Announcements.View";
@@ -235,6 +245,13 @@ public static class Claims
         , new PermissionDef(Permissions.Announcements.Delete, "Delete an announcement",     "Announcements")
           // Index 60 - Users (extended)
         , new PermissionDef(Permissions.Users.Approve, "Approve a pending user registration", "Users")
+          // Index 61 - 66 - Events
+        , new PermissionDef(Permissions.Events.View,            "View events",                    "Events")
+        , new PermissionDef(Permissions.Events.Create,          "Create events",                  "Events")
+        , new PermissionDef(Permissions.Events.Update,          "Edit any event",                 "Events")
+        , new PermissionDef(Permissions.Events.Delete,          "Delete any event",               "Events")
+        , new PermissionDef(Permissions.Events.Register,        "Mark self as going to an event", "Events")
+        , new PermissionDef(Permissions.Events.ManageAttendees, "Remove attendees from an event", "Events")
     };
 
     public static class RolePermissions
@@ -272,11 +289,17 @@ public static class Claims
           , Permissions.Announcements.Create
           , Permissions.Announcements.Update
           , Permissions.Announcements.Delete
-          ,  Permissions.Videos.View
-          ,  Permissions.Videos.Create
-          ,  Permissions.Videos.Update
-          ,  Permissions.Videos.Delete
-          ,  Permissions.Videos.Approve
+          , Permissions.Videos.View
+          , Permissions.Videos.Create
+          , Permissions.Videos.Update
+          , Permissions.Videos.Delete
+          , Permissions.Videos.Approve
+          , Permissions.Events.View
+          , Permissions.Events.Create
+          , Permissions.Events.Update
+          , Permissions.Events.Delete
+          , Permissions.Events.Register
+          , Permissions.Events.ManageAttendees
         };
 
         public static readonly IReadOnlyList<string> Analyst = new[]
@@ -306,6 +329,8 @@ public static class Claims
           , Permissions.Videos.Create
           , Permissions.Videos.DeleteOwn
           , Permissions.Announcements.View
+          , Permissions.Events.View
+          , Permissions.Events.Register
         };
 
         public static readonly IReadOnlyList<string> Unverified = new[]

@@ -240,6 +240,24 @@ public static class DomainErrors
                                                                   (int)HttpStatusCode.Forbidden);
     }
 
+    public static class Event
+    {
+        public static readonly Error NotFound = new(
+            "Event.NotFound", "Event not found", (int)HttpStatusCode.NotFound);
+
+        public static readonly Error CapacityReached = new(
+            "Event.CapacityReached", "This event is at full capacity", (int)HttpStatusCode.Conflict);
+
+        public static readonly Error AlreadyRegistered = new(
+            "Event.AlreadyRegistered", "You are already registered for this event", (int)HttpStatusCode.Conflict);
+
+        public static readonly Error NotRegistered = new(
+            "Event.NotRegistered", "You are not registered for this event", (int)HttpStatusCode.BadRequest);
+
+        public static readonly Error InvalidDates = new(
+            "Event.InvalidDates", "Event end time must be after start time", (int)HttpStatusCode.BadRequest);
+    }
+
     public static class Forum
     {
         public static readonly Error CategoryNotFound = new("Forum.CategoryNotFound"

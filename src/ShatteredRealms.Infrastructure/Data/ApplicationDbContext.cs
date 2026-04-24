@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using ShatteredRealms.Domain.Entities;
 using ShatteredRealms.Domain.Entities.ActivityLog;
+using ShatteredRealms.Domain.Entities.Event;
 using ShatteredRealms.Domain.Entities.Forum;
 using ShatteredRealms.Domain.Entities.User;
 using ShatteredRealms.Domain.Entities.Wiki;
@@ -32,6 +33,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<WikiRevision> WikiRevision { get; set; }
     public DbSet<WikiCategory> WikiCategory { get; set; }
     public DbSet<WikiPageCategory> WikiPageCategory { get; set; }
+    public DbSet<Event> Event { get; set; }
+    public DbSet<EventAttendee> EventAttendee { get; set; }
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -114,6 +117,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         });
         ConfigureForum(builder);
         ConfigureWiki(builder);
+        ConfigureEvents(builder);
 
         SeedRoles(builder);
         SeedPermissions(builder);
@@ -226,6 +230,38 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         });
     }
 
+
+    private static void ConfigureEvents(ModelBuilder builder)
+    {
+        builder.Entity<Event>(e =>
+        {
+            e.ToTable("Event");
+            e.HasKey(ev => ev.Id);
+            e.Property(ev => ev.Title).IsRequired().HasMaxLength(256);
+            e.Property(ev => ev.Description).IsRequired();
+            e.Property(ev => ev.BannerImagePath).HasMaxLength(512);
+            e.Property(ev => ev.Location).HasMaxLength(512);
+            e.HasOne(ev => ev.CreatedBy)
+             .WithMany()
+             .HasForeignKey(ev => ev.CreatedById)
+             .OnDelete(DeleteBehavior.Restrict);
+            e.HasMany(ev => ev.Attendees)
+             .WithOne(a => a.Event)
+             .HasForeignKey(a => a.EventId)
+             .OnDelete(DeleteBehavior.Cascade);
+            e.HasQueryFilter(ev => !ev.IsDeleted);
+        });
+
+        builder.Entity<EventAttendee>(e =>
+        {
+            e.ToTable("EventAttendee");
+            e.HasKey(a => new { a.EventId, a.UserId });
+            e.HasOne(a => a.User)
+             .WithMany()
+             .HasForeignKey(a => a.UserId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+    }
 
     private static void SeedRoles(ModelBuilder builder)
     {

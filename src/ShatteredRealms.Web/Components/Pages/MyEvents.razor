@@ -1,0 +1,205 @@
+@page "/my-events"
+@using ShatteredRealms.Application.DTOs.Events
+@using ShatteredRealms.Web.Services
+@inject EventClientService EventService
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>My Events — ShatteredRealms</PageTitle>
+
+<div class="my-events-page">
+    <div class="my-events-header">
+        <h1 class="my-events-title">My Events</h1>
+        <p class="my-events-subtitle">Events you've marked as Going</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <div class="alert alert-danger">@_error</div>
+    }
+
+    @if (_loading)
+    {
+        <div class="my-events-loading">
+            <div class="loading-orb"></div>
+            <span>Loading your events…</span>
+        </div>
+    }
+    else if (_events.Count == 0)
+    {
+        <div class="my-events-empty">
+            <div class="empty-icon">📅</div>
+            <p>You haven't signed up for any events yet.</p>
+            <button class="btn-gold-outline" @onclick='() => Navigation.NavigateTo("/events")'>Browse Events</button>
+        </div>
+    }
+    else
+    {
+        <div class="my-events-list">
+            @foreach (var ev in _events)
+            {
+                <div class="my-event-row" @onclick="() => GoToEvent(ev.Id)">
+                    <div class="my-event-date-badge">
+                        <span class="date-day">@ev.StartsAt.ToString("dd")</span>
+                        <span class="date-month">@ev.StartsAt.ToString("MMM").ToUpper()</span>
+                    </div>
+                    <div class="my-event-info">
+                        <h3 class="my-event-title">@ev.Title</h3>
+                        <div class="my-event-meta">
+                            <span>@ev.StartsAt.ToString("HH:mm") – @ev.EndsAt.ToString("HH:mm")</span>
+                            @if (!string.IsNullOrEmpty(ev.Location))
+                            {
+                                <span>📍 @ev.Location</span>
+                            }
+                            <span>
+                                @ev.AttendeeCount
+                                @(ev.MemberCap.HasValue ? $"/ {ev.MemberCap}" : "")
+                                going
+                            </span>
+                        </div>
+                    </div>
+                    <div class="my-event-status">
+                        <span class="going-badge">Going ✓</span>
+                        @{
+                            var isPast = ev.EndsAt < DateTime.Now;
+                        }
+                        @if (isPast)
+                        {
+                            <span class="past-badge">Past</span>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .my-events-page { max-width: 900px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+
+    .my-events-header { margin-bottom: 2rem; }
+    .my-events-title {
+        font-family: var(--font-heading); font-size: 2rem;
+        color: var(--gold); margin: 0 0 0.25rem;
+    }
+    .my-events-subtitle { font-family: var(--font-body); color: var(--text-muted); margin: 0; font-size: 0.95rem; }
+
+    .alert { padding: 0.75rem 1rem; border-radius: 6px; font-family: var(--font-body); font-size: 0.88rem; margin-bottom: 1rem; }
+    .alert-danger { background: rgba(255,69,58,0.12); border: 1px solid rgba(255,69,58,0.3); color: #ff453a; }
+
+    .my-events-loading {
+        display: flex; align-items: center; gap: 1rem;
+        justify-content: center; padding: 4rem;
+        color: var(--text-muted); font-family: var(--font-body);
+    }
+    .loading-orb {
+        width: 22px; height: 22px;
+        border: 2px solid rgba(201,168,76,0.2);
+        border-top-color: var(--gold);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+    @@keyframes spin { to { transform: rotate(360deg); } }
+
+    .my-events-empty {
+        text-align: center; padding: 5rem 2rem;
+        color: var(--text-muted); font-family: var(--font-body);
+        display: flex; flex-direction: column; align-items: center; gap: 1.25rem;
+    }
+    .empty-icon { font-size: 3rem; }
+    .my-events-empty p { margin: 0; font-size: 1rem; }
+
+    .btn-gold-outline {
+        padding: 0.55rem 1.3rem;
+        border: 1px solid var(--gold);
+        background: transparent; color: var(--gold);
+        border-radius: 6px; font-family: var(--font-heading);
+        font-size: 0.82rem; font-weight: 700; letter-spacing: 0.06em;
+        cursor: pointer; transition: background 0.15s, color 0.15s;
+    }
+    .btn-gold-outline:hover { background: var(--gold); color: #07090f; }
+
+    .my-events-list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+    .my-event-row {
+        display: flex; align-items: center; gap: 1.25rem;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 1.1rem 1.5rem;
+        cursor: pointer;
+        transition: border-color 0.15s, transform 0.1s;
+    }
+    .my-event-row:hover { border-color: rgba(201,168,76,0.4); transform: translateX(2px); }
+
+    .my-event-date-badge {
+        display: flex; flex-direction: column; align-items: center;
+        min-width: 48px;
+        background: rgba(201,168,76,0.08);
+        border: 1px solid rgba(201,168,76,0.2);
+        border-radius: 8px;
+        padding: 0.5rem;
+        flex-shrink: 0;
+    }
+    .date-day { font-family: var(--font-heading); font-size: 1.5rem; color: var(--gold); line-height: 1; }
+    .date-month { font-family: var(--font-body); font-size: 0.7rem; color: var(--text-muted); letter-spacing: 0.1em; }
+
+    .my-event-info { flex: 1; min-width: 0; }
+    .my-event-title {
+        font-family: var(--font-heading); font-size: 1.05rem;
+        color: var(--text); margin: 0 0 0.35rem;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .my-event-meta {
+        display: flex; gap: 1.25rem; flex-wrap: wrap;
+        font-family: var(--font-body); font-size: 0.82rem; color: var(--text-muted);
+    }
+
+    .my-event-status { display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem; flex-shrink: 0; }
+    .going-badge {
+        background: rgba(52,199,89,0.12); border: 1px solid rgba(52,199,89,0.3);
+        color: #34c759; border-radius: 20px; padding: 0.2rem 0.7rem;
+        font-family: var(--font-body); font-size: 0.75rem; font-weight: 600;
+        white-space: nowrap;
+    }
+    .past-badge {
+        background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+        color: var(--text-muted); border-radius: 20px; padding: 0.2rem 0.7rem;
+        font-family: var(--font-body); font-size: 0.7rem;
+        white-space: nowrap;
+    }
+
+    @@media (max-width: 600px) {
+        .my-event-row { flex-wrap: wrap; }
+        .my-event-status { flex-direction: row; width: 100%; justify-content: flex-start; }
+    }
+</style>
+
+@code {
+    private List<EventDto> _events = new();
+    private bool _loading = true;
+    private string? _error;
+
+    private void GoToEvent(int id) => Navigation.NavigateTo("/events/" + id);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        if (!await AuthService.IsAuthenticatedAsync())
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        _loading = true;
+        var result = await EventService.GetMineAsync();
+        _loading = false;
+
+        if (result.IsSuccess) _events = result.Value;
+        else _error = result.Error.Message;
+
+        StateHasChanged();
+    }
+}

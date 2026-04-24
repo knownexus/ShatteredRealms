@@ -96,16 +96,19 @@ public sealed class UserService : IUserService
             return Result.Failure<User>(new Error("User.CreateFailed", description, (int)HttpStatusCode.UnprocessableEntity));
         }
 
-        // New self-registered users start as Unverified until an admin approves them
-        _context.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = Claims.Roles.UnverifiedId });
-
         if (request.RoleIds is { Count: > 0 })
         {
+            // Admin-created user with explicit roles — skip Unverified, assign those directly
             var assignResult = await AssignRolesToUserAsync(user.Id, request.RoleIds, cancellationToken);
             if (assignResult.IsFailure)
             {
                 return Result.Failure<User>(assignResult.Error);
             }
+        }
+        else
+        {
+            // Self-registered user — starts as Unverified until an admin approves them
+            _context.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = Claims.Roles.UnverifiedId });
         }
 
         await _context.SaveChangesAsync(cancellationToken);
