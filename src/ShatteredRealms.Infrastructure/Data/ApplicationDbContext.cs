@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using ShatteredRealms.Domain.Entities;
 using ShatteredRealms.Domain.Entities.ActivityLog;
+using ShatteredRealms.Domain.Entities.Announcement;
 using ShatteredRealms.Domain.Entities.Event;
 using ShatteredRealms.Domain.Entities.Forum;
 using ShatteredRealms.Domain.Entities.User;
@@ -35,6 +36,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<WikiPageCategory> WikiPageCategory { get; set; }
     public DbSet<Event> Event { get; set; }
     public DbSet<EventAttendee> EventAttendee { get; set; }
+    public DbSet<Announcement> Announcement { get; set; }
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -118,6 +120,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         ConfigureForum(builder);
         ConfigureWiki(builder);
         ConfigureEvents(builder);
+        ConfigureAnnouncements(builder);
 
         SeedRoles(builder);
         SeedPermissions(builder);
@@ -260,6 +263,27 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
              .WithMany()
              .HasForeignKey(a => a.UserId)
              .OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+
+    private static void ConfigureAnnouncements(ModelBuilder builder)
+    {
+        builder.Entity<Announcement>(e =>
+        {
+            e.ToTable("Announcement");
+            e.HasKey(a => a.Id);
+            e.Property(a => a.Title).IsRequired().HasMaxLength(256);
+            e.Property(a => a.Body).IsRequired();
+            e.HasOne(a => a.Author)
+             .WithMany()
+             .HasForeignKey(a => a.AuthorId)
+             .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(a => a.LinkedEvent)
+             .WithMany()
+             .HasForeignKey(a => a.LinkedEventId)
+             .OnDelete(DeleteBehavior.Restrict)
+             .IsRequired(false);
+            e.HasQueryFilter(a => !a.IsDeleted);
         });
     }
 

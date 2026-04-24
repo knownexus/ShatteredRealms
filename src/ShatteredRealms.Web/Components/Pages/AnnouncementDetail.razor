@@ -1,0 +1,367 @@
+@page "/announcements/{Id:int}"
+@using ShatteredRealms.Application.DTOs.Announcements
+@using ShatteredRealms.Web.Services
+@inject AnnouncementClientService AnnouncementService
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>@(_announcement?.Title ?? "Announcement") — ShatteredRealms</PageTitle>
+
+<div class="ann-detail-page">
+    @if (_loading)
+    {
+        <div class="detail-loading">
+            <div class="loading-orb"></div>
+            <span>Loading…</span>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <div class="detail-error">
+            <p>@_error</p>
+            <button class="btn-back" @onclick='() => Navigation.NavigateTo("/announcements")'>← Back to Announcements</button>
+        </div>
+    }
+    else if (_announcement is not null)
+    {
+        <div class="ann-detail-body">
+            <div class="ann-detail-topbar">
+                <button class="btn-back" @onclick='() => Navigation.NavigateTo("/announcements")'>← Announcements</button>
+                <div class="ann-detail-actions">
+                    @if (_canUpdate)
+                    {
+                        <button class="btn-outline" @onclick="ShowEditModal">Edit</button>
+                    }
+                    @if (_canDelete)
+                    {
+                        <button class="btn-danger-outline" @onclick="ConfirmDelete">Delete</button>
+                    }
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_actionError))
+            {
+                <div class="alert alert-danger">@_actionError</div>
+            }
+
+            <div class="ann-detail-header">
+                <div class="ann-meta-line">
+                    <span class="ann-date">@_announcement.CreatedAt.ToString("MMMM d, yyyy")</span>
+                    <span class="ann-sep">·</span>
+                    <span class="ann-author">@_announcement.AuthorName</span>
+                    @if (_announcement.UpdatedAt.HasValue)
+                    {
+                        <span class="ann-sep">·</span>
+                        <span class="ann-updated">Edited @_announcement.UpdatedAt.Value.ToString("MMM d, yyyy")</span>
+                    }
+                </div>
+                <h1 class="ann-detail-title">@_announcement.Title</h1>
+                @if (_announcement.LinkedEventId.HasValue && !string.IsNullOrEmpty(_announcement.LinkedEventTitle))
+                {
+                    <button class="ann-event-chip" @onclick="() => GoToEvent(_announcement.LinkedEventId!.Value)">
+                        📅 View linked event: @_announcement.LinkedEventTitle
+                    </button>
+                }
+            </div>
+
+            <div class="ann-detail-body-text">@_announcement.Body</div>
+        </div>
+    }
+</div>
+
+@if (_showEditModal && _announcement is not null)
+{
+    <div class="modal-backdrop" @onclick="CloseEditModal">
+        <div class="modal-panel" @onclick:stopPropagation>
+            <div class="modal-header">
+                <h2>Edit Announcement</h2>
+                <button class="modal-close" @onclick="CloseEditModal">×</button>
+            </div>
+            <div class="modal-body">
+                @if (!string.IsNullOrEmpty(_editError))
+                {
+                    <div class="alert alert-danger">@_editError</div>
+                }
+                <div class="form-group">
+                    <label class="form-label">Title</label>
+                    <input class="form-control" @bind="_editForm.Title" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Body</label>
+                    <textarea class="form-control" rows="8" @bind="_editForm.Body"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Linked Event ID (optional)</label>
+                    <input class="form-control" type="number" @bind="_editForm.LinkedEventId" min="1" placeholder="Leave blank to remove link" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" @onclick="CloseEditModal">Cancel</button>
+                <button class="btn-gold" @onclick="SaveEdit" disabled="@_saving">
+                    @(_saving ? "Saving…" : "Save Changes")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (_showDeleteConfirm)
+{
+    <div class="modal-backdrop" @onclick="() => _showDeleteConfirm = false">
+        <div class="modal-panel modal-panel--narrow" @onclick:stopPropagation>
+            <div class="modal-header">
+                <h2>Delete Announcement</h2>
+                <button class="modal-close" @onclick="() => _showDeleteConfirm = false">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-family: var(--font-body); color: var(--text-muted);">
+                    Are you sure you want to delete <strong style="color: var(--text)">@_announcement?.Title</strong>? This cannot be undone.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" @onclick="() => _showDeleteConfirm = false">Cancel</button>
+                <button class="btn-danger" @onclick="DeleteAnnouncement" disabled="@_deleting">
+                    @(_deleting ? "Deleting…" : "Delete")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .ann-detail-page { max-width: 800px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+
+    .detail-loading {
+        display: flex; align-items: center; gap: 1rem;
+        justify-content: center; padding: 8rem;
+        color: var(--text-muted); font-family: var(--font-body);
+    }
+    .loading-orb {
+        width: 22px; height: 22px;
+        border: 2px solid rgba(201,168,76,0.2);
+        border-top-color: var(--gold);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+    @@keyframes spin { to { transform: rotate(360deg); } }
+
+    .detail-error {
+        text-align: center; padding: 4rem; color: var(--text-muted);
+        font-family: var(--font-body); display: flex; flex-direction: column;
+        align-items: center; gap: 1rem;
+    }
+
+    .ann-detail-topbar {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 2rem; flex-wrap: wrap; gap: 0.75rem;
+    }
+    .ann-detail-actions { display: flex; gap: 0.6rem; }
+
+    .btn-back {
+        background: none; border: none; color: var(--text-muted);
+        font-family: var(--font-body); font-size: 0.9rem; cursor: pointer;
+        padding: 0; transition: color 0.15s;
+    }
+    .btn-back:hover { color: var(--gold); }
+
+    .btn-outline {
+        padding: 0.45rem 1rem; border: 1px solid var(--border);
+        background: transparent; color: var(--text-muted);
+        border-radius: 6px; font-family: var(--font-body); font-size: 0.83rem;
+        cursor: pointer; transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+
+    .btn-danger-outline {
+        padding: 0.45rem 1rem; border: 1px solid rgba(255,69,58,0.4);
+        background: transparent; color: rgba(255,69,58,0.8);
+        border-radius: 6px; font-family: var(--font-body); font-size: 0.83rem;
+        cursor: pointer; transition: all 0.15s;
+    }
+    .btn-danger-outline:hover { border-color: #ff453a; color: #ff453a; background: rgba(255,69,58,0.08); }
+
+    .alert { padding: 0.75rem 1rem; border-radius: 6px; font-family: var(--font-body); font-size: 0.88rem; margin-bottom: 1.5rem; }
+    .alert-danger { background: rgba(255,69,58,0.12); border: 1px solid rgba(255,69,58,0.3); color: #ff453a; }
+
+    .ann-detail-header {
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    .ann-meta-line {
+        display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+        font-family: var(--font-body); font-size: 0.83rem; color: var(--text-muted);
+        margin-bottom: 0.75rem;
+    }
+    .ann-sep { opacity: 0.4; }
+    .ann-updated { font-style: italic; }
+
+    .ann-detail-title {
+        font-family: var(--font-heading); font-size: 1.9rem;
+        color: var(--text); margin: 0 0 1rem; line-height: 1.25;
+    }
+
+    .ann-event-chip {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.25);
+        color: var(--gold); border-radius: 6px; padding: 0.35rem 0.9rem;
+        font-family: var(--font-body); font-size: 0.82rem; cursor: pointer;
+        transition: background 0.15s;
+    }
+    .ann-event-chip:hover { background: rgba(201,168,76,0.2); }
+
+    .ann-detail-body-text {
+        font-family: var(--font-body); font-size: 1rem;
+        color: var(--text-muted); line-height: 1.75;
+        white-space: pre-wrap;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+        display: flex; align-items: center; justify-content: center; z-index: 1000;
+    }
+    .modal-panel {
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: 12px; width: min(600px, 95vw); max-height: 90vh; overflow-y: auto;
+    }
+    .modal-panel--narrow { width: min(440px, 95vw); }
+    .modal-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 1.25rem 1.75rem; border-bottom: 1px solid var(--border);
+    }
+    .modal-header h2 { font-family: var(--font-heading); font-size: 1.1rem; color: var(--text); margin: 0; }
+    .modal-close { background: none; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer; }
+    .modal-body { padding: 1.5rem 1.75rem; display: flex; flex-direction: column; gap: 1rem; }
+    .modal-footer {
+        display: flex; justify-content: flex-end; gap: 0.75rem;
+        padding: 1rem 1.75rem 1.5rem; border-top: 1px solid var(--border);
+    }
+
+    .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .form-label { font-family: var(--font-body); font-size: 0.82rem; color: var(--text-muted); letter-spacing: 0.04em; }
+    .form-control {
+        background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+        color: var(--text); border-radius: 6px; padding: 0.55rem 0.8rem;
+        font-family: var(--font-body); font-size: 0.9rem; transition: border-color 0.15s;
+    }
+    .form-control:focus { outline: none; border-color: rgba(201,168,76,0.5); }
+
+    .btn-secondary {
+        padding: 0.6rem 1.2rem; background: rgba(255,255,255,0.06);
+        border: 1px solid var(--border); color: var(--text-muted);
+        border-radius: 6px; font-family: var(--font-body); cursor: pointer;
+    }
+    .btn-gold {
+        padding: 0.6rem 1.5rem; background: linear-gradient(135deg, #c9a84c, #a8883c);
+        color: #07090f; border: none; border-radius: 6px;
+        font-family: var(--font-heading); font-size: 0.85rem;
+        font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer;
+    }
+    .btn-gold:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn-danger {
+        padding: 0.6rem 1.5rem; background: rgba(255,69,58,0.9);
+        color: #fff; border: none; border-radius: 6px;
+        font-family: var(--font-heading); font-size: 0.85rem; font-weight: 700; cursor: pointer;
+    }
+    .btn-danger:disabled { opacity: 0.55; cursor: not-allowed; }
+</style>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private AnnouncementDto? _announcement;
+    private bool _loading = true;
+    private string? _error;
+    private string? _actionError;
+
+    private bool _canUpdate;
+    private bool _canDelete;
+
+    private bool _showEditModal;
+    private bool _saving;
+    private string? _editError;
+    private UpdateAnnouncementRequest _editForm = new();
+
+    private bool _showDeleteConfirm;
+    private bool _deleting;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        if (!await AuthService.IsAuthenticatedAsync())
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        _canUpdate = await AuthService.HasPermissionAsync(Domain.Shared.Claims.Permissions.Announcements.Update);
+        _canDelete = await AuthService.HasPermissionAsync(Domain.Shared.Claims.Permissions.Announcements.Delete);
+
+        await LoadAnnouncement();
+        StateHasChanged();
+    }
+
+    private async Task LoadAnnouncement()
+    {
+        _loading = true;
+        var result = await AnnouncementService.GetByIdAsync(Id);
+        _loading = false;
+
+        if (result.IsSuccess) _announcement = result.Value;
+        else _error = result.Error.Message;
+    }
+
+    private void GoToEvent(int id) => Navigation.NavigateTo("/events/" + id);
+
+    private void ShowEditModal()
+    {
+        if (_announcement is null) return;
+        _editForm = new UpdateAnnouncementRequest
+        {
+            Title         = _announcement.Title,
+            Body          = _announcement.Body,
+            LinkedEventId = _announcement.LinkedEventId,
+        };
+        _editError = null;
+        _showEditModal = true;
+    }
+
+    private void CloseEditModal() => _showEditModal = false;
+
+    private async Task SaveEdit()
+    {
+        _editError = null;
+        _saving = true;
+        var result = await AnnouncementService.UpdateAsync(Id, _editForm);
+        _saving = false;
+
+        if (result.IsSuccess)
+        {
+            _showEditModal = false;
+            _announcement = result.Value;
+        }
+        else
+        {
+            _editError = result.Error.Message;
+        }
+    }
+
+    private void ConfirmDelete() => _showDeleteConfirm = true;
+
+    private async Task DeleteAnnouncement()
+    {
+        _deleting = true;
+        var result = await AnnouncementService.DeleteAsync(Id);
+        _deleting = false;
+
+        if (result.IsSuccess) Navigation.NavigateTo("/announcements");
+        else
+        {
+            _showDeleteConfirm = false;
+            _actionError = result.Error.Message;
+        }
+    }
+}

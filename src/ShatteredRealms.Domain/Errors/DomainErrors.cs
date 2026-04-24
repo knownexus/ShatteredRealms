@@ -258,6 +258,12 @@ public static class DomainErrors
             "Event.InvalidDates", "Event end time must be after start time", (int)HttpStatusCode.BadRequest);
     }
 
+    public static class Announcement
+    {
+        public static readonly Error NotFound = new(
+            "Announcement.NotFound", "Announcement not found", (int)HttpStatusCode.NotFound);
+    }
+
     public static class Forum
     {
         public static readonly Error CategoryNotFound = new("Forum.CategoryNotFound"

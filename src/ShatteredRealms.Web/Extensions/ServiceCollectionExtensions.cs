@@ -88,6 +88,13 @@ public static class ServiceCollectionExtensions
         .AddHttpMessageHandler<AuthTokenHandler>()
         .AddDevelopmentCertificateHandler();
 
+        services.AddHttpClient<AnnouncementClientService>(client =>
+        {
+            client.BaseAddress = new Uri(apiBaseAddress);
+        })
+        .AddHttpMessageHandler<AuthTokenHandler>()
+        .AddDevelopmentCertificateHandler();
+
         return services;
     }
 
