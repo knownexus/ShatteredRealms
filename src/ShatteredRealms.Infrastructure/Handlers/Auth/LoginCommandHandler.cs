@@ -7,6 +7,7 @@ using ShatteredRealms.Application.Settings;
 using ShatteredRealms.Domain.Entities.User;
 using ShatteredRealms.Domain.Errors;
 using ShatteredRealms.Domain.Shared;
+using Microsoft.EntityFrameworkCore;
 using ShatteredRealms.Infrastructure.Data;
 
 namespace ShatteredRealms.Infrastructure.Handlers.Auth;
@@ -60,6 +61,14 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, Result<A
         if (_confirmationSettings.CurrentValue.RequireEmailConfirmation && !user.EmailConfirmed)
         {
             return Result.Failure<AuthResponse>(DomainErrors.Authentication.EmailNotConfirmed);
+        }
+
+        var isUnverified = await _context.UserRoles
+            .AnyAsync(ur => ur.UserId == user.Id && ur.RoleId == Claims.Roles.UnverifiedId, cancellationToken);
+
+        if (isUnverified)
+        {
+            return Result.Failure<AuthResponse>(DomainErrors.Authentication.PendingApproval);
         }
 
         return await AuthHelpers.GenerateAuthResponseAsync(

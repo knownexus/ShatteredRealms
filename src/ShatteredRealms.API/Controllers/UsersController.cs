@@ -7,7 +7,6 @@ using ShatteredRealms.Application.DTOs.Auth;
 using ShatteredRealms.Application.DTOs.Users;
 using ShatteredRealms.Application.Features.Users.Commands;
 using ShatteredRealms.Application.Features.Users.Queries;
-using ShatteredRealms.Application.DTOs.Users;
 using ShatteredRealms.Domain.Shared;
 using ShatteredRealms.Infrastructure.Data;
 
@@ -167,6 +166,37 @@ public sealed class UsersController : ControllerBase
             return Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title);
         }
 
+        return Ok(result.Value);
+    }
+
+    /// <summary>Returns users pending admin approval.</summary>
+    [RequirePermission(Claims.Permissions.Users.View)]
+    [HttpGet("pending")]
+    public async Task<ActionResult<List<UserDto>>> GetPending(CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetPendingUsersQuery(), cancellationToken);
+        if (result.IsFailure)
+        {
+            return Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title);
+        }
+
+        return Ok(result.Value);
+    }
+
+    /// <summary>Approves a pending user, promoting them from Unverified to User role.</summary>
+    [RequirePermission(Claims.Permissions.Users.Approve)]
+    [HttpPost("{id}/approve")]
+    public async Task<ActionResult<UserDto>> Approve(string id, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Approve user {TargetUserId} - requested by UserId: {UserId}", id, User.GetUserId());
+
+        var result = await _mediator.Send(new ApproveUserCommand(id), cancellationToken);
+        if (result.IsFailure)
+        {
+            return Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title);
+        }
+
+        _logger.LogInformation("User {TargetUserId} approved", id);
         return Ok(result.Value);
     }
 

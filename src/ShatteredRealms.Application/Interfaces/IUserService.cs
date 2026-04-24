@@ -18,4 +18,6 @@ public interface IUserService
     Task<string> GenerateEmailConfirmationTokenAsync(User user, CancellationToken cancellationToken = default);
     Task<Result> ConfirmEmailAsync(string userId, string token, CancellationToken cancellationToken = default);
     Task<Result> ChangePasswordAsync(string userId, string currentPassword, string newPassword, CancellationToken cancellationToken = default);
+    Task<Result<List<User>>> GetPendingUsersAsync(CancellationToken cancellationToken = default);
+    Task<Result<User>> ApproveUserAsync(string userId, CancellationToken cancellationToken = default);
 }

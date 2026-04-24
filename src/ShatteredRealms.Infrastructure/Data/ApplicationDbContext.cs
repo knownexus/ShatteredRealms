@@ -234,7 +234,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             new Role { Id = Claims.Roles.AdminId,          Name = Claims.Roles.AdminName,          NormalizedName = Claims.Roles.AdminName.ToUpper(),          ConcurrencyStamp = "b1000000-0000-0000-0000-000000000002", Description = Claims.Roles.AdminDescription,          Priority = 90,  IsSystem = false },
             new Role { Id = Claims.Roles.AnalystId,        Name = Claims.Roles.AnalystName,        NormalizedName = Claims.Roles.AnalystName.ToUpper(),        ConcurrencyStamp = "b1000000-0000-0000-0000-000000000005", Description = Claims.Roles.AnalystDescription,        Priority = 80,  IsSystem = false },
             new Role { Id = Claims.Roles.EventOrganizerId, Name = Claims.Roles.EventOrganizerName, NormalizedName = Claims.Roles.EventOrganizerName.ToUpper(), ConcurrencyStamp = "b1000000-0000-0000-0000-000000000003", Description = Claims.Roles.EventOrganizerDescription, Priority = 50,  IsSystem = false },
-            new Role { Id = Claims.Roles.UserId,           Name = Claims.Roles.UserName,           NormalizedName = Claims.Roles.UserName.ToUpper(),           ConcurrencyStamp = "b1000000-0000-0000-0000-000000000004", Description = Claims.Roles.UserDescription,           Priority = 10,  IsSystem = false }
+            new Role { Id = Claims.Roles.UserId,           Name = Claims.Roles.UserName,           NormalizedName = Claims.Roles.UserName.ToUpper(),           ConcurrencyStamp = "b1000000-0000-0000-0000-000000000004", Description = Claims.Roles.UserDescription,           Priority = 10,  IsSystem = false },
+            new Role { Id = Claims.Roles.UnverifiedId,     Name = Claims.Roles.UnverifiedName,     NormalizedName = Claims.Roles.UnverifiedName.ToUpper(),     ConcurrencyStamp = "b1000000-0000-0000-0000-000000000007", Description = Claims.Roles.UnverifiedDescription,     Priority = 5,   IsSystem = false }
         );
     }
 
@@ -253,6 +254,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             (Claims.Roles.AnalystId,       Claims.RolePermissions.Analyst,        IdOffset: 300),
             (Claims.Roles.EventOrganizerId,Claims.RolePermissions.EventOrganizer, IdOffset: 400),
             (Claims.Roles.UserId,          Claims.RolePermissions.User,           IdOffset: 500),
+            (Claims.Roles.UnverifiedId,    Claims.RolePermissions.Unverified,     IdOffset: 600),
         };
 
         var rows = roleMappings

@@ -86,6 +86,40 @@ public class UserService
                                                  (int)response.StatusCode));
     }
 
+    public async Task<Result<List<UserDto>>> GetPendingUsersAsync()
+    {
+        var response = await _httpClient.GetAsync("api/users/pending");
+        if (response.IsSuccessStatusCode)
+        {
+            var list = await response.Content.ReadFromJsonAsync<List<UserDto>>();
+            return Result.Success(list ?? new List<UserDto>());
+        }
+
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        return Result.Failure<List<UserDto>>(new Error(
+            problem?.Title ?? "Unknown error occurred",
+            problem?.Detail ?? "No detail provided",
+            (int)response.StatusCode));
+    }
+
+    public async Task<Result<UserDto>> ApproveUserAsync(string id)
+    {
+        var response = await _httpClient.PostAsync($"api/users/{id}/approve", null);
+        if (response.IsSuccessStatusCode)
+        {
+            var dto = await response.Content.ReadFromJsonAsync<UserDto>();
+            return dto is not null
+                ? Result.Success(dto)
+                : Result.Failure<UserDto>(new Error("User.ApproveFailed", "Failed to read approved user response", (int)HttpStatusCode.InternalServerError));
+        }
+
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        return Result.Failure<UserDto>(new Error(
+            problem?.Title ?? "Unknown error occurred",
+            problem?.Detail ?? "No detail provided",
+            (int)response.StatusCode));
+    }
+
     public async Task<Result<UserDto>> GetOwnProfileAsync()
     {
         var response = await _httpClient.GetAsync("api/users/self");

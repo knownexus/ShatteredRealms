@@ -157,6 +157,11 @@ public static class DomainErrors
                                                              "Please confirm your email address before signing in",
                                                              (int)HttpStatusCode.Forbidden);
 
+        public static readonly Error PendingApproval = new(
+                                                           "Authentication.PendingApproval",
+                                                           "Your account is awaiting admin approval before you can sign in",
+                                                           (int)HttpStatusCode.Forbidden);
+
         public static readonly Error NoRoles = new(
                                                    "Authentication.NoRoles",
                                                    "No Roles were returned",
@@ -195,6 +200,11 @@ public static class DomainErrors
                                                                   "User.CannotModifySystemUser",
                                                                   "System user cannot be changed",
                                                                   (int)HttpStatusCode.Forbidden);
+
+        public static readonly Error NotPendingApproval = new(
+                                                             "User.NotPendingApproval",
+                                                             "This user is not pending approval",
+                                                             (int)HttpStatusCode.BadRequest);
     }
 
     public static class Role

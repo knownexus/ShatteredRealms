@@ -96,8 +96,8 @@ public sealed class UserService : IUserService
             return Result.Failure<User>(new Error("User.CreateFailed", description, (int)HttpStatusCode.UnprocessableEntity));
         }
 
-        // Always assign the default User role on registration
-        _context.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = Claims.Roles.UserId });
+        // New self-registered users start as Unverified until an admin approves them
+        _context.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = Claims.Roles.UnverifiedId });
 
         if (request.RoleIds is { Count: > 0 })
         {
@@ -250,6 +250,43 @@ public sealed class UserService : IUserService
             .ToListAsync(cancellationToken);
 
         return Result.Create(roles);
+    }
+
+    public async Task<Result<List<User>>> GetPendingUsersAsync(CancellationToken cancellationToken = default)
+    {
+        var users = await _userManager.Users
+            .Include(u => u.UserRoles)
+            .ThenInclude(ur => ur.Role)
+            .Where(u => u.UserRoles.Any(ur => ur.RoleId == Claims.Roles.UnverifiedId) && u.EmailConfirmed)
+            .ToListAsync(cancellationToken);
+
+        return Result.Success(users);
+    }
+
+    public async Task<Result<User>> ApproveUserAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return Result.Failure<User>(DomainErrors.User.NotFound);
+        }
+
+        var unverifiedRole = await _context.UserRoles
+            .FirstOrDefaultAsync(ur => ur.UserId == userId && ur.RoleId == Claims.Roles.UnverifiedId, cancellationToken);
+
+        if (unverifiedRole == null)
+        {
+            return Result.Failure<User>(DomainErrors.User.NotPendingApproval);
+        }
+
+        _context.UserRoles.Remove(unverifiedRole);
+        _context.UserRoles.Add(new UserRole { UserId = userId, RoleId = Claims.Roles.UserId });
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var updatedUser = await _userManager.FindByIdAsync(userId);
+        return updatedUser != null
+            ? Result.Success(updatedUser)
+            : Result.Failure<User>(DomainErrors.User.NotFound);
     }
 
     private async Task<Result> AssignRolesToUserAsync(string userId, List<string> roleIds, CancellationToken cancellationToken)

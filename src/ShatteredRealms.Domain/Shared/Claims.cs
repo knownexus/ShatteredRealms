@@ -9,18 +9,21 @@ public static class Claims
         public const string EventOrganizerId = "00000000-0000-0000-0000-000000000003";
         public const string UserId           = "00000000-0000-0000-0000-000000000004";
         public const string AnalystId        = "00000000-0000-0000-0000-000000000005";
+        public const string UnverifiedId     = "00000000-0000-0000-0000-000000000007";
 
         public const string SystemName         = "System";
         public const string AdminName          = "Admin";
         public const string AnalystName            = "Analyst";
         public const string EventOrganizerName = "EventOrganizer";
         public const string UserName           = "User";
+        public const string UnverifiedName     = "Unverified";
 
         public const string SystemDescription         = "Internal system role, unrestricted";
         public const string AdminDescription          = "Full administrative access";
         public const string AnalystDescription        = "Report Access";
         public const string EventOrganizerDescription = "Can manage events, characters, assign positions/experience";
         public const string UserDescription           = "Standard registered user";
+        public const string UnverifiedDescription     = "Newly registered user awaiting admin approval";
     }
 
     // Constants are now ClaimValue strings - human-readable and stable.
@@ -35,6 +38,7 @@ public static class Claims
             public const string Create    = "Users.Create";
             public const string Update    = "Users.Update";
             public const string Delete    = "Users.Delete";
+            public const string Approve   = "Users.Approve";
         }
 
         public static class Characters
@@ -229,6 +233,8 @@ public static class Claims
         , new PermissionDef(Permissions.Announcements.Create, "Create a new announcements", "Announcements")
         , new PermissionDef(Permissions.Announcements.Update, "Edit an announcement",       "Announcements")
         , new PermissionDef(Permissions.Announcements.Delete, "Delete an announcement",     "Announcements")
+          // Index 60 - Users (extended)
+        , new PermissionDef(Permissions.Users.Approve, "Approve a pending user registration", "Users")
     };
 
     public static class RolePermissions
@@ -299,7 +305,13 @@ public static class Claims
           , Permissions.Videos.View
           , Permissions.Videos.Create
           , Permissions.Videos.DeleteOwn
+          , Permissions.Announcements.View
+        };
 
+        public static readonly IReadOnlyList<string> Unverified = new[]
+        {
+            Permissions.Users.ViewOwn
+          , Permissions.Users.UpdateOwn
         };
     }
 }

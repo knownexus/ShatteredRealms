@@ -25,6 +25,54 @@
     </div>
 }
 
+@if (pendingUsers is { Count: > 0 })
+{
+    <div class="card mb-4" style="border-color: rgba(201,168,76,0.4);">
+        <div class="card-header" style="background: rgba(201,168,76,0.08); border-color: rgba(201,168,76,0.4);">
+            <h5 class="mb-0">
+                Pending Approval
+                <span class="badge" style="background: var(--gold); color: #07090f; margin-left: 0.5rem;">@pendingUsers.Count</span>
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var pending in pendingUsers)
+                    {
+                        <tr>
+                            <td>@pending.Email</td>
+                            <td>@pending.FirstName</td>
+                            <td>@pending.LastName</td>
+                            <td>
+                                <button class="btn btn-sm btn-success" @onclick="() => ApproveUser(pending.Id)"
+                                        disabled="@_approvingUserId.Contains(pending.Id)">
+                                    @if (_approvingUserId.Contains(pending.Id))
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                        <span>Approving…</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Approve</span>
+                                    }
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
 @if (users == null)
 {
     <div class="text-center my-5">
@@ -133,6 +181,8 @@ else
 
 @code {
     private List<UserDto>? users;
+    private List<UserDto>? pendingUsers;
+    private HashSet<string> _approvingUserId = new();
     private List<RoleDto>? roles;
     private bool showModal = false;
     private bool isEdit = false;
@@ -169,6 +219,7 @@ else
             }
 
             await LoadUsers();
+            await LoadPendingUsers();
             await LoadRoles();
             StateHasChanged();
         }
@@ -184,6 +235,30 @@ else
         {
             errorMessage = $"Failed to load users: {ex.Message}";
             users = new List<UserDto>();
+        }
+    }
+
+    private async Task LoadPendingUsers()
+    {
+        var result = await UserService.GetPendingUsersAsync();
+        pendingUsers = result.IsSuccess ? result.Value : new List<UserDto>();
+    }
+
+    private async Task ApproveUser(string userId)
+    {
+        _approvingUserId.Add(userId);
+        var result = await UserService.ApproveUserAsync(userId);
+        _approvingUserId.Remove(userId);
+
+        if (result.IsFailure)
+        {
+            errorCode = result.Error.Code.ToString();
+            errorMessage = result.Error.Message;
+        }
+        else
+        {
+            await LoadPendingUsers();
+            await LoadUsers();
         }
     }
 
