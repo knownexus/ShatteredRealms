@@ -1,7 +1,9 @@
 @page "/announcements"
 @using ShatteredRealms.Application.DTOs.Announcements
+@using ShatteredRealms.Application.DTOs.Events
 @using ShatteredRealms.Web.Services
 @inject AnnouncementClientService AnnouncementService
+@inject EventClientService EventService
 @inject AuthService AuthService
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
@@ -98,8 +100,14 @@
                     <textarea class="form-control" rows="6" @bind="_form.Body" placeholder="Write your announcement…"></textarea>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Linked Event ID (optional)</label>
-                    <input class="form-control" type="number" @bind="_form.LinkedEventId" min="1" placeholder="Leave blank for standalone announcement" />
+                    <label class="form-label">Linked Event (optional)</label>
+                    <select class="form-control" @bind="_linkedEventStr">
+                        <option value="">— No linked event —</option>
+                        @foreach (var ev in _allEvents)
+                        {
+                            <option value="@ev.Id">@ev.Title (@ev.StartsAt.ToString("MMM d, yyyy"))</option>
+                        }
+                    </select>
                 </div>
             </div>
             <div class="modal-footer">
@@ -266,6 +274,8 @@
     private bool _saving;
     private string? _formError;
     private CreateAnnouncementRequest _form = new();
+    private List<EventDto> _allEvents = new();
+    private string _linkedEventStr = "";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -295,17 +305,24 @@
     private void GoToAnnouncement(int id) => Navigation.NavigateTo("/announcements/" + id);
     private void GoToEvent(int id) => Navigation.NavigateTo("/events/" + id);
 
-    private void ShowCreateModal()
+    private async Task ShowCreateModal()
     {
         _form = new CreateAnnouncementRequest();
+        _linkedEventStr = "";
         _formError = null;
+
+        var eventsResult = await EventService.GetAllAsync(upcomingOnly: false);
+        _allEvents = eventsResult.IsSuccess ? eventsResult.Value : [];
+
         _showCreateModal = true;
+        StateHasChanged();
     }
 
     private void CloseModal() => _showCreateModal = false;
 
     private async Task CreateAnnouncement()
     {
+        _form.LinkedEventId = string.IsNullOrEmpty(_linkedEventStr) ? null : int.Parse(_linkedEventStr);
         _formError = null;
         _saving = true;
         var result = await AnnouncementService.CreateAsync(_form);

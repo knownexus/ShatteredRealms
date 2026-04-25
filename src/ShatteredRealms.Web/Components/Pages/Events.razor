@@ -1,7 +1,9 @@
 @page "/events"
 @using ShatteredRealms.Application.DTOs.Events
+@using ShatteredRealms.Application.DTOs.Announcements
 @using ShatteredRealms.Web.Services
 @inject EventClientService EventService
+@inject AnnouncementClientService AnnouncementService
 @inject AuthService AuthService
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
@@ -120,6 +122,27 @@
                         <input class="form-control" type="number" @bind="_form.MemberCap" min="1" placeholder="Unlimited" />
                     </div>
                 </div>
+
+                <div class="announcement-toggle">
+                    <label class="checkbox-label">
+                        <input type="checkbox" @bind="_createAnnouncement" />
+                        <span>Also create a linked announcement</span>
+                    </label>
+                </div>
+
+                @if (_createAnnouncement)
+                {
+                    <div class="announcement-fields">
+                        <div class="form-group">
+                            <label class="form-label">Announcement Title</label>
+                            <input class="form-control" @bind="_annForm.Title" placeholder="e.g. New Event: Summer Raid Night" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Announcement Body</label>
+                            <textarea class="form-control" rows="3" @bind="_annForm.Body" placeholder="Write a short announcement for this event…"></textarea>
+                        </div>
+                    </div>
+                }
             </div>
             <div class="modal-footer">
                 <button class="btn-secondary" @onclick="CloseModal">Cancel</button>
@@ -304,6 +327,28 @@
     }
     .btn-gold:disabled { opacity: 0.55; cursor: not-allowed; }
 
+    .announcement-toggle {
+        padding: 0.75rem 1rem;
+        background: rgba(201,168,76,0.05);
+        border: 1px solid rgba(201,168,76,0.15);
+        border-radius: 8px;
+    }
+    .checkbox-label {
+        display: flex; align-items: center; gap: 0.65rem;
+        font-family: var(--font-body); font-size: 0.88rem; color: var(--text-muted);
+        cursor: pointer; user-select: none;
+    }
+    .checkbox-label input[type="checkbox"] { accent-color: var(--gold); width: 15px; height: 15px; cursor: pointer; }
+    .checkbox-label span { transition: color 0.15s; }
+    .checkbox-label:hover span { color: var(--text); }
+    .announcement-fields {
+        display: flex; flex-direction: column; gap: 1rem;
+        padding: 1rem;
+        background: rgba(201,168,76,0.04);
+        border: 1px solid rgba(201,168,76,0.12);
+        border-radius: 8px;
+    }
+
     @@media (max-width: 600px) {
         .form-grid { grid-template-columns: 1fr; }
     }
@@ -319,6 +364,9 @@
     private bool _saving;
     private string? _formError;
     private CreateEventRequest _form = new() { StartsAt = DateTime.Now.AddDays(1), EndsAt = DateTime.Now.AddDays(1).AddHours(2) };
+
+    private bool _createAnnouncement;
+    private CreateAnnouncementRequest _annForm = new();
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -348,6 +396,8 @@
     private void ShowCreateModal()
     {
         _form = new CreateEventRequest { StartsAt = DateTime.Now.AddDays(1), EndsAt = DateTime.Now.AddDays(1).AddHours(2) };
+        _annForm = new CreateAnnouncementRequest();
+        _createAnnouncement = false;
         _formError = null;
         _showCreateModal = true;
     }
@@ -361,12 +411,19 @@
         _formError = null;
         _saving = true;
         var result = await EventService.CreateAsync(_form);
+
+        if (result.IsSuccess && _createAnnouncement)
+        {
+            _annForm.LinkedEventId = result.Value.Id;
+            await AnnouncementService.CreateAsync(_annForm);
+        }
+
         _saving = false;
 
         if (result.IsSuccess)
         {
             _showCreateModal = false;
-            Navigation.NavigateTo($"/events/{result.Value.Id}");
+            Navigation.NavigateTo("/events/" + result.Value.Id);
         }
         else
         {
