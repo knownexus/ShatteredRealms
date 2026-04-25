@@ -2,6 +2,8 @@ html, body {
     font-family: 'Crimson Pro', Georgia, serif;
     background-color: #07090f;
     color: #d8cdb8;
+    overflow-x: hidden;
+    max-width: 100vw;
 }
 
 a, .btn-link {

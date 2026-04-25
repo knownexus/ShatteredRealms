@@ -1,9 +1,21 @@
-@using ShatteredRealms.Web.Services
+﻿@using ShatteredRealms.Web.Services
 @inherits LayoutComponentBase
 @inject AuthService AuthService
 
 <div class="page">
-    <div class="sidebar">
+    <div class="sidebar" class:collapsed="@_sidebarCollapsed">
+        <button class="sidebar-toggle" @onclick="ToggleSidebar" aria-label="Toggle sidebar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                @if (_sidebarCollapsed)
+                {
+                    <path d="M9 18l6-6-6-6"/>
+                }
+                else
+                {
+                    <path d="M15 18l-6-6 6-6"/>
+                }
+            </svg>
+        </button>
         <NavMenu />
     </div>
 
@@ -24,6 +36,7 @@
 </div>
 
 @code {
+    private bool _sidebarCollapsed;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -34,4 +47,8 @@
         }
     }
 
+    private void ToggleSidebar()
+    {
+        _sidebarCollapsed = !_sidebarCollapsed;
+    }
 }

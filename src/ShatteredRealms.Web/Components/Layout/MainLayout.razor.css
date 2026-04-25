@@ -4,6 +4,8 @@
     flex-direction: column;
     min-height: 100vh;
     background-color: #07090f;
+    overflow-x: hidden;
+    max-width: 100%;
 }
 
 main {
@@ -11,6 +13,10 @@ main {
     min-width: 0;
     overflow-x: hidden;
     background-color: #07090f;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 100%;
 }
 
 /* ── Sidebar ─────────────────────────────────────────────── */
@@ -23,6 +29,7 @@ main {
     background-blend-mode: normal;
     border-right: 1px solid #111c2b;
     position: relative;
+    transition: width 0.25s ease;
 }
 
 .sidebar::after {
@@ -33,6 +40,34 @@ main {
     height: 100%;
     background: linear-gradient(180deg, transparent 0%, rgba(201,168,76,0.2) 30%, rgba(201,168,76,0.2) 70%, transparent 100%);
     pointer-events: none;
+}
+
+.sidebar-toggle {
+    position: absolute;
+    top: 1rem;
+    right: -12px;
+    width: 24px;
+    height: 24px;
+    background: #0f1419;
+    border: 1px solid #1e2a38;
+    border-radius: 50%;
+    color: #5e7189;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    transition: all 0.15s ease;
+}
+
+.sidebar-toggle:hover {
+    color: #c9a84c;
+    border-color: rgba(201,168,76,0.4);
+}
+
+.sidebar-toggle svg {
+    width: 14px;
+    height: 14px;
 }
 
 /* ── Top row ─────────────────────────────────────────────── */
@@ -78,8 +113,9 @@ main {
 /* ── Article ─────────────────────────────────────────────── */
 
 article.content {
-    padding: 2rem 2.5rem;
+    padding: 2rem 1rem;
     max-width: 1400px;
+    width: 100%;
     min-width: 0;
     overflow-x: hidden;
 }
@@ -126,6 +162,7 @@ article.content {
     .top-row { justify-content: space-between; }
     .top-row ::deep a, .top-row ::deep .btn-link { margin-left: 0; }
     article.content { padding: 1rem; }
+    .sidebar-toggle { display: none; }
 }
 
 @media (min-width: 641px) {
@@ -136,7 +173,15 @@ article.content {
         height: 100vh;
         position: sticky;
         top: 0;
-        overflow-y: auto;
+    }
+
+    .sidebar.collapsed {
+        width: 60px;
+    }
+
+    .sidebar.collapsed .nav-scrollable {
+        opacity: 0;
+        visibility: hidden;
     }
 
     .top-row {
@@ -145,7 +190,7 @@ article.content {
     }
 
     article {
-        padding-left: 2.5rem !important;
+        padding-left: 2rem !important;
         padding-right: 2rem !important;
     }
 }
