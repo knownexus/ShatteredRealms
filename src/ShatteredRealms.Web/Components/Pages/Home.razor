@@ -1,10 +1,26 @@
 @page "/"
+@using ShatteredRealms.Application.DTOs.Announcements
 @using ShatteredRealms.Web.Services
+@using Blazored.LocalStorage
 @inject AuthService AuthService
+@inject AnnouncementClientService AnnouncementService
+@inject ILocalStorageService LocalStorage
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
 
 <PageTitle>ShatteredRealms</PageTitle>
+
+@if (_latestAnnouncement is not null && !_announcementDismissed)
+{
+    <div class="ann-banner">
+        <div class="ann-banner__inner">
+            <span class="ann-banner__label">Announcement</span>
+            <button class="ann-banner__title" @onclick="GoToAnnouncement">@_latestAnnouncement.Title</button>
+            <span class="ann-banner__date">@_latestAnnouncement.CreatedAt.ToString("MMM d")</span>
+        </div>
+        <button class="ann-banner__close" @onclick="DismissAnnouncement" aria-label="Dismiss">×</button>
+    </div>
+}
 
 <div class="home-hero">
     <div class="home-hero__emblem">
@@ -38,7 +54,7 @@
 </div>
 
 <div class="home-grid">
-    <div class="home-feature-card">
+    <a class="home-feature-card" href="/forum">
         <div class="home-feature-card__icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
                 <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
@@ -46,9 +62,9 @@
         </div>
         <h3>Forum</h3>
         <p>Engage with the community. Discuss lore, strategy, and the latest events across all realms.</p>
-    </div>
+    </a>
 
-    <div class="home-feature-card">
+    <a class="home-feature-card" href="/wiki">
         <div class="home-feature-card__icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
                 <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
@@ -56,20 +72,92 @@
         </div>
         <h3>Wiki</h3>
         <p>Discover the chronicles of ShatteredRealms. Lore, guides, and history — written by the community.</p>
-    </div>
+    </a>
 
-    <div class="home-feature-card">
+    <a class="home-feature-card" href="/events">
         <div class="home-feature-card__icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
             </svg>
         </div>
-        <h3>Secure Access</h3>
-        <p>Role-based permissions ensure the right people have access to the right realms of power.</p>
-    </div>
+        <h3>Events</h3>
+        <p>Join community gatherings, raids, and tournaments. Mark yourself as going and track upcoming activities.</p>
+    </a>
+
+    <a class="home-feature-card" href="/documents">
+        <div class="home-feature-card__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+            </svg>
+        </div>
+        <h3>Documents</h3>
+        <p>Access rulebooks, guides, and shared files uploaded by organisers and admins.</p>
+    </a>
 </div>
 
 <style>
+    /* Announcement banner */
+    .ann-banner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        background: rgba(201,168,76,0.08);
+        border-bottom: 1px solid rgba(201,168,76,0.2);
+        padding: 0.65rem 1.5rem;
+        font-family: 'Crimson Pro', Georgia, serif;
+        animation: slide-down 0.3s ease;
+    }
+    @@keyframes slide-down {
+        from { transform: translateY(-100%); opacity: 0; }
+        to   { transform: translateY(0);    opacity: 1; }
+    }
+    .ann-banner__inner {
+        display: flex; align-items: center; gap: 0.75rem;
+        min-width: 0; flex: 1;
+        flex-wrap: wrap;
+    }
+    .ann-banner__label {
+        font-family: 'Cinzel', serif;
+        font-size: 0.68rem; font-weight: 600;
+        letter-spacing: 0.12em; text-transform: uppercase;
+        color: #c9a84c;
+        background: rgba(201,168,76,0.12);
+        border: 1px solid rgba(201,168,76,0.25);
+        border-radius: 3px;
+        padding: 0.1rem 0.5rem;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    .ann-banner__title {
+        background: none; border: none; padding: 0;
+        font-family: 'Crimson Pro', Georgia, serif;
+        font-size: 0.95rem; color: #d8cdb8;
+        cursor: pointer; text-align: left;
+        transition: color 0.15s;
+        min-width: 0;
+    }
+    .ann-banner__title:hover { color: #c9a84c; }
+    .ann-banner__date {
+        font-size: 0.78rem; color: #5e7189;
+        white-space: nowrap; flex-shrink: 0;
+    }
+    .ann-banner__close {
+        background: none; border: none;
+        color: #5e7189; font-size: 1.3rem;
+        cursor: pointer; padding: 0 0.25rem;
+        line-height: 1; flex-shrink: 0;
+        transition: color 0.15s;
+    }
+    .ann-banner__close:hover { color: #d8cdb8; }
+
     .home-hero {
         display: flex;
         flex-direction: column;
@@ -122,7 +210,7 @@
 
     .home-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
         gap: 1.5rem;
         padding: 0 0 3rem;
         max-width: 960px;
@@ -131,16 +219,20 @@
     }
 
     .home-feature-card {
+        display: block;
         background: #0d1219;
         border: 1px solid #1c2a3e;
         border-radius: 12px;
         padding: 2rem 1.75rem;
-        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        text-decoration: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+        cursor: pointer;
     }
 
     .home-feature-card:hover {
-        border-color: rgba(201, 168, 76, 0.35);
+        border-color: rgba(201, 168, 76, 0.4);
         box-shadow: 0 4px 24px rgba(0,0,0,0.5), 0 0 20px rgba(201,168,76,0.08);
+        transform: translateY(-2px);
     }
 
     .home-feature-card__icon {
@@ -149,7 +241,9 @@
         color: #c9a84c;
         margin-bottom: 1.25rem;
         opacity: 0.85;
+        transition: opacity 0.15s;
     }
+    .home-feature-card:hover .home-feature-card__icon { opacity: 1; }
 
     .home-feature-card__icon svg {
         width: 100%;
@@ -177,11 +271,41 @@
 
 @code {
     private bool _isAuthenticated;
+    private AnnouncementDto? _latestAnnouncement;
+    private bool _announcementDismissed;
+
+    private const string DismissedKey = "dismissedAnnouncementId";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
+
         _isAuthenticated = await AuthService.IsAuthenticatedAsync();
+
+        if (_isAuthenticated)
+        {
+            var result = await AnnouncementService.GetAllAsync();
+            if (result.IsSuccess && result.Value.Count > 0)
+            {
+                _latestAnnouncement = result.Value[0];
+                var dismissedId = await LocalStorage.GetItemAsync<int?>(DismissedKey);
+                _announcementDismissed = dismissedId == _latestAnnouncement.Id;
+            }
+        }
+
         StateHasChanged();
+    }
+
+    private async Task DismissAnnouncement()
+    {
+        if (_latestAnnouncement is null) return;
+        _announcementDismissed = true;
+        await LocalStorage.SetItemAsync(DismissedKey, _latestAnnouncement.Id);
+    }
+
+    private void GoToAnnouncement()
+    {
+        if (_latestAnnouncement is null) return;
+        Navigation.NavigateTo("/announcements/" + _latestAnnouncement.Id);
     }
 }
