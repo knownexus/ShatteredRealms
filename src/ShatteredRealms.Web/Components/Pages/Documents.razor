@@ -95,8 +95,8 @@
 
 @if (_deleteTarget is not null)
 {
-    <div class="modal-backdrop" @onclick="CancelDelete">
-        <div class="modal-panel" @onclick:stopPropagation>
+    <div class="modal-backdrop" @onmousedown="() => _backdropDown = true" @onclick="CancelDeleteViaBackdrop">
+        <div class="modal-panel" @onmousedown:stopPropagation @onclick:stopPropagation>
             <div class="modal-header">
                 <h2>Delete Document</h2>
                 <button class="modal-close" @onclick="CancelDelete">×</button>
@@ -262,6 +262,7 @@
 
     private DocumentDto? _deleteTarget;
     private bool _deleting;
+    private bool _backdropDown;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -338,6 +339,7 @@
     }
 
     private void CancelDelete() => _deleteTarget = null;
+    private void CancelDeleteViaBackdrop() { if (_backdropDown) CancelDelete(); _backdropDown = false; }
 
     private async Task DeleteDocument()
     {

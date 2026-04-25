@@ -85,8 +85,8 @@
 
 @if (_showCreateModal)
 {
-    <div class="modal-backdrop" @onclick="CloseModal">
-        <div class="modal-panel" @onclick:stopPropagation>
+    <div class="modal-backdrop" @onmousedown="() => _backdropDown = true" @onclick="CloseModalViaBackdrop">
+        <div class="modal-panel" @onmousedown:stopPropagation @onclick:stopPropagation>
             <div class="modal-header">
                 <h2>Create Event</h2>
                 <button class="modal-close" @onclick="CloseModal">×</button>
@@ -362,6 +362,7 @@
 
     private bool _showCreateModal;
     private bool _saving;
+    private bool _backdropDown;
     private string? _formError;
     private CreateEventRequest _form = new() { StartsAt = DateTime.Now.AddDays(1), EndsAt = DateTime.Now.AddDays(1).AddHours(2) };
 
@@ -405,6 +406,7 @@
     private void GoToEvent(int id) => Navigation.NavigateTo("/events/" + id);
 
     private void CloseModal() => _showCreateModal = false;
+    private void CloseModalViaBackdrop() { if (_backdropDown) CloseModal(); _backdropDown = false; }
 
     private async Task CreateEvent()
     {

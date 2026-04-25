@@ -80,8 +80,8 @@
 
 @if (_showCreateModal)
 {
-    <div class="modal-backdrop" @onclick="CloseModal">
-        <div class="modal-panel" @onclick:stopPropagation>
+    <div class="modal-backdrop" @onmousedown="() => _backdropDown = true" @onclick="CloseModalViaBackdrop">
+        <div class="modal-panel" @onmousedown:stopPropagation @onclick:stopPropagation>
             <div class="modal-header">
                 <h2>New Announcement</h2>
                 <button class="modal-close" @onclick="CloseModal">×</button>
@@ -274,6 +274,7 @@
     private bool _saving;
     private string? _formError;
     private CreateAnnouncementRequest _form = new();
+    private bool _backdropDown;
     private List<EventDto> _allEvents = new();
     private string _linkedEventStr = "";
 
@@ -319,6 +320,7 @@
     }
 
     private void CloseModal() => _showCreateModal = false;
+    private void CloseModalViaBackdrop() { if (_backdropDown) CloseModal(); _backdropDown = false; }
 
     private async Task CreateAnnouncement()
     {

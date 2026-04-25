@@ -72,8 +72,8 @@
 
 @if (_showEditModal && _announcement is not null)
 {
-    <div class="modal-backdrop" @onclick="CloseEditModal">
-        <div class="modal-panel" @onclick:stopPropagation>
+    <div class="modal-backdrop" @onmousedown="() => _backdropDown = true" @onclick="CloseEditModalViaBackdrop">
+        <div class="modal-panel" @onmousedown:stopPropagation @onclick:stopPropagation>
             <div class="modal-header">
                 <h2>Edit Announcement</h2>
                 <button class="modal-close" @onclick="CloseEditModal">×</button>
@@ -108,8 +108,8 @@
 
 @if (_showDeleteConfirm)
 {
-    <div class="modal-backdrop" @onclick="() => _showDeleteConfirm = false">
-        <div class="modal-panel modal-panel--narrow" @onclick:stopPropagation>
+    <div class="modal-backdrop" @onmousedown="() => _backdropDown = true" @onclick="CloseDeleteConfirmViaBackdrop">
+        <div class="modal-panel modal-panel--narrow" @onmousedown:stopPropagation @onclick:stopPropagation>
             <div class="modal-header">
                 <h2>Delete Announcement</h2>
                 <button class="modal-close" @onclick="() => _showDeleteConfirm = false">×</button>
@@ -285,6 +285,7 @@
     private UpdateAnnouncementRequest _editForm = new();
 
     private bool _showDeleteConfirm;
+    private bool _backdropDown;
     private bool _deleting;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -330,6 +331,8 @@
     }
 
     private void CloseEditModal() => _showEditModal = false;
+    private void CloseEditModalViaBackdrop() { if (_backdropDown) CloseEditModal(); _backdropDown = false; }
+    private void CloseDeleteConfirmViaBackdrop() { if (_backdropDown) _showDeleteConfirm = false; _backdropDown = false; }
 
     private async Task SaveEdit()
     {
