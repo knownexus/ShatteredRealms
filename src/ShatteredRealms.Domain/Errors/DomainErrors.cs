@@ -296,6 +296,25 @@ public static class DomainErrors
                                                           , (int)HttpStatusCode.Forbidden);
     }
 
+    public static class Character
+    {
+        public static readonly Error NotFound = new("Character.NotFound",
+                                                     "Character not found",
+                                                     (int)HttpStatusCode.NotFound);
+
+        public static readonly Error NotOwner = new("Character.NotOwner",
+                                                     "You do not own this character",
+                                                     (int)HttpStatusCode.Forbidden);
+
+        public static readonly Error NameRequired = new("Character.NameRequired",
+                                                        "Character name is required",
+                                                        (int)HttpStatusCode.BadRequest);
+
+        public static readonly Error NationalityRequired = new("Character.NationalityRequired",
+                                                               "Character nationality is required",
+                                                               (int)HttpStatusCode.BadRequest);
+    }
+
     public static class Wiki
     {
         public static readonly Error PageNotFound = new("Wiki.PageNotFound"

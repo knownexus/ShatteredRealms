@@ -1,0 +1,415 @@
+@page "/characters"
+@using ShatteredRealms.Application.DTOs.Characters
+@using ShatteredRealms.Domain.Shared
+@using ShatteredRealms.Web.Services
+@inject CharacterClientService CharacterService
+@inject AuthService AuthService
+@rendermode InteractiveServer
+
+<PageTitle>Characters — Shattered Realms</PageTitle>
+
+<div class="chars-page">
+
+    <div class="chars-header">
+        <div class="chars-title-group">
+            <h1 class="chars-title">Characters</h1>
+            <p class="chars-subtitle">Your in-world identities</p>
+        </div>
+        @if (_canCreate)
+        {
+            <button class="chars-btn chars-btn--primary" @onclick="ShowCreateModal">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                New Character
+            </button>
+        }
+    </div>
+
+    @if (_loading)
+    {
+        <div class="chars-loading">
+            <div class="chars-spinner"></div>
+            <span>Loading characters…</span>
+        </div>
+    }
+    else if (_error is not null)
+    {
+        <div class="chars-error">@_error</div>
+    }
+    else if (_characters.Count == 0)
+    {
+        <div class="chars-empty">
+            <svg class="chars-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <p>No characters yet.</p>
+            @if (_canCreate)
+            {
+                <button class="chars-btn chars-btn--primary" @onclick="ShowCreateModal">Create your first character</button>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="chars-grid">
+            @foreach (var c in _characters)
+            {
+                <div class="char-card">
+                    <div class="char-card__crest">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </div>
+                    <div class="char-card__body">
+                        <div class="char-card__name">@c.Name</div>
+                        <div class="char-card__nationality">@c.Nationality</div>
+                        <div class="char-card__stats">
+                            <span class="char-stat">
+                                <span class="char-stat__label">Level</span>
+                                <span class="char-stat__value">@c.Level</span>
+                            </span>
+                            <span class="char-stat">
+                                <span class="char-stat__label">XP</span>
+                                <span class="char-stat__value">@c.Experience</span>
+                            </span>
+                        </div>
+                        @if (!string.IsNullOrEmpty(c.OwnerName) && _canViewAny)
+                        {
+                            <div class="char-card__owner">Owner: @c.OwnerName</div>
+                        }
+                    </div>
+                    <div class="char-card__actions">
+                        @if (_canEdit || c.UserId == _currentUserId)
+                        {
+                            <button class="char-action-btn" title="Edit" @onclick="() => ShowEditModal(c)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                            </button>
+                        }
+                        @if (_canAssignXp)
+                        {
+                            <button class="char-action-btn char-action-btn--gold" title="Assign XP" @onclick="() => ShowXpModal(c)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                            </button>
+                        }
+                        <button class="char-action-btn char-action-btn--danger" title="Delete" @onclick="() => ShowDeleteConfirm(c)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@* ── Create Modal ─────────────────────────────────────────────────────────── *@
+@if (_showCreate)
+{
+    <div class="modal-backdrop" @onclick="CloseCreateViaBackdrop" @onmousedown="() => _createBackdropDown = true">
+        <div class="modal-panel" @onclick:stopPropagation @onmousedown:stopPropagation>
+            <div class="modal-header">
+                <h2 class="modal-title">New Character</h2>
+                <button class="modal-close" @onclick="CloseCreate">✕</button>
+            </div>
+            <div class="modal-body">
+                @if (_createError is not null)
+                {
+                    <div class="form-error-banner">@_createError</div>
+                }
+                <div class="form-group">
+                    <label class="form-label">Name</label>
+                    <input class="form-input" @bind="_createForm.Name" placeholder="Character name" maxlength="128" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nationality</label>
+                    <input class="form-input" @bind="_createForm.Nationality" placeholder="e.g. Norman, Saxon, Viking…" maxlength="128" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="chars-btn chars-btn--ghost" @onclick="CloseCreate">Cancel</button>
+                <button class="chars-btn chars-btn--primary" @onclick="CreateCharacter" disabled="@_saving">
+                    @(_saving ? "Creating…" : "Create")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@* ── Edit Modal ───────────────────────────────────────────────────────────── *@
+@if (_showEdit && _editTarget is not null)
+{
+    <div class="modal-backdrop" @onclick="CloseEditViaBackdrop" @onmousedown="() => _editBackdropDown = true">
+        <div class="modal-panel" @onclick:stopPropagation @onmousedown:stopPropagation>
+            <div class="modal-header">
+                <h2 class="modal-title">Edit Character</h2>
+                <button class="modal-close" @onclick="CloseEdit">✕</button>
+            </div>
+            <div class="modal-body">
+                @if (_editError is not null)
+                {
+                    <div class="form-error-banner">@_editError</div>
+                }
+                <div class="form-group">
+                    <label class="form-label">Name</label>
+                    <input class="form-input" @bind="_editForm.Name" placeholder="Character name" maxlength="128" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nationality</label>
+                    <input class="form-input" @bind="_editForm.Nationality" placeholder="Nationality" maxlength="128" />
+                </div>
+                @if (_canEdit)
+                {
+                    <div class="form-group">
+                        <label class="form-label">Level</label>
+                        <input class="form-input" type="number" min="1" @bind="_editAdminForm.Level" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Experience</label>
+                        <input class="form-input" type="number" min="0" @bind="_editAdminForm.Experience" />
+                    </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button class="chars-btn chars-btn--ghost" @onclick="CloseEdit">Cancel</button>
+                <button class="chars-btn chars-btn--primary" @onclick="SaveEdit" disabled="@_saving">
+                    @(_saving ? "Saving…" : "Save")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@* ── Assign XP Modal ─────────────────────────────────────────────────────── *@
+@if (_showXp && _xpTarget is not null)
+{
+    <div class="modal-backdrop" @onclick="CloseXpViaBackdrop" @onmousedown="() => _xpBackdropDown = true">
+        <div class="modal-panel modal-panel--sm" @onclick:stopPropagation @onmousedown:stopPropagation>
+            <div class="modal-header">
+                <h2 class="modal-title">Assign XP — @_xpTarget.Name</h2>
+                <button class="modal-close" @onclick="CloseXp">✕</button>
+            </div>
+            <div class="modal-body">
+                @if (_xpError is not null)
+                {
+                    <div class="form-error-banner">@_xpError</div>
+                }
+                <p class="xp-current">Current XP: <strong>@_xpTarget.Experience</strong> &nbsp;|&nbsp; Level: <strong>@_xpTarget.Level</strong></p>
+                <div class="form-group">
+                    <label class="form-label">XP to add</label>
+                    <input class="form-input" type="number" @bind="_xpAmount" min="-9999" max="9999" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="chars-btn chars-btn--ghost" @onclick="CloseXp">Cancel</button>
+                <button class="chars-btn chars-btn--primary" @onclick="SubmitXp" disabled="@_saving">
+                    @(_saving ? "Saving…" : "Assign XP")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@* ── Delete Confirm ───────────────────────────────────────────────────────── *@
+@if (_showDelete && _deleteTarget is not null)
+{
+    <div class="modal-backdrop" @onclick="CloseDeleteViaBackdrop" @onmousedown="() => _deleteBackdropDown = true">
+        <div class="modal-panel modal-panel--sm" @onclick:stopPropagation @onmousedown:stopPropagation>
+            <div class="modal-header">
+                <h2 class="modal-title">Delete Character?</h2>
+                <button class="modal-close" @onclick="CloseDelete">✕</button>
+            </div>
+            <div class="modal-body">
+                <p>Permanently delete <strong>@_deleteTarget.Name</strong>? This cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="chars-btn chars-btn--ghost" @onclick="CloseDelete">Cancel</button>
+                <button class="chars-btn chars-btn--danger" @onclick="ConfirmDelete" disabled="@_saving">
+                    @(_saving ? "Deleting…" : "Delete")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<CharacterDto> _characters = [];
+    private bool _loading = true;
+    private string? _error;
+    private string? _currentUserId;
+
+    private bool _canCreate;
+    private bool _canEdit;
+    private bool _canViewAny;
+    private bool _canAssignXp;
+
+    // Create modal
+    private bool _showCreate;
+    private bool _createBackdropDown;
+    private string? _createError;
+    private bool _saving;
+    private CreateCharacterRequest _createForm = new();
+
+    // Edit modal
+    private bool _showEdit;
+    private bool _editBackdropDown;
+    private string? _editError;
+    private CharacterDto? _editTarget;
+    private UpdateCharacterRequest _editForm = new();
+    private UpdateCharacterByAdminRequest _editAdminForm = new();
+
+    // XP modal
+    private bool _showXp;
+    private bool _xpBackdropDown;
+    private string? _xpError;
+    private CharacterDto? _xpTarget;
+    private int _xpAmount;
+
+    // Delete confirm
+    private bool _showDelete;
+    private bool _deleteBackdropDown;
+    private CharacterDto? _deleteTarget;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        _currentUserId = await AuthService.GetUserIdAsync();
+        _canCreate    = await AuthService.HasPermissionAsync(Claims.Permissions.Characters.CreateOwn);
+        _canEdit      = await AuthService.HasPermissionAsync(Claims.Permissions.Characters.Update);
+        _canViewAny   = await AuthService.HasPermissionAsync(Claims.Permissions.Characters.View);
+        _canAssignXp  = await AuthService.HasPermissionAsync(Claims.Permissions.Characters.AssignExperience);
+
+        await LoadCharacters();
+        StateHasChanged();
+    }
+
+    private async Task LoadCharacters()
+    {
+        _loading = true;
+        _error = null;
+        var result = await CharacterService.GetMineAsync();
+        if (result.IsFailure)
+            _error = result.Error.Message;
+        else
+            _characters = result.Value;
+        _loading = false;
+    }
+
+    // ── Create ─────────────────────────────────────────────────────────────
+
+    private void ShowCreateModal()
+    {
+        _createForm = new CreateCharacterRequest();
+        _createError = null;
+        _showCreate = true;
+    }
+
+    private void CloseCreate() => _showCreate = false;
+
+    private void CloseCreateViaBackdrop()
+    {
+        if (_createBackdropDown) { CloseCreate(); }
+        _createBackdropDown = false;
+    }
+
+    private async Task CreateCharacter()
+    {
+        _saving = true;
+        _createError = null;
+        var result = await CharacterService.CreateAsync(_createForm);
+        _saving = false;
+        if (result.IsFailure) { _createError = result.Error.Message; return; }
+        _characters.Add(result.Value);
+        _showCreate = false;
+    }
+
+    // ── Edit ────────────────────────────────────────────────────────────────
+
+    private void ShowEditModal(CharacterDto c)
+    {
+        _editTarget = c;
+        _editForm = new UpdateCharacterRequest { Name = c.Name, Nationality = c.Nationality };
+        _editAdminForm = new UpdateCharacterByAdminRequest { Name = c.Name, Nationality = c.Nationality, Level = c.Level, Experience = c.Experience };
+        _editError = null;
+        _showEdit = true;
+    }
+
+    private void CloseEdit() => _showEdit = false;
+
+    private void CloseEditViaBackdrop()
+    {
+        if (_editBackdropDown) { CloseEdit(); }
+        _editBackdropDown = false;
+    }
+
+    private async Task SaveEdit()
+    {
+        if (_editTarget is null) return;
+        _saving = true;
+        _editError = null;
+
+        Result<CharacterDto> result;
+        if (_canEdit)
+        {
+            _editAdminForm.Name = _editForm.Name;
+            _editAdminForm.Nationality = _editForm.Nationality;
+            result = await CharacterService.UpdateByAdminAsync(_editTarget.Id, _editAdminForm);
+        }
+        else
+        {
+            result = await CharacterService.UpdateOwnAsync(_editTarget.Id, _editForm);
+        }
+
+        _saving = false;
+        if (result.IsFailure) { _editError = result.Error.Message; return; }
+
+        var idx = _characters.FindIndex(c => c.Id == _editTarget.Id);
+        if (idx >= 0) _characters[idx] = result.Value;
+        _showEdit = false;
+    }
+
+    // ── XP ──────────────────────────────────────────────────────────────────
+
+    private void ShowXpModal(CharacterDto c) { _xpTarget = c; _xpAmount = 0; _xpError = null; _showXp = true; }
+    private void CloseXp() => _showXp = false;
+    private void CloseXpViaBackdrop()
+    {
+        if (_xpBackdropDown) { CloseXp(); }
+        _xpBackdropDown = false;
+    }
+
+    private async Task SubmitXp()
+    {
+        if (_xpTarget is null) return;
+        _saving = true;
+        _xpError = null;
+        var result = await CharacterService.AssignXpAsync(_xpTarget.Id, _xpAmount);
+        _saving = false;
+        if (result.IsFailure) { _xpError = result.Error.Message; return; }
+
+        var idx = _characters.FindIndex(c => c.Id == _xpTarget.Id);
+        if (idx >= 0) _characters[idx] = result.Value;
+        _showXp = false;
+    }
+
+    // ── Delete ───────────────────────────────────────────────────────────────
+
+    private void ShowDeleteConfirm(CharacterDto c) { _deleteTarget = c; _showDelete = true; }
+    private void CloseDelete() => _showDelete = false;
+    private void CloseDeleteViaBackdrop()
+    {
+        if (_deleteBackdropDown) { CloseDelete(); }
+        _deleteBackdropDown = false;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        if (_deleteTarget is null) return;
+        _saving = true;
+
+        Result result;
+        if (_canEdit && _deleteTarget.UserId != _currentUserId)
+            result = await CharacterService.DeleteAsync(_deleteTarget.Id);
+        else
+            result = await CharacterService.DeleteOwnAsync(_deleteTarget.Id);
+
+        _saving = false;
+        if (result.IsFailure) { _error = result.Error.Message; _showDelete = false; return; }
+        _characters.RemoveAll(c => c.Id == _deleteTarget.Id);
+        _showDelete = false;
+    }
+}

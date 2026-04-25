@@ -7,7 +7,7 @@
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">ShatteredRealms</a>
+        <a class="navbar-brand" href="">Shattered Realms</a>
     </div>
 </div>
 
@@ -25,6 +25,15 @@
 
         @if (_isAuthenticated)
         {
+            <div class="nav-section"><span class="nav-label">Characters</span></div>
+
+            <div class="nav-item nav-item--indented">
+                <NavLink class="nav-link" href="/characters" title="My Characters">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    <span class="nav-label">My Characters</span>
+                </NavLink>
+            </div>
+
             <div class="nav-section"><span class="nav-label">Community</span></div>
 
             <div class="nav-item nav-item--indented">

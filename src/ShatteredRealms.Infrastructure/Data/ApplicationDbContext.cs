@@ -6,6 +6,7 @@ using ShatteredRealms.Domain.Entities.ActivityLog;
 using ShatteredRealms.Domain.Entities.Announcement;
 using ShatteredRealms.Domain.Entities.Document;
 using ShatteredRealms.Domain.Entities.Event;
+using ShatteredRealms.Domain.Entities.Character;
 using ShatteredRealms.Domain.Entities.Forum;
 using ShatteredRealms.Domain.Entities.User;
 using ShatteredRealms.Domain.Entities.Wiki;
@@ -39,6 +40,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<EventAttendee> EventAttendee { get; set; }
     public DbSet<Announcement> Announcement { get; set; }
     public DbSet<Document> Document { get; set; }
+    public DbSet<Character> Character { get; set; }
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -124,6 +126,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         ConfigureEvents(builder);
         ConfigureAnnouncements(builder);
         ConfigureDocuments(builder);
+        ConfigureCharacters(builder);
 
         SeedRoles(builder);
         SeedPermissions(builder);
@@ -304,6 +307,21 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
              .HasForeignKey(d => d.UploadedById)
              .OnDelete(DeleteBehavior.Restrict);
             e.HasQueryFilter(d => !d.IsDeleted);
+        });
+    }
+
+    private static void ConfigureCharacters(ModelBuilder builder)
+    {
+        builder.Entity<Character>(e =>
+        {
+            e.ToTable("Character");
+            e.HasKey(c => c.Id);
+            e.Property(c => c.Name).IsRequired().HasMaxLength(128);
+            e.Property(c => c.Nationality).IsRequired().HasMaxLength(128);
+            e.HasOne(c => c.Owner)
+             .WithMany()
+             .HasForeignKey(c => c.UserId)
+             .OnDelete(DeleteBehavior.Cascade);
         });
     }
 
