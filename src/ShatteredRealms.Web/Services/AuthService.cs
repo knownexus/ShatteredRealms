@@ -31,12 +31,21 @@ public class AuthService
         try
         {
             var token = await _localStorage.GetItemAsync<string>("accessToken");
+            if (!string.IsNullOrEmpty(token) && IsTokenExpired(token))
+            {
+                await _localStorage.RemoveItemAsync("accessToken");
+                await _localStorage.RemoveItemAsync("refreshToken");
+                await _localStorage.RemoveItemAsync("user");
+                token = null;
+            }
             _cache.AccessToken = token;
         }
         catch
         {
             _cache.AccessToken = null;
         }
+
+        _authStateService.NotifyAuthStateChanged();
     }
 
     public async Task<(bool success, bool requiresEmailConfirmation, string? errorCode, string? errorMessage)> RegisterAsync(RegisterRequest request)
@@ -143,6 +152,17 @@ public class AuthService
     {
         if (!string.IsNullOrEmpty(_cache.AccessToken))
         {
+            if (IsTokenExpired(_cache.AccessToken))
+            {
+                _cache.AccessToken = null;
+                if (_clientLoaded)
+                {
+                    await _localStorage.RemoveItemAsync("accessToken");
+                    await _localStorage.RemoveItemAsync("refreshToken");
+                    await _localStorage.RemoveItemAsync("user");
+                }
+                return false;
+            }
             return true;
         }
 
@@ -152,8 +172,45 @@ public class AuthService
         }
 
         var token = await _localStorage.GetItemAsync<string>("accessToken");
+        if (!string.IsNullOrEmpty(token) && IsTokenExpired(token))
+        {
+            await _localStorage.RemoveItemAsync("accessToken");
+            await _localStorage.RemoveItemAsync("refreshToken");
+            await _localStorage.RemoveItemAsync("user");
+            token = null;
+        }
         _cache.AccessToken = token;
         return !string.IsNullOrEmpty(token);
+    }
+
+    private static bool IsTokenExpired(string token)
+    {
+        try
+        {
+            var parts = token.Split('.');
+            if (parts.Length != 3) return true;
+
+            var payload = parts[1];
+            // base64url → base64
+            payload = payload.Replace('-', '+').Replace('_', '/');
+            switch (payload.Length % 4)
+            {
+                case 2: payload += "=="; break;
+                case 3: payload += "=";  break;
+            }
+
+            var json = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(payload));
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            if (!doc.RootElement.TryGetProperty("exp", out var expProp)) return true;
+
+            var exp = expProp.GetInt64();
+            var expiry = DateTimeOffset.FromUnixTimeSeconds(exp);
+            return expiry <= DateTimeOffset.UtcNow;
+        }
+        catch
+        {
+            return true;
+        }
     }
 
     public async Task<UserDto?> GetCurrentUserAsync()
