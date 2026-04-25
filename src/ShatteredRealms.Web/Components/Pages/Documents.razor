@@ -4,6 +4,7 @@
 @inject DocumentClientService DocumentService
 @inject AuthService AuthService
 @inject NavigationManager Navigation
+@inject IJSRuntime JS
 @rendermode InteractiveServer
 
 <PageTitle>Documents — ShatteredRealms</PageTitle>
@@ -77,6 +78,16 @@
                             <td class="doc-uploader">@doc.UploadedByName</td>
                             <td class="doc-date">@doc.UploadedAt.ToString("MMM d, yyyy")</td>
                             <td class="doc-actions">
+                                <button class="btn-view" @onclick="() => ViewDocument(doc)">
+                                    @if (doc.ContentType == "application/pdf")
+                                    {
+                                        <span>View</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Preview</span>
+                                    }
+                                </button>
                                 <a class="btn-download" href="@DocumentService.GetDownloadUrl(doc.Id)" target="_blank" download="@doc.OriginalFileName">
                                     ↓ Download
                                 </a>
@@ -92,6 +103,47 @@
         </div>
     }
 </div>
+
+@if (_showViewer)
+{
+    <div class="viewer-backdrop" @onmousedown="() => _viewerBackdropDown = true" @onclick="CloseViewerViaBackdrop">
+        <div class="viewer-panel" @onmousedown:stopPropagation @onclick:stopPropagation>
+            <div class="viewer-header">
+                <span class="viewer-title">@_viewerTitle</span>
+                <button class="viewer-close" @onclick="CloseViewer">×</button>
+            </div>
+            <div class="viewer-body">
+                @if (_viewerLoading)
+                {
+                    <div class="viewer-loading">
+                        <div class="loading-orb"></div>
+                        <span>Loading document…</span>
+                    </div>
+                }
+                else if (!string.IsNullOrEmpty(_viewerError))
+                {
+                    <div class="viewer-error">
+                        <p>@_viewerError</p>
+                    </div>
+                }
+                else if (_viewerContentType == "application/pdf" && _viewerBlobUrl is not null)
+                {
+                    <iframe class="doc-iframe" src="@_viewerBlobUrl" title="@_viewerTitle"></iframe>
+                }
+                else
+                {
+                    <div class="viewer-no-preview">
+                        <div class="no-preview-icon">📄</div>
+                        <p>Browser preview is not available for this file type.</p>
+                        <a class="btn-download" href="@(_viewerDownloadUrl ?? "")" target="_blank" download="@_viewerTitle">
+                            ↓ Download to view
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
 
 @if (_deleteTarget is not null)
 {
@@ -192,6 +244,64 @@
     .doc-type, .doc-size, .doc-uploader, .doc-date { color: var(--text-muted); white-space: nowrap; }
     .doc-actions { display: flex; align-items: center; gap: 0.6rem; white-space: nowrap; }
 
+    .btn-view {
+        padding: 0.3rem 0.85rem;
+        border: 1px solid rgba(201,168,76,0.3);
+        background: transparent; color: var(--gold);
+        border-radius: 5px; font-family: var(--font-body); font-size: 0.8rem;
+        cursor: pointer; transition: background 0.15s;
+        white-space: nowrap;
+    }
+    .btn-view:hover { background: rgba(201,168,76,0.1); }
+
+    /* Document viewer modal */
+    .viewer-backdrop {
+        position: fixed; inset: 0;
+        background: rgba(0,0,0,0.75);
+        display: flex; align-items: center; justify-content: center;
+        z-index: 1000; padding: 1rem;
+    }
+    .viewer-panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        width: min(1100px, 100%);
+        height: min(90vh, 900px);
+        display: flex; flex-direction: column;
+        overflow: hidden;
+    }
+    .viewer-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 0.9rem 1.25rem;
+        border-bottom: 1px solid var(--border);
+        background: rgba(255,255,255,0.02);
+        flex-shrink: 0;
+    }
+    .viewer-title {
+        font-family: var(--font-body); font-size: 0.9rem; color: var(--text);
+        min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .viewer-close {
+        background: none; border: none; color: var(--text-muted);
+        font-size: 1.4rem; cursor: pointer; line-height: 1; flex-shrink: 0; padding: 0 0.25rem;
+        transition: color 0.15s;
+    }
+    .viewer-close:hover { color: var(--text); }
+    .viewer-body { flex: 1; min-height: 0; position: relative; }
+
+    .doc-iframe {
+        width: 100%; height: 100%; border: none; display: block;
+        background: #fff;
+    }
+
+    .viewer-loading, .viewer-error, .viewer-no-preview {
+        display: flex; flex-direction: column; align-items: center;
+        justify-content: center; gap: 1rem;
+        height: 100%; padding: 2rem;
+        font-family: var(--font-body); color: var(--text-muted); text-align: center;
+    }
+    .no-preview-icon { font-size: 4rem; }
+
     .btn-download {
         padding: 0.3rem 0.85rem;
         border: 1px solid rgba(201,168,76,0.3);
@@ -264,6 +374,15 @@
     private bool _deleting;
     private bool _backdropDown;
 
+    private bool _showViewer;
+    private bool _viewerLoading;
+    private string? _viewerBlobUrl;
+    private string? _viewerTitle;
+    private string? _viewerContentType;
+    private string? _viewerDownloadUrl;
+    private string? _viewerError;
+    private bool _viewerBackdropDown;
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
@@ -330,6 +449,51 @@
         }
 
         StateHasChanged();
+    }
+
+    private async Task ViewDocument(DocumentDto doc)
+    {
+        _viewerTitle       = doc.OriginalFileName;
+        _viewerContentType = doc.ContentType;
+        _viewerDownloadUrl = DocumentService.GetDownloadUrl(doc.Id);
+        _viewerBlobUrl     = null;
+        _viewerError       = null;
+        _viewerLoading     = true;
+        _showViewer        = true;
+        StateHasChanged();
+
+        if (doc.ContentType == "application/pdf")
+        {
+            var result = await DocumentService.GetBytesAsync(doc.Id);
+            if (result.IsSuccess)
+            {
+                var base64 = Convert.ToBase64String(result.Value.Bytes);
+                _viewerBlobUrl = await JS.InvokeAsync<string>("SRViewer.createBlobUrl", base64, result.Value.ContentType);
+            }
+            else
+            {
+                _viewerError = result.Error.Message;
+            }
+        }
+
+        _viewerLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task CloseViewer()
+    {
+        _showViewer = false;
+        if (_viewerBlobUrl is not null)
+        {
+            await JS.InvokeVoidAsync("SRViewer.revokeBlobUrl", _viewerBlobUrl);
+            _viewerBlobUrl = null;
+        }
+    }
+
+    private async Task CloseViewerViaBackdrop()
+    {
+        if (_viewerBackdropDown) await CloseViewer();
+        _viewerBackdropDown = false;
     }
 
     private void ConfirmDelete(DocumentDto doc)

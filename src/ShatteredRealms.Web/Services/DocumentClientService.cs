@@ -47,6 +47,20 @@ public class DocumentClientService
         return Result.Failure<DocumentDto>(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to upload document", (int)response.StatusCode));
     }
 
+    public async Task<Result<(byte[] Bytes, string ContentType)>> GetBytesAsync(int id)
+    {
+        var response = await _httpClient.GetAsync($"api/documents/{id}/download");
+        if (response.IsSuccessStatusCode)
+        {
+            var bytes = await response.Content.ReadAsByteArrayAsync();
+            var ct = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
+            return Result.Success((bytes, ct));
+        }
+
+        var p = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        return Result.Failure<(byte[], string)>(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to load document", (int)response.StatusCode));
+    }
+
     public async Task<Result> DeleteAsync(int id)
     {
         var response = await _httpClient.DeleteAsync($"api/documents/{id}");
