@@ -749,6 +749,10 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 .form-floating > .form-control-plaintext:focus::placeholder,
 .form-floating > .form-control:focus::placeholder { text-align: start; }
 
-.row { display: flex; flex-wrap: wrap; margin-left: -0.75rem; margin-right: -0.75rem; }
-.col-md-4 { flex: 0 0 33.333%; max-width: 33.333%; padding: 0 0.75rem; }
-@media (max-width: 768px) { .col-md-4 { flex: 0 0 100%; max-width: 100%; } }
+.row { display: flex; flex-wrap: wrap; margin-left: -0.75rem; margin-right: -0.75rem; min-width: 0; }
+.col-md-4 { flex: 0 0 33.333%; max-width: 33.333%; padding: 0 0.75rem; min-width: 0; overflow-x: auto; }
+.col-md-6 { flex: 0 0 50%;      max-width: 50%;      padding: 0 0.75rem; min-width: 0; }
+.col-12   { flex: 0 0 100%;     max-width: 100%;     padding: 0 0.75rem; min-width: 0; }
+/* col breakpoints account for 250px sidebar at ≥641px viewport */
+@media (max-width: 900px) { .col-md-4 { flex: 0 0 50%;   max-width: 50%; } }
+@media (max-width: 640px) { .col-md-4, .col-md-6 { flex: 0 0 100%; max-width: 100%; } }

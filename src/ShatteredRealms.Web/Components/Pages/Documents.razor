@@ -16,16 +16,9 @@
         </div>
         @if (_canUpload)
         {
-            <label class="btn-gold-outline upload-label">
-                @if (_uploading)
-                {
-                    <span>Uploading…</span>
-                }
-                else
-                {
-                    <span>↑ Upload Document</span>
-                    <InputFile OnChange="OnFileSelected" accept=".pdf,.docx" style="display:none" />
-                }
+            <label class="btn-gold-outline upload-label @(_uploading ? "upload-label--busy" : "")">
+                <span>@(_uploading ? "Uploading…" : "↑ Upload Document")</span>
+                <InputFile OnChange="OnFileSelected" accept=".pdf,.docx" style="display:none" />
             </label>
         }
     </div>
@@ -142,6 +135,7 @@
     }
     .btn-gold-outline:hover { background: var(--gold); color: #07090f; }
     .upload-label { cursor: pointer; }
+    .upload-label--busy { opacity: 0.65; pointer-events: none; }
 
     .alert { padding: 0.75rem 1rem; border-radius: 6px; font-family: var(--font-body); font-size: 0.88rem; margin-bottom: 1rem; }
     .alert-danger { background: rgba(255,69,58,0.12); border: 1px solid rgba(255,69,58,0.3); color: #ff453a; }
@@ -317,7 +311,8 @@
         }
 
         _uploading = true;
-        StateHasChanged();
+        // No StateHasChanged() here — re-rendering before the stream is read removes
+        // the InputFile from the DOM, which breaks the underlying JS file interop.
 
         await using var stream = file.OpenReadStream(maxAllowedSize: 20 * 1024 * 1024);
         var result = await DocumentService.UploadAsync(stream, file.Name, file.ContentType, file.Size);
