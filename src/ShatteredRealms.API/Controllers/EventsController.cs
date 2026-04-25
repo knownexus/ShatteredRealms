@@ -5,6 +5,7 @@ using ShatteredRealms.API.Authorization;
 using ShatteredRealms.API.Extensions;
 using ShatteredRealms.Application.DTOs.Events;
 using ShatteredRealms.Application.Features.Events.Commands;
+using ShatteredRealms.Application.DTOs.Events;
 using ShatteredRealms.Application.Features.Events.Queries;
 using ShatteredRealms.Application.Interfaces;
 using ShatteredRealms.Domain.Shared;
@@ -61,6 +62,16 @@ public sealed class EventsController : ControllerBase
     public async Task<ActionResult<EventDto>> GetById(int id, CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(new GetEventByIdQuery(id, User.GetUserId()), cancellationToken);
+        return result.IsFailure
+            ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)
+            : Ok(result.Value);
+    }
+
+    [RequirePermission(Claims.Permissions.Events.ManageAttendees)]
+    [HttpGet("{id:int}/attendees")]
+    public async Task<ActionResult<List<EventAttendeeDto>>> GetAttendees(int id, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetEventAttendeesQuery(id), cancellationToken);
         return result.IsFailure
             ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)
             : Ok(result.Value);

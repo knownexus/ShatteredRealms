@@ -172,6 +172,49 @@
                             }
                         </div>
                     }
+
+                    @if (_canManageAttendees)
+                    {
+                        <div class="sidebar-card attendees-card">
+                            <div class="sidebar-card-header">
+                                Attendees
+                                @if (_attendees is not null)
+                                {
+                                    <span class="attendee-count-badge">@_attendees.Count</span>
+                                }
+                            </div>
+                            @if (_attendeesLoading)
+                            {
+                                <div class="attendees-loading">
+                                    <div class="loading-orb loading-orb--sm"></div>
+                                    <span>Loading…</span>
+                                </div>
+                            }
+                            else if (!string.IsNullOrEmpty(_attendeesError))
+                            {
+                                <div class="alert alert-danger mt-2">@_attendeesError</div>
+                            }
+                            else if (_attendees is not null && _attendees.Count == 0)
+                            {
+                                <p class="attendees-empty">No one has signed up yet.</p>
+                            }
+                            else if (_attendees is not null)
+                            {
+                                <ul class="attendees-list">
+                                    @foreach (var a in _attendees)
+                                    {
+                                        <li class="attendee-row">
+                                            <div class="attendee-avatar">@(a.UserName.Length > 0 ? a.UserName[0].ToString().ToUpper() : "?")</div>
+                                            <div class="attendee-info">
+                                                <span class="attendee-name">@a.UserName</span>
+                                                <span class="attendee-since">since @a.RegisteredAt.ToString("MMM d")</span>
+                                            </div>
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                        </div>
+                    }
                 </aside>
             </div>
         </div>
@@ -394,6 +437,46 @@
     .capacity-label { font-family: var(--font-body); font-size: 0.8rem; color: var(--text-muted); }
     .capacity-unlimited { font-family: var(--font-body); font-size: 0.85rem; color: var(--text-muted); }
 
+    .attendees-card .sidebar-card-header {
+        display: flex; align-items: center; justify-content: space-between;
+    }
+    .attendee-count-badge {
+        background: rgba(201,168,76,0.15); border: 1px solid rgba(201,168,76,0.3);
+        color: var(--gold); border-radius: 20px; padding: 0.1rem 0.55rem;
+        font-family: var(--font-body); font-size: 0.72rem; font-weight: 600;
+    }
+    .attendees-loading {
+        display: flex; align-items: center; gap: 0.5rem;
+        font-family: var(--font-body); font-size: 0.82rem; color: var(--text-muted);
+        padding: 0.5rem 0;
+    }
+    .loading-orb--sm { width: 14px; height: 14px; border-width: 2px; }
+    .attendees-empty {
+        font-family: var(--font-body); font-size: 0.83rem; color: var(--text-muted);
+        margin: 0; font-style: italic;
+    }
+    .attendees-list {
+        list-style: none; margin: 0; padding: 0;
+        display: flex; flex-direction: column; gap: 0.6rem;
+        max-height: 340px; overflow-y: auto;
+    }
+    .attendee-row {
+        display: flex; align-items: center; gap: 0.65rem;
+    }
+    .attendee-avatar {
+        width: 30px; height: 30px; border-radius: 50%;
+        background: rgba(201,168,76,0.15); border: 1px solid rgba(201,168,76,0.25);
+        color: var(--gold); font-family: var(--font-heading); font-size: 0.75rem;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+    .attendee-info { display: flex; flex-direction: column; min-width: 0; }
+    .attendee-name {
+        font-family: var(--font-body); font-size: 0.85rem; color: var(--text);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .attendee-since { font-family: var(--font-body); font-size: 0.72rem; color: var(--text-muted); }
+
     .file-input {
         width: 100%; font-family: var(--font-body); font-size: 0.82rem;
         color: var(--text-muted);
@@ -488,6 +571,11 @@
     private bool _canUpdate;
     private bool _canDelete;
     private bool _canRegister;
+    private bool _canManageAttendees;
+
+    private List<EventAttendeeDto>? _attendees;
+    private bool _attendeesLoading;
+    private string? _attendeesError;
 
     private bool _toggling;
     private bool _uploadingBanner;
@@ -511,11 +599,16 @@
             return;
         }
 
-        _canUpdate   = await AuthService.HasPermissionAsync(Domain.Shared.Claims.Permissions.Events.Update);
-        _canDelete   = await AuthService.HasPermissionAsync(Domain.Shared.Claims.Permissions.Events.Delete);
-        _canRegister = await AuthService.HasPermissionAsync(Domain.Shared.Claims.Permissions.Events.Register);
+        _canUpdate          = await AuthService.HasPermissionAsync(Domain.Shared.Claims.Permissions.Events.Update);
+        _canDelete          = await AuthService.HasPermissionAsync(Domain.Shared.Claims.Permissions.Events.Delete);
+        _canRegister        = await AuthService.HasPermissionAsync(Domain.Shared.Claims.Permissions.Events.Register);
+        _canManageAttendees = await AuthService.HasPermissionAsync(Domain.Shared.Claims.Permissions.Events.ManageAttendees);
 
         await LoadEvent();
+
+        if (_canManageAttendees)
+            await LoadAttendees();
+
         StateHasChanged();
     }
 
@@ -529,6 +622,17 @@
         else _error = result.Error.Message;
     }
 
+    private async Task LoadAttendees()
+    {
+        _attendeesLoading = true;
+        _attendeesError   = null;
+        var result = await EventService.GetAttendeesAsync(Id);
+        _attendeesLoading = false;
+
+        if (result.IsSuccess) _attendees = result.Value;
+        else _attendeesError = result.Error.Message;
+    }
+
     private async Task Register()
     {
         _actionError = null;
@@ -536,7 +640,11 @@
         var result = await EventService.RegisterAsync(Id);
         _toggling = false;
 
-        if (result.IsSuccess) await LoadEvent();
+        if (result.IsSuccess)
+        {
+            await LoadEvent();
+            if (_canManageAttendees) await LoadAttendees();
+        }
         else _actionError = result.Error.Message;
 
         StateHasChanged();
@@ -549,7 +657,11 @@
         var result = await EventService.CancelRegistrationAsync(Id);
         _toggling = false;
 
-        if (result.IsSuccess) await LoadEvent();
+        if (result.IsSuccess)
+        {
+            await LoadEvent();
+            if (_canManageAttendees) await LoadAttendees();
+        }
         else _actionError = result.Error.Message;
 
         StateHasChanged();

@@ -54,6 +54,16 @@ public class EventClientService
         return Result.Failure<List<EventDto>>(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to load your events", (int)response.StatusCode));
     }
 
+    public async Task<Result<List<EventAttendeeDto>>> GetAttendeesAsync(int id)
+    {
+        var response = await _httpClient.GetAsync($"api/events/{id}/attendees");
+        if (response.IsSuccessStatusCode)
+            return Result.Success(await response.Content.ReadFromJsonAsync<List<EventAttendeeDto>>() ?? []);
+
+        var p = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        return Result.Failure<List<EventAttendeeDto>>(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to load attendees", (int)response.StatusCode));
+    }
+
     public async Task<Result<EventDto>> CreateAsync(CreateEventRequest request)
     {
         var response = await _httpClient.PostAsJsonAsync("api/events", request);
