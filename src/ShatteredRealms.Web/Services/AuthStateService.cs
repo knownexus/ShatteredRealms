@@ -10,12 +10,13 @@ public class AuthStateService
 
     public void NotifyAuthStateChanged()
     {
-        if (OnAuthStateChanged != null)
+        if (OnAuthStateChanged == null) return;
+
+        foreach (var handler in OnAuthStateChanged.GetInvocationList().Cast<Func<Task>>())
         {
-            foreach (var handler in OnAuthStateChanged.GetInvocationList().Cast<Func<Task>>())
-            {
-                _ = handler.Invoke();
-            }
+            _ = handler.Invoke().ContinueWith(
+                t => { /* swallow — component may already be disposed */ },
+                TaskContinuationOptions.OnlyOnFaulted);
         }
     }
 }

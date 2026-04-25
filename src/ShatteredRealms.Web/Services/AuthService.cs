@@ -31,21 +31,17 @@ public class AuthService
         try
         {
             var token = await _localStorage.GetItemAsync<string>("accessToken");
-            if (!string.IsNullOrEmpty(token) && IsTokenExpired(token))
-            {
-                await _localStorage.RemoveItemAsync("accessToken");
-                await _localStorage.RemoveItemAsync("refreshToken");
-                await _localStorage.RemoveItemAsync("user");
-                token = null;
-            }
-            _cache.AccessToken = token;
+            // Only cache valid tokens; expired ones stay in localStorage until
+            // IsAuthenticatedAsync cleans them up inside a proper async context.
+            _cache.AccessToken = (!string.IsNullOrEmpty(token) && !IsTokenExpired(token)) ? token : null;
         }
         catch
         {
             _cache.AccessToken = null;
         }
 
-        _authStateService.NotifyAuthStateChanged();
+        // Notify on a new task so we don't re-enter the current Blazor dispatch context.
+        _ = Task.Run(() => _authStateService.NotifyAuthStateChanged());
     }
 
     public async Task<(bool success, bool requiresEmailConfirmation, string? errorCode, string? errorMessage)> RegisterAsync(RegisterRequest request)
