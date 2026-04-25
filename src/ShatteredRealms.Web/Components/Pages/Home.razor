@@ -12,13 +12,13 @@
 
 @if (_latestAnnouncement is not null && !_announcementDismissed)
 {
-    <div class="ann-banner">
+    <div class="ann-banner" @onclick="GoToAnnouncement">
         <div class="ann-banner__inner">
             <span class="ann-banner__label">Announcement</span>
-            <button class="ann-banner__title" @onclick="GoToAnnouncement">@_latestAnnouncement.Title</button>
+            <span class="ann-banner__title">@_latestAnnouncement.Title</span>
             <span class="ann-banner__date">@_latestAnnouncement.CreatedAt.ToString("MMM d")</span>
         </div>
-        <button class="ann-banner__close" @onclick="DismissAnnouncement" aria-label="Dismiss">×</button>
+        <button class="ann-banner__close" @onclick="DismissAnnouncement" @onclick:stopPropagation aria-label="Dismiss">×</button>
     </div>
 }
 
@@ -41,8 +41,8 @@
     @if (_isAuthenticated)
     {
         <div class="home-hero__actions">
-            <a href="/forum" class="btn btn-primary">Enter Forum</a>
-            <a href="/wiki" class="btn btn-secondary">Browse Wiki</a>
+            <a href="/my-events" class="btn btn-primary">My Events</a>
+            <a href="/announcements" class="btn btn-secondary">Announcements</a>
         </div>
     }
     else
@@ -114,7 +114,9 @@
         padding: 0.65rem 1.5rem;
         font-family: 'Crimson Pro', Georgia, serif;
         animation: slide-down 0.3s ease;
+        cursor: pointer;
     }
+    .ann-banner:hover { background: rgba(201,168,76,0.12); }
     @@keyframes slide-down {
         from { transform: translateY(-100%); opacity: 0; }
         to   { transform: translateY(0);    opacity: 1; }
@@ -137,14 +139,13 @@
         flex-shrink: 0;
     }
     .ann-banner__title {
-        background: none; border: none; padding: 0;
         font-family: 'Crimson Pro', Georgia, serif;
         font-size: 0.95rem; color: #d8cdb8;
-        cursor: pointer; text-align: left;
+        cursor: pointer;
         transition: color 0.15s;
         min-width: 0;
     }
-    .ann-banner__title:hover { color: #c9a84c; }
+    .ann-banner:hover .ann-banner__title { color: #c9a84c; }
     .ann-banner__date {
         font-size: 0.78rem; color: #5e7189;
         white-space: nowrap; flex-shrink: 0;
