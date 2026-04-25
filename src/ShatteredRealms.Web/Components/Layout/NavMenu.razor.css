@@ -41,6 +41,9 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
     text-decoration: none;
+    transition: opacity 0.25s ease, width 0.25s ease;
+    overflow: hidden;
+    white-space: nowrap;
 }
 
 /* ── Nav scrollable area ─────────────────────────────────── */
@@ -150,6 +153,14 @@
 .nav-item ::deep a.active .nav-icon,
 .nav-item ::deep button.nav-link:hover .nav-icon {
     opacity: 1;
+}
+
+/* ── Nav label (hidden when sidebar collapsed) ───────────── */
+
+.nav-label {
+    overflow: hidden;
+    white-space: nowrap;
+    transition: opacity 0.25s ease, width 0.25s ease;
 }
 
 /* ── Nav section divider ─────────────────────────────────── */
