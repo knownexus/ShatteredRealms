@@ -9,13 +9,13 @@ using ShatteredRealms.Infrastructure.Data;
 
 namespace ShatteredRealms.Infrastructure.Handlers.Characters;
 
-public sealed class AssignExperienceCommandHandler : IRequestHandler<AssignExperienceCommand, Result<CharacterDto>>
+public sealed class AssignPositionCommandHandler : IRequestHandler<AssignPositionCommand, Result<CharacterDto>>
 {
     private readonly ApplicationDbContext _context;
 
-    public AssignExperienceCommandHandler(ApplicationDbContext context) => _context = context;
+    public AssignPositionCommandHandler(ApplicationDbContext context) => _context = context;
 
-    public async Task<Result<CharacterDto>> Handle(AssignExperienceCommand request, CancellationToken cancellationToken)
+    public async Task<Result<CharacterDto>> Handle(AssignPositionCommand request, CancellationToken cancellationToken)
     {
         var character = await _context.Character
             .Include(c => c.Owner)
@@ -25,17 +25,29 @@ public sealed class AssignExperienceCommandHandler : IRequestHandler<AssignExper
         if (character is null)
             return Result.Failure<CharacterDto>(DomainErrors.Character.NotFound);
 
-        character.Experience = Math.Max(0, character.Experience + request.XpToAdd);
+        if (request.PositionId.HasValue)
+        {
+            var position = await _context.Position
+                .FirstOrDefaultAsync(p => p.Id == request.PositionId.Value, cancellationToken);
 
-        var description = string.IsNullOrWhiteSpace(request.Note)
-            ? $"Assigned {request.XpToAdd} XP to character '{character.Name}' (new total: {character.Experience})"
-            : $"Assigned {request.XpToAdd} XP to character '{character.Name}' (new total: {character.Experience}) — {request.Note}";
+            if (position is null)
+                return Result.Failure<CharacterDto>(DomainErrors.Position.NotFound);
 
+            character.PositionId = position.Id;
+            character.Position   = position;
+        }
+        else
+        {
+            character.PositionId = null;
+            character.Position   = null;
+        }
+
+        var positionName = character.Position?.Name ?? "none";
         _context.ActivityLog.Add(new ActivityLog
         {
             Id          = Guid.NewGuid(),
             UserId      = request.RequestingUserId,
-            Description = description,
+            Description = $"Assigned position '{positionName}' to character '{character.Name}'",
             Date        = DateTime.UtcNow,
         });
 

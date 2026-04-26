@@ -8,5 +8,6 @@ public sealed record UpdateOwnCharacterCommand(
     int CharacterId,
     string RequestingUserId,
     string Name,
-    string Nationality
+    string Nationality,
+    string Faction
 ) : IRequest<Result<CharacterDto>>;

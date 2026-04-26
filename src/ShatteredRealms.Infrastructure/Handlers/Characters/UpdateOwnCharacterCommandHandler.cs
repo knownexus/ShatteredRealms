@@ -22,8 +22,12 @@ public sealed class UpdateOwnCharacterCommandHandler : IRequestHandler<UpdateOwn
         if (string.IsNullOrWhiteSpace(request.Nationality))
             return Result.Failure<CharacterDto>(DomainErrors.Character.NationalityRequired);
 
+        if (string.IsNullOrWhiteSpace(request.Faction))
+            return Result.Failure<CharacterDto>(DomainErrors.Character.FactionRequired);
+
         var character = await _context.Character
             .Include(c => c.Owner)
+            .Include(c => c.Position)
             .FirstOrDefaultAsync(c => c.Id == request.CharacterId, cancellationToken);
 
         if (character is null)
@@ -34,6 +38,7 @@ public sealed class UpdateOwnCharacterCommandHandler : IRequestHandler<UpdateOwn
 
         character.Name        = request.Name.Trim();
         character.Nationality = request.Nationality.Trim();
+        character.Faction     = request.Faction.Trim();
 
         await _context.SaveChangesAsync(cancellationToken);
         return Result.Success(CreateCharacterCommandHandler.MapToDto(character, null));

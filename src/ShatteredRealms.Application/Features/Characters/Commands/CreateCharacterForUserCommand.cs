@@ -4,11 +4,10 @@ using ShatteredRealms.Domain.Shared;
 
 namespace ShatteredRealms.Application.Features.Characters.Commands;
 
-public sealed record UpdateCharacterCommand(
-    int CharacterId,
+public sealed record CreateCharacterForUserCommand(
+    string TargetUserId,
     string Name,
     string Nationality,
     string Faction,
-    int Level,
-    int Experience
+    string RequestingUserId
 ) : IRequest<Result<CharacterDto>>;

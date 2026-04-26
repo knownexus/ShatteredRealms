@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ShatteredRealms.Application.Features.Characters.Commands;
+using ShatteredRealms.Domain.Entities.ActivityLog;
 using ShatteredRealms.Domain.Errors;
 using ShatteredRealms.Domain.Shared;
 using ShatteredRealms.Infrastructure.Data;
@@ -22,6 +23,15 @@ public sealed class DeleteCharacterCommandHandler : IRequestHandler<DeleteCharac
             return Result.Failure(DomainErrors.Character.NotFound);
 
         _context.Character.Remove(character);
+
+        _context.ActivityLog.Add(new ActivityLog
+        {
+            Id          = Guid.NewGuid(),
+            UserId      = request.RequestingUserId,
+            Description = $"Deleted character '{character.Name}' (id: {character.Id})",
+            Date        = DateTime.UtcNow,
+        });
+
         await _context.SaveChangesAsync(cancellationToken);
         return Result.Success();
     }

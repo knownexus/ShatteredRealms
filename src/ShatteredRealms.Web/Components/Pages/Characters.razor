@@ -1,5 +1,6 @@
 @page "/characters"
 @using ShatteredRealms.Application.DTOs.Characters
+@using ShatteredRealms.Application.DTOs.Positions
 @using ShatteredRealms.Domain.Shared
 @using ShatteredRealms.Web.Services
 @inject CharacterClientService CharacterService
@@ -58,6 +59,14 @@
                     <div class="char-card__body">
                         <div class="char-card__name">@c.Name</div>
                         <div class="char-card__nationality">@c.Nationality</div>
+                        @if (!string.IsNullOrEmpty(c.Faction))
+                        {
+                            <div class="char-card__faction">@c.Faction</div>
+                        }
+                        @if (!string.IsNullOrEmpty(c.PositionName))
+                        {
+                            <div class="char-card__position">@c.PositionName</div>
+                        }
                         <div class="char-card__stats">
                             <span class="char-stat">
                                 <span class="char-stat__label">Level</span>
@@ -84,6 +93,12 @@
                         {
                             <button class="char-action-btn char-action-btn--gold" title="Assign XP" @onclick="() => ShowXpModal(c)">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                            </button>
+                        }
+                        @if (_canAssignPosition)
+                        {
+                            <button class="char-action-btn char-action-btn--teal" title="Assign Position" @onclick="() => ShowPositionModal(c)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                             </button>
                         }
                         <button class="char-action-btn char-action-btn--danger" title="Delete" @onclick="() => ShowDeleteConfirm(c)">
@@ -118,6 +133,10 @@
                     <label class="form-label">Nationality</label>
                     <input class="form-input" @bind="_createForm.Nationality" placeholder="e.g. Norman, Saxon, Viking…" maxlength="128" />
                 </div>
+                <div class="form-group">
+                    <label class="form-label">Faction</label>
+                    <input class="form-input" @bind="_createForm.Faction" placeholder="e.g. Kingdom of England, Norse Clan…" maxlength="128" />
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="chars-btn chars-btn--ghost" @onclick="CloseCreate">Cancel</button>
@@ -150,6 +169,10 @@
                 <div class="form-group">
                     <label class="form-label">Nationality</label>
                     <input class="form-input" @bind="_editForm.Nationality" placeholder="Nationality" maxlength="128" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Faction</label>
+                    <input class="form-input" @bind="_editForm.Faction" placeholder="Faction" maxlength="128" />
                 </div>
                 @if (_canEdit)
                 {
@@ -192,11 +215,50 @@
                     <label class="form-label">XP to add</label>
                     <input class="form-input" type="number" @bind="_xpAmount" min="-9999" max="9999" />
                 </div>
+                <div class="form-group">
+                    <label class="form-label">Note (optional)</label>
+                    <input class="form-input" @bind="_xpNote" placeholder="e.g. Battle of Hastings event" maxlength="256" />
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="chars-btn chars-btn--ghost" @onclick="CloseXp">Cancel</button>
                 <button class="chars-btn chars-btn--primary" @onclick="SubmitXp" disabled="@_saving">
                     @(_saving ? "Saving…" : "Assign XP")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@* ── Assign Position Modal ───────────────────────────────────────────────── *@
+@if (_showPosition && _positionTarget is not null)
+{
+    <div class="modal-backdrop" @onclick="ClosePositionViaBackdrop" @onmousedown="() => _positionBackdropDown = true">
+        <div class="modal-panel modal-panel--sm" @onclick:stopPropagation @onmousedown:stopPropagation>
+            <div class="modal-header">
+                <h2 class="modal-title">Assign Position — @_positionTarget.Name</h2>
+                <button class="modal-close" @onclick="ClosePosition">✕</button>
+            </div>
+            <div class="modal-body">
+                @if (_positionError is not null)
+                {
+                    <div class="form-error-banner">@_positionError</div>
+                }
+                <div class="form-group">
+                    <label class="form-label">Position</label>
+                    <select class="form-input" @bind="_selectedPositionId">
+                        <option value="">— None —</option>
+                        @foreach (var pos in _positions)
+                        {
+                            <option value="@pos.Id">@pos.Name</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="chars-btn chars-btn--ghost" @onclick="ClosePosition">Cancel</button>
+                <button class="chars-btn chars-btn--primary" @onclick="SubmitPosition" disabled="@_saving">
+                    @(_saving ? "Saving…" : "Assign")
                 </button>
             </div>
         </div>
@@ -235,6 +297,7 @@
     private bool _canEdit;
     private bool _canViewAny;
     private bool _canAssignXp;
+    private bool _canAssignPosition;
 
     // Create modal
     private bool _showCreate;
@@ -257,6 +320,15 @@
     private string? _xpError;
     private CharacterDto? _xpTarget;
     private int _xpAmount;
+    private string? _xpNote;
+
+    // Position modal
+    private bool _showPosition;
+    private bool _positionBackdropDown;
+    private string? _positionError;
+    private CharacterDto? _positionTarget;
+    private string _selectedPositionId = string.Empty;
+    private List<PositionDto> _positions = [];
 
     // Delete confirm
     private bool _showDelete;
@@ -267,11 +339,12 @@
     {
         if (!firstRender) return;
 
-        _currentUserId = await AuthService.GetUserIdAsync();
-        _canCreate    = await AuthService.HasPermissionAsync(Claims.Permissions.Characters.CreateOwn);
-        _canEdit      = await AuthService.HasPermissionAsync(Claims.Permissions.Characters.Update);
-        _canViewAny   = await AuthService.HasPermissionAsync(Claims.Permissions.Characters.View);
-        _canAssignXp  = await AuthService.HasPermissionAsync(Claims.Permissions.Characters.AssignExperience);
+        _currentUserId     = await AuthService.GetUserIdAsync();
+        _canCreate         = await AuthService.HasPermissionAsync(Claims.Permissions.Characters.CreateOwn);
+        _canEdit           = await AuthService.HasPermissionAsync(Claims.Permissions.Characters.Update);
+        _canViewAny        = await AuthService.HasPermissionAsync(Claims.Permissions.Characters.View);
+        _canAssignXp       = await AuthService.HasPermissionAsync(Claims.Permissions.Characters.AssignExperience);
+        _canAssignPosition = await AuthService.HasPermissionAsync(Claims.Permissions.Characters.AssignPosition);
 
         await LoadCharacters();
         StateHasChanged();
@@ -322,8 +395,8 @@
     private void ShowEditModal(CharacterDto c)
     {
         _editTarget = c;
-        _editForm = new UpdateCharacterRequest { Name = c.Name, Nationality = c.Nationality };
-        _editAdminForm = new UpdateCharacterByAdminRequest { Name = c.Name, Nationality = c.Nationality, Level = c.Level, Experience = c.Experience };
+        _editForm = new UpdateCharacterRequest { Name = c.Name, Nationality = c.Nationality, Faction = c.Faction };
+        _editAdminForm = new UpdateCharacterByAdminRequest { Name = c.Name, Nationality = c.Nationality, Faction = c.Faction, Level = c.Level, Experience = c.Experience };
         _editError = null;
         _showEdit = true;
     }
@@ -347,6 +420,7 @@
         {
             _editAdminForm.Name = _editForm.Name;
             _editAdminForm.Nationality = _editForm.Nationality;
+            _editAdminForm.Faction = _editForm.Faction;
             result = await CharacterService.UpdateByAdminAsync(_editTarget.Id, _editAdminForm);
         }
         else
@@ -364,7 +438,7 @@
 
     // ── XP ──────────────────────────────────────────────────────────────────
 
-    private void ShowXpModal(CharacterDto c) { _xpTarget = c; _xpAmount = 0; _xpError = null; _showXp = true; }
+    private void ShowXpModal(CharacterDto c) { _xpTarget = c; _xpAmount = 0; _xpNote = null; _xpError = null; _showXp = true; }
     private void CloseXp() => _showXp = false;
     private void CloseXpViaBackdrop()
     {
@@ -377,13 +451,53 @@
         if (_xpTarget is null) return;
         _saving = true;
         _xpError = null;
-        var result = await CharacterService.AssignXpAsync(_xpTarget.Id, _xpAmount);
+        var result = await CharacterService.AssignXpAsync(_xpTarget.Id, new AssignXpRequest { Amount = _xpAmount, Note = _xpNote });
         _saving = false;
         if (result.IsFailure) { _xpError = result.Error.Message; return; }
 
         var idx = _characters.FindIndex(c => c.Id == _xpTarget.Id);
         if (idx >= 0) _characters[idx] = result.Value;
         _showXp = false;
+    }
+
+    // ── Position ─────────────────────────────────────────────────────────────
+
+    private async Task ShowPositionModal(CharacterDto c)
+    {
+        _positionTarget = c;
+        _selectedPositionId = c.PositionId?.ToString() ?? string.Empty;
+        _positionError = null;
+        _showPosition = true;
+
+        if (_positions.Count == 0)
+        {
+            var posResult = await CharacterService.GetPositionsAsync();
+            if (posResult.IsSuccess)
+                _positions = posResult.Value;
+        }
+    }
+
+    private void ClosePosition() => _showPosition = false;
+    private void ClosePositionViaBackdrop()
+    {
+        if (_positionBackdropDown) { ClosePosition(); }
+        _positionBackdropDown = false;
+    }
+
+    private async Task SubmitPosition()
+    {
+        if (_positionTarget is null) return;
+        _saving = true;
+        _positionError = null;
+
+        int? posId = int.TryParse(_selectedPositionId, out var parsed) ? parsed : null;
+        var result = await CharacterService.AssignPositionAsync(_positionTarget.Id, posId);
+        _saving = false;
+        if (result.IsFailure) { _positionError = result.Error.Message; return; }
+
+        var idx = _characters.FindIndex(c => c.Id == _positionTarget.Id);
+        if (idx >= 0) _characters[idx] = result.Value;
+        _showPosition = false;
     }
 
     // ── Delete ───────────────────────────────────────────────────────────────

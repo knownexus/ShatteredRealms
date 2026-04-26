@@ -313,6 +313,17 @@ public static class DomainErrors
         public static readonly Error NationalityRequired = new("Character.NationalityRequired",
                                                                "Character nationality is required",
                                                                (int)HttpStatusCode.BadRequest);
+
+        public static readonly Error FactionRequired = new("Character.FactionRequired",
+                                                           "Character faction is required",
+                                                           (int)HttpStatusCode.BadRequest);
+    }
+
+    public static class Position
+    {
+        public static readonly Error NotFound = new("Position.NotFound",
+                                                    "Position not found",
+                                                    (int)HttpStatusCode.NotFound);
     }
 
     public static class Wiki

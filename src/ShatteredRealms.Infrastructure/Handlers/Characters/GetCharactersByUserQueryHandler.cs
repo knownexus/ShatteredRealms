@@ -17,6 +17,7 @@ public sealed class GetCharactersByUserQueryHandler : IRequestHandler<GetCharact
     {
         var characters = await _context.Character
             .Include(c => c.Owner)
+            .Include(c => c.Position)
             .Where(c => c.UserId == request.UserId)
             .OrderBy(c => c.CreatedAt)
             .ToListAsync(cancellationToken);

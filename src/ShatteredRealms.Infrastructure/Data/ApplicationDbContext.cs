@@ -41,6 +41,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Announcement> Announcement { get; set; }
     public DbSet<Document> Document { get; set; }
     public DbSet<Character> Character { get; set; }
+    public DbSet<Position> Position { get; set; }
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -127,9 +128,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         ConfigureAnnouncements(builder);
         ConfigureDocuments(builder);
         ConfigureCharacters(builder);
+        ConfigurePositions(builder);
 
         SeedRoles(builder);
         SeedPermissions(builder);
+        SeedPositions(builder);
     }
 
     private static void ConfigureForum(ModelBuilder builder)
@@ -318,11 +321,48 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             e.HasKey(c => c.Id);
             e.Property(c => c.Name).IsRequired().HasMaxLength(128);
             e.Property(c => c.Nationality).IsRequired().HasMaxLength(128);
+            e.Property(c => c.Faction).IsRequired().HasMaxLength(128);
             e.HasOne(c => c.Owner)
              .WithMany()
              .HasForeignKey(c => c.UserId)
              .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(c => c.Position)
+             .WithMany()
+             .HasForeignKey(c => c.PositionId)
+             .OnDelete(DeleteBehavior.SetNull);
         });
+    }
+
+    private static void ConfigurePositions(ModelBuilder builder)
+    {
+        builder.Entity<Position>(e =>
+        {
+            e.ToTable("Position");
+            e.HasKey(p => p.Id);
+            e.Property(p => p.Name).IsRequired().HasMaxLength(64);
+            e.Property(p => p.Description).HasMaxLength(256);
+        });
+    }
+
+    private static void SeedPositions(ModelBuilder builder)
+    {
+        builder.Entity<Position>().HasData(
+            new Position { Id =  1, Name = "Commoner",        Description = "An ordinary member of society with no special rank" },
+            new Position { Id =  2, Name = "Freeman",         Description = "A free man with basic rights, not bound to a lord" },
+            new Position { Id =  3, Name = "Merchant",        Description = "A trader dealing in goods and services" },
+            new Position { Id =  4, Name = "Craftsman",       Description = "A skilled worker or artisan" },
+            new Position { Id =  5, Name = "Monk",            Description = "A member of a religious order" },
+            new Position { Id =  6, Name = "Priest",          Description = "A member of the clergy" },
+            new Position { Id =  7, Name = "Man-at-Arms",     Description = "A professional soldier in service to a lord" },
+            new Position { Id =  8, Name = "Archer",          Description = "A ranged combatant specialising in the bow" },
+            new Position { Id =  9, Name = "Sergeant",        Description = "A mid-ranking military officer" },
+            new Position { Id = 10, Name = "Squire",          Description = "A knight's attendant in training for knighthood" },
+            new Position { Id = 11, Name = "Knight",          Description = "A mounted warrior granted a rank of honour" },
+            new Position { Id = 12, Name = "Captain",         Description = "A commander of a military unit" },
+            new Position { Id = 13, Name = "Steward",         Description = "An official responsible for managing an estate" },
+            new Position { Id = 14, Name = "Sheriff",         Description = "A royal officer responsible for law and order" },
+            new Position { Id = 15, Name = "Baron",           Description = "A member of the lowest order of the nobility" }
+        );
     }
 
     private static void SeedRoles(ModelBuilder builder)

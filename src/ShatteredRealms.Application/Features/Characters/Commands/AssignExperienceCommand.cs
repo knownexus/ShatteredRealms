@@ -6,5 +6,7 @@ namespace ShatteredRealms.Application.Features.Characters.Commands;
 
 public sealed record AssignExperienceCommand(
     int CharacterId,
-    int XpToAdd
+    int XpToAdd,
+    string RequestingUserId,
+    string? Note = null
 ) : IRequest<Result<CharacterDto>>;

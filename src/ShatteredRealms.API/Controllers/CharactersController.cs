@@ -61,7 +61,21 @@ public sealed class CharactersController : ControllerBase
         if (string.IsNullOrEmpty(userId))
             return Problem(detail: "User ID cannot be null or empty", statusCode: 400, title: "Invalid User ID");
 
-        var result = await _mediator.Send(new CreateCharacterCommand(userId, request.Name, request.Nationality), cancellationToken);
+        var result = await _mediator.Send(new CreateCharacterCommand(userId, request.Name, request.Nationality, request.Faction), cancellationToken);
+        return result.IsFailure
+            ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)
+            : CreatedAtAction(nameof(GetById), new { id = result.Value.Id }, result.Value);
+    }
+
+    [RequirePermission(Claims.Permissions.Characters.Create)]
+    [HttpPost("for-user/{targetUserId}")]
+    public async Task<ActionResult<CharacterDto>> CreateForUser(string targetUserId, [FromBody] CreateCharacterRequest request, CancellationToken cancellationToken)
+    {
+        var requestingUserId = User.GetUserId();
+        if (string.IsNullOrEmpty(requestingUserId))
+            return Problem(detail: "User ID cannot be null or empty", statusCode: 400, title: "Invalid User ID");
+
+        var result = await _mediator.Send(new CreateCharacterForUserCommand(targetUserId, request.Name, request.Nationality, request.Faction, requestingUserId), cancellationToken);
         return result.IsFailure
             ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)
             : CreatedAtAction(nameof(GetById), new { id = result.Value.Id }, result.Value);
@@ -75,7 +89,7 @@ public sealed class CharactersController : ControllerBase
         if (string.IsNullOrEmpty(userId))
             return Problem(detail: "User ID cannot be null or empty", statusCode: 400, title: "Invalid User ID");
 
-        var result = await _mediator.Send(new UpdateOwnCharacterCommand(id, userId, request.Name, request.Nationality), cancellationToken);
+        var result = await _mediator.Send(new UpdateOwnCharacterCommand(id, userId, request.Name, request.Nationality, request.Faction), cancellationToken);
         return result.IsFailure
             ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)
             : Ok(result.Value);
@@ -85,17 +99,35 @@ public sealed class CharactersController : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<ActionResult<CharacterDto>> Update(int id, [FromBody] UpdateCharacterByAdminRequest request, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new UpdateCharacterCommand(id, request.Name, request.Nationality, request.Level, request.Experience), cancellationToken);
+        var result = await _mediator.Send(new UpdateCharacterCommand(id, request.Name, request.Nationality, request.Faction, request.Level, request.Experience), cancellationToken);
         return result.IsFailure
             ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)
             : Ok(result.Value);
     }
 
     [RequirePermission(Claims.Permissions.Characters.AssignExperience)]
-    [HttpPut("{id:int}/assign-xp/{amount:int}")]
-    public async Task<ActionResult<CharacterDto>> AssignXp(int id, int amount, CancellationToken cancellationToken)
+    [HttpPut("{id:int}/assign-xp")]
+    public async Task<ActionResult<CharacterDto>> AssignXp(int id, [FromBody] AssignXpRequest request, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new AssignExperienceCommand(id, amount), cancellationToken);
+        var requestingUserId = User.GetUserId();
+        if (string.IsNullOrEmpty(requestingUserId))
+            return Problem(detail: "User ID cannot be null or empty", statusCode: 400, title: "Invalid User ID");
+
+        var result = await _mediator.Send(new AssignExperienceCommand(id, request.Amount, requestingUserId, request.Note), cancellationToken);
+        return result.IsFailure
+            ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)
+            : Ok(result.Value);
+    }
+
+    [RequirePermission(Claims.Permissions.Characters.AssignPosition)]
+    [HttpPut("{id:int}/assign-position/{positionId:int?}")]
+    public async Task<ActionResult<CharacterDto>> AssignPosition(int id, int? positionId, CancellationToken cancellationToken)
+    {
+        var requestingUserId = User.GetUserId();
+        if (string.IsNullOrEmpty(requestingUserId))
+            return Problem(detail: "User ID cannot be null or empty", statusCode: 400, title: "Invalid User ID");
+
+        var result = await _mediator.Send(new AssignPositionCommand(id, positionId, requestingUserId), cancellationToken);
         return result.IsFailure
             ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)
             : Ok(result.Value);
@@ -119,7 +151,11 @@ public sealed class CharactersController : ControllerBase
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new DeleteCharacterCommand(id), cancellationToken);
+        var requestingUserId = User.GetUserId();
+        if (string.IsNullOrEmpty(requestingUserId))
+            return Problem(detail: "User ID cannot be null or empty", statusCode: 400, title: "Invalid User ID");
+
+        var result = await _mediator.Send(new DeleteCharacterCommand(id, requestingUserId), cancellationToken);
         return result.IsFailure
             ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)
             : NoContent();

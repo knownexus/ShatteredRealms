@@ -8,13 +8,13 @@ using ShatteredRealms.Infrastructure.Data;
 
 namespace ShatteredRealms.Infrastructure.Handlers.Characters;
 
-public sealed class CreateCharacterCommandHandler : IRequestHandler<CreateCharacterCommand, Result<CharacterDto>>
+public sealed class CreateCharacterForUserCommandHandler : IRequestHandler<CreateCharacterForUserCommand, Result<CharacterDto>>
 {
     private readonly ApplicationDbContext _context;
 
-    public CreateCharacterCommandHandler(ApplicationDbContext context) => _context = context;
+    public CreateCharacterForUserCommandHandler(ApplicationDbContext context) => _context = context;
 
-    public async Task<Result<CharacterDto>> Handle(CreateCharacterCommand request, CancellationToken cancellationToken)
+    public async Task<Result<CharacterDto>> Handle(CreateCharacterForUserCommand request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.Name))
             return Result.Failure<CharacterDto>(DomainErrors.Character.NameRequired);
@@ -27,7 +27,7 @@ public sealed class CreateCharacterCommandHandler : IRequestHandler<CreateCharac
 
         var character = new Domain.Entities.Character.Character
         {
-            UserId      = request.UserId,
+            UserId      = request.TargetUserId,
             Name        = request.Name.Trim(),
             Nationality = request.Nationality.Trim(),
             Faction     = request.Faction.Trim(),
@@ -41,28 +41,12 @@ public sealed class CreateCharacterCommandHandler : IRequestHandler<CreateCharac
         _context.ActivityLog.Add(new ActivityLog
         {
             Id          = Guid.NewGuid(),
-            UserId      = request.UserId,
-            Description = $"Created character '{character.Name}'",
+            UserId      = request.RequestingUserId,
+            Description = $"Admin created character '{character.Name}' for user '{request.TargetUserId}'",
             Date        = DateTime.UtcNow,
         });
 
         await _context.SaveChangesAsync(cancellationToken);
-
-        return Result.Success(MapToDto(character, null));
+        return Result.Success(CreateCharacterCommandHandler.MapToDto(character, null));
     }
-
-    internal static CharacterDto MapToDto(Domain.Entities.Character.Character c, string? ownerName) => new()
-    {
-        Id           = c.Id,
-        UserId       = c.UserId,
-        OwnerName    = ownerName ?? c.Owner?.UserName ?? string.Empty,
-        Name         = c.Name,
-        Nationality  = c.Nationality,
-        Faction      = c.Faction,
-        Level        = c.Level,
-        Experience   = c.Experience,
-        CreatedAt    = c.CreatedAt,
-        PositionId   = c.PositionId,
-        PositionName = c.Position?.Name,
-    };
 }

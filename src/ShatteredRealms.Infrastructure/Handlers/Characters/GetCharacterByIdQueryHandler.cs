@@ -18,6 +18,7 @@ public sealed class GetCharacterByIdQueryHandler : IRequestHandler<GetCharacterB
     {
         var character = await _context.Character
             .Include(c => c.Owner)
+            .Include(c => c.Position)
             .FirstOrDefaultAsync(c => c.Id == request.CharacterId, cancellationToken);
 
         return character is null
