@@ -344,4 +344,15 @@ public static class DomainErrors
                                                            , "Failed to create wiki page"
                                                            , (int)HttpStatusCode.InternalServerError);
     }
+
+    public static class Analytics
+    {
+        public static readonly Error EventNotFound = new("Analytics.EventNotFound"
+                                                       , "Telemetry event not found"
+                                                       , (int)HttpStatusCode.NotFound);
+
+        public static readonly Error FlagRuleNotFound = new("Analytics.FlagRuleNotFound"
+                                                          , "Flag rule not found"
+                                                          , (int)HttpStatusCode.NotFound);
+    }
 }

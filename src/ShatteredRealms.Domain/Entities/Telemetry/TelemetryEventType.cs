@@ -54,4 +54,9 @@ public enum TelemetryEventType
     AnnouncementCreated = 80,
     AnnouncementUpdated = 81,
     AnnouncementDeleted = 82,
+
+    // Documents
+    DocumentUploaded   = 90,
+    DocumentDownloaded = 91,
+    DocumentDeleted    = 92,
 }

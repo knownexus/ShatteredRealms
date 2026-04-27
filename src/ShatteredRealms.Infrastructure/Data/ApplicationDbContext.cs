@@ -44,6 +44,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Character> Character { get; set; }
     public DbSet<Position> Position { get; set; }
     public DbSet<TelemetryEvent> TelemetryEvent { get; set; }
+    public DbSet<AnalyticsFlagRule> AnalyticsFlagRule { get; set; }
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -360,14 +361,32 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             e.ToTable("TelemetryEvent");
             e.HasKey(t => t.Id);
             e.Property(t => t.ActorId).IsRequired().HasMaxLength(450);
+            e.Property(t => t.ActorName).IsRequired().HasMaxLength(256);
             e.Property(t => t.ActorEmail).IsRequired().HasMaxLength(256);
+            e.Property(t => t.ActorRole).IsRequired().HasMaxLength(128);
             e.Property(t => t.TargetId).HasMaxLength(450);
             e.Property(t => t.TargetName).HasMaxLength(512);
             e.Property(t => t.Details).HasMaxLength(1024);
+            e.Property(t => t.FlagReason).HasMaxLength(512);
+            e.Property(t => t.FlaggedById).HasMaxLength(450);
             e.Property(t => t.EventType).IsRequired();
             e.HasIndex(t => t.OccurredAt);
             e.HasIndex(t => t.ActorId);
+            e.HasIndex(t => t.ActorName);
             e.HasIndex(t => t.EventType);
+            e.HasIndex(t => t.IsFlagged);
+        });
+
+        builder.Entity<AnalyticsFlagRule>(e =>
+        {
+            e.ToTable("AnalyticsFlagRule");
+            e.HasKey(r => r.Id);
+            e.Property(r => r.Reason).IsRequired().HasMaxLength(512);
+            e.Property(r => r.CreatedById).IsRequired().HasMaxLength(450);
+            e.Property(r => r.TargetUserId).HasMaxLength(450);
+            e.Property(r => r.ActorRole).HasMaxLength(128);
+            e.HasIndex(r => r.RuleType);
+            e.HasIndex(r => r.IsActive);
         });
     }
 

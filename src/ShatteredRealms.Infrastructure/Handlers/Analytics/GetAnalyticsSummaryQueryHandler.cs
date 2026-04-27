@@ -52,14 +52,18 @@ public sealed class GetAnalyticsSummaryQueryHandler : IRequestHandler<GetAnalyti
             .Take(20)
             .Select(e => new TelemetryEventDto
             {
-                Id         = e.Id,
-                EventType  = e.EventType,
-                ActorId    = e.ActorId,
-                ActorEmail = e.ActorEmail,
-                TargetId   = e.TargetId,
-                TargetName = e.TargetName,
-                Details    = e.Details,
-                OccurredAt = e.OccurredAt,
+                Id          = e.Id,
+                EventType   = e.EventType,
+                ActorId     = e.ActorId,
+                ActorName   = e.ActorName,
+                ActorEmail  = e.ActorEmail,
+                ActorRole   = e.ActorRole,
+                TargetId    = e.TargetId,
+                TargetName  = e.TargetName,
+                Details     = e.Details,
+                OccurredAt  = e.OccurredAt,
+                IsFlagged   = e.IsFlagged,
+                FlagReason  = e.FlagReason,
             })
             .ToListAsync(cancellationToken);
 

@@ -1,7 +1,9 @@
 using MediatR;
 using ShatteredRealms.Application.DTOs.Documents;
 using ShatteredRealms.Application.Features.Documents.Commands;
+using ShatteredRealms.Application.Interfaces;
 using ShatteredRealms.Domain.Entities.Document;
+using ShatteredRealms.Domain.Entities.Telemetry;
 using ShatteredRealms.Domain.Shared;
 using ShatteredRealms.Infrastructure.Data;
 
@@ -10,8 +12,13 @@ namespace ShatteredRealms.Infrastructure.Handlers.Documents;
 public sealed class SaveDocumentCommandHandler : IRequestHandler<SaveDocumentCommand, Result<DocumentDto>>
 {
     private readonly ApplicationDbContext _context;
+    private readonly IAnalyticsService _analytics;
 
-    public SaveDocumentCommandHandler(ApplicationDbContext context) => _context = context;
+    public SaveDocumentCommandHandler(ApplicationDbContext context, IAnalyticsService analytics)
+    {
+        _context   = context;
+        _analytics = analytics;
+    }
 
     public async Task<Result<DocumentDto>> Handle(SaveDocumentCommand request, CancellationToken cancellationToken)
     {
@@ -27,6 +34,11 @@ public sealed class SaveDocumentCommandHandler : IRequestHandler<SaveDocumentCom
 
         _context.Document.Add(doc);
         await _context.SaveChangesAsync(cancellationToken);
+
+        await _analytics.TrackAsync(TelemetryEventType.DocumentUploaded, request.UploadedById, string.Empty,
+            targetId: doc.Id.ToString(), targetName: request.OriginalFileName,
+            details: $"{request.FileSizeBytes / 1024.0:F1} KB",
+            cancellationToken: cancellationToken);
 
         var uploader = await _context.Users.FindAsync([request.UploadedById], cancellationToken);
 

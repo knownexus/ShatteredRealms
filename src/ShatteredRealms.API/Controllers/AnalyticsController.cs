@@ -2,7 +2,9 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ShatteredRealms.API.Authorization;
+using ShatteredRealms.API.Extensions;
 using ShatteredRealms.Application.DTOs.Analytics;
+using ShatteredRealms.Application.Features.Analytics.Commands;
 using ShatteredRealms.Application.Features.Analytics.Queries;
 using ShatteredRealms.Domain.Entities.Telemetry;
 using ShatteredRealms.Domain.Shared;
@@ -24,13 +26,13 @@ public sealed class AnalyticsController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50,
         [FromQuery] TelemetryEventType? eventType = null,
-        [FromQuery] string? actorId = null,
+        [FromQuery] string? actorSearch = null,
         [FromQuery] DateTime? from = null,
         [FromQuery] DateTime? to = null,
         CancellationToken cancellationToken = default)
     {
         var result = await _mediator.Send(
-            new GetTelemetryEventsQuery(page, pageSize, eventType, actorId, from, to),
+            new GetTelemetryEventsQuery(page, pageSize, eventType, actorSearch, from, to),
             cancellationToken);
 
         return result.IsFailure
@@ -47,4 +49,81 @@ public sealed class AnalyticsController : ControllerBase
             ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)
             : Ok(result.Value);
     }
+
+    [RequirePermission(Claims.Permissions.Analytics.View)]
+    [HttpPut("{id:guid}/flag")]
+    public async Task<IActionResult> Flag(Guid id, [FromBody] FlagEventRequest request, CancellationToken cancellationToken)
+    {
+        var actorId = User.GetUserId();
+        if (string.IsNullOrEmpty(actorId))
+            return Problem(detail: "User ID cannot be resolved", statusCode: 400, title: "Invalid User");
+
+        var result = await _mediator.Send(new FlagTelemetryEventCommand(id, actorId, request.Reason), cancellationToken);
+        return result.IsFailure
+            ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)
+            : NoContent();
+    }
+
+    [RequirePermission(Claims.Permissions.Analytics.View)]
+    [HttpDelete("{id:guid}/flag")]
+    public async Task<IActionResult> Unflag(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new UnflagTelemetryEventCommand(id), cancellationToken);
+        return result.IsFailure
+            ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)
+            : NoContent();
+    }
+
+    [RequirePermission(Claims.Permissions.Analytics.View)]
+    [HttpGet("rules")]
+    public async Task<ActionResult<List<AnalyticsFlagRuleDto>>> GetRules(CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetFlagRulesQuery(), cancellationToken);
+        return result.IsFailure
+            ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)
+            : Ok(result.Value);
+    }
+
+    [RequirePermission(Claims.Permissions.Analytics.View)]
+    [HttpPost("rules")]
+    public async Task<ActionResult<AnalyticsFlagRuleDto>> CreateRule(
+        [FromBody] CreateFlagRuleRequest request,
+        CancellationToken cancellationToken)
+    {
+        var actorId = User.GetUserId();
+        if (string.IsNullOrEmpty(actorId))
+            return Problem(detail: "User ID cannot be resolved", statusCode: 400, title: "Invalid User");
+
+        var result = await _mediator.Send(
+            new CreateFlagRuleCommand(request.RuleType, request.TargetUserId, request.EventType, request.ActorRole, request.Reason, actorId),
+            cancellationToken);
+
+        return result.IsFailure
+            ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)
+            : Ok(result.Value);
+    }
+
+    [RequirePermission(Claims.Permissions.Analytics.View)]
+    [HttpDelete("rules/{id:int}")]
+    public async Task<IActionResult> DeleteRule(int id, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new DeleteFlagRuleCommand(id), cancellationToken);
+        return result.IsFailure
+            ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)
+            : NoContent();
+    }
+
+    [RequirePermission(Claims.Permissions.Analytics.View)]
+    [HttpPatch("rules/{id:int}/active")]
+    public async Task<IActionResult> SetRuleActive(int id, [FromBody] SetRuleActiveRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new SetFlagRuleActiveCommand(id, request.IsActive), cancellationToken);
+        return result.IsFailure
+            ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)
+            : NoContent();
+    }
 }
+
+public record FlagEventRequest(string? Reason);
+public record CreateFlagRuleRequest(FlagRuleType RuleType, string? TargetUserId, TelemetryEventType? EventType, string? ActorRole, string Reason);
+public record SetRuleActiveRequest(bool IsActive);

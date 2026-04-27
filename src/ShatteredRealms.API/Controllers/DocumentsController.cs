@@ -7,6 +7,7 @@ using ShatteredRealms.Application.DTOs.Documents;
 using ShatteredRealms.Application.Features.Documents.Commands;
 using ShatteredRealms.Application.Features.Documents.Queries;
 using ShatteredRealms.Application.Interfaces;
+using ShatteredRealms.Domain.Entities.Telemetry;
 using ShatteredRealms.Domain.Errors;
 using ShatteredRealms.Domain.Shared;
 
@@ -27,11 +28,13 @@ public sealed class DocumentsController : ControllerBase
 
     private readonly IMediator _mediator;
     private readonly IFileStorageService _fileStorage;
+    private readonly IAnalyticsService _analytics;
 
-    public DocumentsController(IMediator mediator, IFileStorageService fileStorage)
+    public DocumentsController(IMediator mediator, IFileStorageService fileStorage, IAnalyticsService analytics)
     {
-        _mediator    = mediator;
+        _mediator  = mediator;
         _fileStorage = fileStorage;
+        _analytics = analytics;
     }
 
     [RequirePermission(Claims.Permissions.Documents.View)]
@@ -58,6 +61,15 @@ public sealed class DocumentsController : ControllerBase
         try
         {
             var stream = _fileStorage.Open(relativePath);
+
+            var userId = User.GetUserId();
+            if (!string.IsNullOrEmpty(userId))
+            {
+                await _analytics.TrackAsync(TelemetryEventType.DocumentDownloaded, userId, string.Empty,
+                    targetId: id.ToString(), targetName: dto.OriginalFileName,
+                    cancellationToken: cancellationToken);
+            }
+
             return File(stream, dto.ContentType, dto.OriginalFileName);
         }
         catch (FileNotFoundException)
@@ -112,7 +124,7 @@ public sealed class DocumentsController : ControllerBase
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new DeleteDocumentCommand(id), cancellationToken);
+        var result = await _mediator.Send(new DeleteDocumentCommand(id, User.GetUserId()), cancellationToken);
         return result.IsFailure
             ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)
             : NoContent();

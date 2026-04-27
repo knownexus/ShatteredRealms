@@ -20,8 +20,14 @@ public sealed class GetTelemetryEventsQueryHandler : IRequestHandler<GetTelemetr
         if (request.EventType.HasValue)
             query = query.Where(e => e.EventType == request.EventType.Value);
 
-        if (!string.IsNullOrEmpty(request.ActorId))
-            query = query.Where(e => e.ActorId == request.ActorId);
+        if (!string.IsNullOrEmpty(request.ActorSearch))
+        {
+            var search = request.ActorSearch.ToLower();
+            query = query.Where(e =>
+                e.ActorName.ToLower().Contains(search) ||
+                e.ActorEmail.ToLower().Contains(search) ||
+                e.ActorId == request.ActorSearch);
+        }
 
         if (request.From.HasValue)
             query = query.Where(e => e.OccurredAt >= request.From.Value);
@@ -43,13 +49,55 @@ public sealed class GetTelemetryEventsQueryHandler : IRequestHandler<GetTelemetr
                 Id          = e.Id,
                 EventType   = e.EventType,
                 ActorId     = e.ActorId,
+                ActorName   = e.ActorName,
                 ActorEmail  = e.ActorEmail,
+                ActorRole   = e.ActorRole,
                 TargetId    = e.TargetId,
                 TargetName  = e.TargetName,
                 Details     = e.Details,
                 OccurredAt  = e.OccurredAt,
+                IsFlagged   = e.IsFlagged,
+                FlagReason  = e.FlagReason,
+                FlaggedAt   = e.FlaggedAt,
+                FlaggedById = e.FlaggedById,
             })
             .ToListAsync(cancellationToken);
+
+        // Apply active flag rules
+        var activeRules = await _context.AnalyticsFlagRule
+            .Where(r => r.IsActive)
+            .ToListAsync(cancellationToken);
+
+        if (activeRules.Count > 0)
+        {
+            foreach (var ev in events)
+            {
+                if (ev.IsFlagged) continue;
+
+                foreach (var rule in activeRules)
+                {
+                    var matched = rule.RuleType switch
+                    {
+                        Domain.Entities.Telemetry.FlagRuleType.User =>
+                            rule.TargetUserId == ev.ActorId,
+                        Domain.Entities.Telemetry.FlagRuleType.EventType =>
+                            rule.EventType.HasValue && rule.EventType.Value == ev.EventType,
+                        Domain.Entities.Telemetry.FlagRuleType.RoleAction =>
+                            !string.IsNullOrEmpty(rule.ActorRole) &&
+                            string.Equals(rule.ActorRole, ev.ActorRole, StringComparison.OrdinalIgnoreCase) &&
+                            (!rule.EventType.HasValue || rule.EventType.Value == ev.EventType),
+                        _ => false,
+                    };
+
+                    if (matched)
+                    {
+                        ev.IsRuleFlagged     = true;
+                        ev.MatchedRuleReason = rule.Reason;
+                        break;
+                    }
+                }
+            }
+        }
 
         return Result.Success(new PagedTelemetryResult
         {
