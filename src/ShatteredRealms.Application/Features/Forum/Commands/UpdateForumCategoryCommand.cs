@@ -9,4 +9,5 @@ public sealed record UpdateForumCategoryCommand(
     int    CategoryId,
     string Name,
     string Description,
-    int    SortOrder) : IRequest<Result<ForumCategoryDto>>;
+    int    SortOrder,
+    string? ActorId = null) : IRequest<Result<ForumCategoryDto>>;

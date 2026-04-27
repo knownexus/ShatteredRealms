@@ -1,7 +1,9 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Moq;
 using ShatteredRealms.Application.Features.Characters.Commands;
+using ShatteredRealms.Application.Interfaces;
 using ShatteredRealms.Domain.Entities.Character;
 using ShatteredRealms.Domain.Entities.User;
 using ShatteredRealms.Domain.Errors;
@@ -48,7 +50,7 @@ public sealed class AssignPositionCommandHandlerTests
     {
         await using var ctx = CreateContext();
         var (character, position) = SeedData(ctx);
-        var handler = new AssignPositionCommandHandler(ctx);
+        var handler = new AssignPositionCommandHandler(ctx, new Mock<IAnalyticsService>().Object);
 
         var result = await handler.Handle(
             new AssignPositionCommand(character.Id, position.Id, "em-1"),
@@ -67,7 +69,7 @@ public sealed class AssignPositionCommandHandlerTests
         character.PositionId = position.Id;
         ctx.SaveChanges();
 
-        var handler = new AssignPositionCommandHandler(ctx);
+        var handler = new AssignPositionCommandHandler(ctx, new Mock<IAnalyticsService>().Object);
 
         var result = await handler.Handle(
             new AssignPositionCommand(character.Id, null, "em-1"),
@@ -83,7 +85,7 @@ public sealed class AssignPositionCommandHandlerTests
     {
         await using var ctx = CreateContext();
         SeedData(ctx);
-        var handler = new AssignPositionCommandHandler(ctx);
+        var handler = new AssignPositionCommandHandler(ctx, new Mock<IAnalyticsService>().Object);
 
         var result = await handler.Handle(
             new AssignPositionCommand(999, 100, "em-1"),
@@ -98,7 +100,7 @@ public sealed class AssignPositionCommandHandlerTests
     {
         await using var ctx = CreateContext();
         var (character, _) = SeedData(ctx);
-        var handler = new AssignPositionCommandHandler(ctx);
+        var handler = new AssignPositionCommandHandler(ctx, new Mock<IAnalyticsService>().Object);
 
         var result = await handler.Handle(
             new AssignPositionCommand(character.Id, 999, "em-1"),
@@ -113,7 +115,7 @@ public sealed class AssignPositionCommandHandlerTests
     {
         await using var ctx = CreateContext();
         var (character, position) = SeedData(ctx);
-        var handler = new AssignPositionCommandHandler(ctx);
+        var handler = new AssignPositionCommandHandler(ctx, new Mock<IAnalyticsService>().Object);
 
         await handler.Handle(
             new AssignPositionCommand(character.Id, position.Id, "em-1"),

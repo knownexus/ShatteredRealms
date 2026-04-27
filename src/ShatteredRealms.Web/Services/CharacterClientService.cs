@@ -16,6 +16,26 @@ public class CharacterClientService
         _httpClient = httpClient;
     }
 
+    public async Task<Result<List<CharacterDto>>> GetAllAsync()
+    {
+        var response = await _httpClient.GetAsync("api/characters");
+        if (response.IsSuccessStatusCode)
+            return Result.Success(await response.Content.ReadFromJsonAsync<List<CharacterDto>>() ?? []);
+
+        var p = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        return Result.Failure<List<CharacterDto>>(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to load characters", (int)response.StatusCode));
+    }
+
+    public async Task<Result<List<CharacterHistoryDto>>> GetHistoryAsync(int characterId)
+    {
+        var response = await _httpClient.GetAsync($"api/characters/{characterId}/history");
+        if (response.IsSuccessStatusCode)
+            return Result.Success(await response.Content.ReadFromJsonAsync<List<CharacterHistoryDto>>() ?? []);
+
+        var p = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        return Result.Failure<List<CharacterHistoryDto>>(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to load history", (int)response.StatusCode));
+    }
+
     public async Task<Result<List<CharacterDto>>> GetMineAsync()
     {
         var response = await _httpClient.GetAsync("api/characters/self");

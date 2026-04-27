@@ -83,7 +83,7 @@ public sealed class ForumController : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(
-            new UpdateForumCategoryCommand(id, request.Name, request.Description, request.SortOrder),
+            new UpdateForumCategoryCommand(id, request.Name, request.Description, request.SortOrder, User.GetUserId()),
             cancellationToken);
 
         if (result.IsFailure)
@@ -99,7 +99,7 @@ public sealed class ForumController : ControllerBase
     [HttpDelete("categories/{id:int}")]
     public async Task<IActionResult> DeleteCategory(int id, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new DeleteForumCategoryCommand(id), cancellationToken);
+        var result = await _mediator.Send(new DeleteForumCategoryCommand(id, User.GetUserId()), cancellationToken);
         if (result.IsFailure)
         {
             return Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title);
@@ -181,7 +181,7 @@ public sealed class ForumController : ControllerBase
     [HttpDelete("threads/{id:int}")]
     public async Task<IActionResult> DeleteThread(int id, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new DeleteForumThreadCommand(id), cancellationToken);
+        var result = await _mediator.Send(new DeleteForumThreadCommand(id, User.GetUserId()), cancellationToken);
         if (result.IsFailure)
         {
             return Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title);
@@ -264,7 +264,7 @@ public sealed class ForumController : ControllerBase
 
         if (role is Claims.Roles.AdminName or Claims.Roles.SystemName)
         {
-          result = await _mediator.Send(new DeleteForumPostAsAdminCommand(postId), cancellationToken);
+          result = await _mediator.Send(new DeleteForumPostAsAdminCommand(postId, User.GetUserId()), cancellationToken);
         }
         else
         {

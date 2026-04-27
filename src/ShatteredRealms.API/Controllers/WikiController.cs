@@ -115,7 +115,7 @@ public sealed class WikiController : ControllerBase
     {
         _logger.LogInformation("Delete wiki page {PageId} - UserId: {UserId}", id, User.GetUserId());
 
-        var result = await _mediator.Send(new DeleteWikiPageCommand(id), cancellationToken);
+        var result = await _mediator.Send(new DeleteWikiPageCommand(id, User.GetUserId()), cancellationToken);
         if (result.IsFailure)
         {
             return Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title);
@@ -164,7 +164,7 @@ public sealed class WikiController : ControllerBase
         _logger.LogInformation("Create wiki category - UserId: {UserId}", User.GetUserId());
 
         var result = await _mediator.Send(
-            new CreateWikiCategoryCommand(request.Name, request.Description),
+            new CreateWikiCategoryCommand(request.Name, request.Description, User.GetUserId()),
             cancellationToken);
 
         if (result.IsFailure)

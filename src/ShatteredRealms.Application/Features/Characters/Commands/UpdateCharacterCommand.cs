@@ -10,5 +10,6 @@ public sealed record UpdateCharacterCommand(
     string Nationality,
     string Faction,
     int Level,
-    int Experience
+    int Experience,
+    string? ActorId = null
 ) : IRequest<Result<CharacterDto>>;

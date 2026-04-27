@@ -8,5 +8,6 @@ public record UpdateAnnouncementCommand(
     int Id,
     string Title,
     string Body,
-    int? LinkedEventId
+    int? LinkedEventId,
+    string? ActorId = null
 ) : IRequest<Result<AnnouncementDto>>;

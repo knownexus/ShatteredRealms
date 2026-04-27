@@ -2,7 +2,9 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ShatteredRealms.Application.DTOs.Events;
 using ShatteredRealms.Application.Features.Events.Commands;
+using ShatteredRealms.Application.Interfaces;
 using ShatteredRealms.Domain.Entities.Event;
+using ShatteredRealms.Domain.Entities.Telemetry;
 using ShatteredRealms.Domain.Errors;
 using ShatteredRealms.Domain.Shared;
 using ShatteredRealms.Infrastructure.Data;
@@ -12,8 +14,13 @@ namespace ShatteredRealms.Infrastructure.Handlers.Events;
 public sealed class CreateEventCommandHandler : IRequestHandler<CreateEventCommand, Result<EventDto>>
 {
     private readonly ApplicationDbContext _context;
+    private readonly IAnalyticsService _analytics;
 
-    public CreateEventCommandHandler(ApplicationDbContext context) => _context = context;
+    public CreateEventCommandHandler(ApplicationDbContext context, IAnalyticsService analytics)
+    {
+        _context = context;
+        _analytics = analytics;
+    }
 
     public async Task<Result<EventDto>> Handle(CreateEventCommand request, CancellationToken cancellationToken)
     {
@@ -34,6 +41,9 @@ public sealed class CreateEventCommandHandler : IRequestHandler<CreateEventComma
 
         _context.Event.Add(ev);
         await _context.SaveChangesAsync(cancellationToken);
+
+        await _analytics.TrackAsync(TelemetryEventType.EventCreated, request.CreatedById, string.Empty,
+            targetId: ev.Id.ToString(), targetName: ev.Title, cancellationToken: cancellationToken);
 
         return Result.Success(new EventDto
         {

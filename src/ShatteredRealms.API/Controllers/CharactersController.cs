@@ -44,10 +44,30 @@ public sealed class CharactersController : ControllerBase
     }
 
     [RequirePermission(Claims.Permissions.Characters.View)]
+    [HttpGet]
+    public async Task<ActionResult<List<CharacterDto>>> GetAll(CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetAllCharactersQuery(), cancellationToken);
+        return result.IsFailure
+            ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)
+            : Ok(result.Value);
+    }
+
+    [RequirePermission(Claims.Permissions.Characters.View)]
     [HttpGet("{id:int}")]
     public async Task<ActionResult<CharacterDto>> GetById(int id, CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(new GetCharacterByIdQuery(id), cancellationToken);
+        return result.IsFailure
+            ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)
+            : Ok(result.Value);
+    }
+
+    [RequirePermission(Claims.Permissions.Characters.View)]
+    [HttpGet("{id:int}/history")]
+    public async Task<ActionResult<List<CharacterHistoryDto>>> GetHistory(int id, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetCharacterHistoryQuery(id), cancellationToken);
         return result.IsFailure
             ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)
             : Ok(result.Value);
@@ -99,7 +119,7 @@ public sealed class CharactersController : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<ActionResult<CharacterDto>> Update(int id, [FromBody] UpdateCharacterByAdminRequest request, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new UpdateCharacterCommand(id, request.Name, request.Nationality, request.Faction, request.Level, request.Experience), cancellationToken);
+        var result = await _mediator.Send(new UpdateCharacterCommand(id, request.Name, request.Nationality, request.Faction, request.Level, request.Experience, User.GetUserId()), cancellationToken);
         return result.IsFailure
             ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)
             : Ok(result.Value);

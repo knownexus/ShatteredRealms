@@ -38,6 +38,11 @@
     --amber:           #e67e22;
     --amber-bg:        rgba(230, 126, 34, 0.1);
 
+    /* Typography */
+    --font-heading:    'Cinzel', 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+    --font-body:       'Crimson Text', Georgia, 'Times New Roman', serif;
+    --font-ui:         'Inter', system-ui, -apple-system, sans-serif;
+
     /* Radius & Spacing */
     --radius-sm:       4px;
     --radius:          8px;

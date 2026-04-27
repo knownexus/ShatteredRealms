@@ -4,6 +4,7 @@ using ShatteredRealms.Application.DTOs.Users;
 using ShatteredRealms.Application.Features.Users.Commands;
 using ShatteredRealms.Application.Interfaces;
 using ShatteredRealms.Application.Mappers;
+using ShatteredRealms.Domain.Entities.Telemetry;
 using ShatteredRealms.Domain.Shared;
 
 namespace ShatteredRealms.Infrastructure.Handlers.Users;
@@ -12,11 +13,13 @@ public sealed class CreateUserCommandHandler : IRequestHandler<CreateUserCommand
 {
     private readonly IUserService _userService;
     private readonly IPermissionService _permissionService;
+    private readonly IAnalyticsService _analytics;
 
-    public CreateUserCommandHandler(IUserService userService, IPermissionService permissionService)
+    public CreateUserCommandHandler(IUserService userService, IPermissionService permissionService, IAnalyticsService analytics)
     {
         _userService = userService;
         _permissionService = permissionService;
+        _analytics = analytics;
     }
 
     public async Task<Result<UserDto>> Handle(CreateUserCommand request, CancellationToken cancellationToken)
@@ -48,6 +51,10 @@ public sealed class CreateUserCommandHandler : IRequestHandler<CreateUserCommand
         {
             return Result.Failure<UserDto>(permissionsResult.Error);
         }
+
+        var actorId = request.ActorId ?? user.Id;
+        await _analytics.TrackAsync(TelemetryEventType.UserCreated, actorId, string.Empty,
+            targetId: user.Id, targetName: user.Email, cancellationToken: cancellationToken);
 
         return Result.Success(UserMapper.ToDto(user, rolesResult.Value, permissionsResult.Value));
     }

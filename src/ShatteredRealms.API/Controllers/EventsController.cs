@@ -99,7 +99,7 @@ public sealed class EventsController : ControllerBase
     public async Task<ActionResult<EventDto>> Update(int id, [FromBody] UpdateEventRequest request, CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(
-            new UpdateEventCommand(id, request.Title, request.Description, request.StartsAt, request.EndsAt, request.Location, request.MemberCap),
+            new UpdateEventCommand(id, request.Title, request.Description, request.StartsAt, request.EndsAt, request.Location, request.MemberCap, User.GetUserId()),
             cancellationToken);
 
         return result.IsFailure
@@ -111,7 +111,7 @@ public sealed class EventsController : ControllerBase
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new DeleteEventCommand(id), cancellationToken);
+        var result = await _mediator.Send(new DeleteEventCommand(id, User.GetUserId()), cancellationToken);
         return result.IsFailure
             ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)
             : NoContent();

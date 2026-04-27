@@ -1,7 +1,9 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Moq;
 using ShatteredRealms.Application.Features.Characters.Commands;
+using ShatteredRealms.Application.Interfaces;
 using ShatteredRealms.Domain.Entities.Character;
 using ShatteredRealms.Domain.Entities.User;
 using ShatteredRealms.Domain.Errors;
@@ -52,7 +54,7 @@ public sealed class AssignExperienceCommandHandlerTests
     {
         await using var ctx = CreateContext();
         var character = SeedCharacter(ctx, experience: 50);
-        var handler = new AssignExperienceCommandHandler(ctx);
+        var handler = new AssignExperienceCommandHandler(ctx, new Mock<IAnalyticsService>().Object);
 
         var result = await handler.Handle(
             new AssignExperienceCommand(character.Id, 100, "em-1"),
@@ -67,7 +69,7 @@ public sealed class AssignExperienceCommandHandlerTests
     {
         await using var ctx = CreateContext();
         var character = SeedCharacter(ctx, experience: 10);
-        var handler = new AssignExperienceCommandHandler(ctx);
+        var handler = new AssignExperienceCommandHandler(ctx, new Mock<IAnalyticsService>().Object);
 
         var result = await handler.Handle(
             new AssignExperienceCommand(character.Id, -100, "em-1"),
@@ -81,7 +83,7 @@ public sealed class AssignExperienceCommandHandlerTests
     public async Task Handle_ReturnsFailure_WhenCharacterNotFound()
     {
         await using var ctx = CreateContext();
-        var handler = new AssignExperienceCommandHandler(ctx);
+        var handler = new AssignExperienceCommandHandler(ctx, new Mock<IAnalyticsService>().Object);
 
         var result = await handler.Handle(
             new AssignExperienceCommand(999, 50, "em-1"),
@@ -96,7 +98,7 @@ public sealed class AssignExperienceCommandHandlerTests
     {
         await using var ctx = CreateContext();
         var character = SeedCharacter(ctx);
-        var handler = new AssignExperienceCommandHandler(ctx);
+        var handler = new AssignExperienceCommandHandler(ctx, new Mock<IAnalyticsService>().Object);
 
         await handler.Handle(
             new AssignExperienceCommand(character.Id, 50, "em-1", "Attended Spring Event"),
@@ -111,7 +113,7 @@ public sealed class AssignExperienceCommandHandlerTests
     {
         await using var ctx = CreateContext();
         var character = SeedCharacter(ctx);
-        var handler = new AssignExperienceCommandHandler(ctx);
+        var handler = new AssignExperienceCommandHandler(ctx, new Mock<IAnalyticsService>().Object);
 
         await handler.Handle(
             new AssignExperienceCommand(character.Id, 50, "em-1"),

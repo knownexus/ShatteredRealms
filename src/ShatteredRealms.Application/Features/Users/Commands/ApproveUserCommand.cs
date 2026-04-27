@@ -4,4 +4,4 @@ using ShatteredRealms.Domain.Shared;
 
 namespace ShatteredRealms.Application.Features.Users.Commands;
 
-public sealed record ApproveUserCommand(string TargetUserId) : IRequest<Result<UserDto>>;
+public sealed record ApproveUserCommand(string TargetUserId, string? ActorId = null) : IRequest<Result<UserDto>>;

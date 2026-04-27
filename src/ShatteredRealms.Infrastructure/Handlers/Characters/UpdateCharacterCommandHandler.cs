@@ -2,6 +2,8 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ShatteredRealms.Application.DTOs.Characters;
 using ShatteredRealms.Application.Features.Characters.Commands;
+using ShatteredRealms.Application.Interfaces;
+using ShatteredRealms.Domain.Entities.Telemetry;
 using ShatteredRealms.Domain.Errors;
 using ShatteredRealms.Domain.Shared;
 using ShatteredRealms.Infrastructure.Data;
@@ -11,8 +13,13 @@ namespace ShatteredRealms.Infrastructure.Handlers.Characters;
 public sealed class UpdateCharacterCommandHandler : IRequestHandler<UpdateCharacterCommand, Result<CharacterDto>>
 {
     private readonly ApplicationDbContext _context;
+    private readonly IAnalyticsService _analytics;
 
-    public UpdateCharacterCommandHandler(ApplicationDbContext context) => _context = context;
+    public UpdateCharacterCommandHandler(ApplicationDbContext context, IAnalyticsService analytics)
+    {
+        _context = context;
+        _analytics = analytics;
+    }
 
     public async Task<Result<CharacterDto>> Handle(UpdateCharacterCommand request, CancellationToken cancellationToken)
     {
@@ -40,6 +47,11 @@ public sealed class UpdateCharacterCommandHandler : IRequestHandler<UpdateCharac
         character.Experience  = request.Experience;
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        var actorId = request.ActorId ?? character.UserId;
+        await _analytics.TrackAsync(TelemetryEventType.CharacterUpdated, actorId, string.Empty,
+            targetId: character.Id.ToString(), targetName: character.Name, cancellationToken: cancellationToken);
+
         return Result.Success(CreateCharacterCommandHandler.MapToDto(character, null));
     }
 }

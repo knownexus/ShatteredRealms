@@ -19,6 +19,7 @@ public sealed class LoginCommandHandlerTests
     private readonly IUserService _userService = Substitute.For<IUserService>();
     private readonly ITokenService _tokenService = Substitute.For<ITokenService>();
     private readonly IPermissionService _permissionService = Substitute.For<IPermissionService>();
+    private readonly IAnalyticsService _analytics = Substitute.For<IAnalyticsService>();
     private readonly ApplicationDbContext _context;
     private readonly LoginCommandHandler _handler;
 
@@ -41,7 +42,7 @@ public sealed class LoginCommandHandlerTests
         var confirmationSettings = Substitute.For<IOptionsMonitor<ConfirmationSettings>>();
         confirmationSettings.CurrentValue.Returns(new ConfirmationSettings { RequireEmailConfirmation = false });
         confirmationSettings.Get(Arg.Any<string>()).Returns(new ConfirmationSettings { RequireEmailConfirmation = false });
-        _handler = new LoginCommandHandler(_userService, _tokenService, _permissionService, _context, confirmationSettings);
+        _handler = new LoginCommandHandler(_userService, _tokenService, _permissionService, _analytics, _context, confirmationSettings);
     }
 
     [Fact]

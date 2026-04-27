@@ -4,6 +4,7 @@ using ShatteredRealms.Application.DTOs.Auth;
 using ShatteredRealms.Application.Features.Auth.Commands;
 using ShatteredRealms.Application.Interfaces;
 using ShatteredRealms.Application.Settings;
+using ShatteredRealms.Domain.Entities.Telemetry;
 using ShatteredRealms.Domain.Entities.User;
 using ShatteredRealms.Domain.Errors;
 using ShatteredRealms.Domain.Shared;
@@ -17,6 +18,7 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, Result<A
     private readonly IUserService _userService;
     private readonly ITokenService _tokenService;
     private readonly IPermissionService _permissionService;
+    private readonly IAnalyticsService _analytics;
     private readonly ApplicationDbContext _context;
     private readonly IOptionsMonitor<ConfirmationSettings> _confirmationSettings;
 
@@ -24,12 +26,14 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, Result<A
         IUserService userService,
         ITokenService tokenService,
         IPermissionService permissionService,
+        IAnalyticsService analytics,
         ApplicationDbContext context,
         IOptionsMonitor<ConfirmationSettings> confirmationSettings)
     {
         _userService = userService;
         _tokenService = tokenService;
         _permissionService = permissionService;
+        _analytics = analytics;
         _context = context;
         _confirmationSettings = confirmationSettings;
     }
@@ -70,6 +74,9 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, Result<A
         {
             return Result.Failure<AuthResponse>(DomainErrors.Authentication.PendingApproval);
         }
+
+        await _analytics.TrackAsync(TelemetryEventType.UserLoggedIn, user.Id, user.Email ?? string.Empty,
+            cancellationToken: cancellationToken);
 
         return await AuthHelpers.GenerateAuthResponseAsync(
             user, _userService, _tokenService, _permissionService, _context, cancellationToken);

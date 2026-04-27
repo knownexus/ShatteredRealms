@@ -10,4 +10,5 @@ public sealed record UpdateUserCommand(
     string Email,
     string FirstName,
     string LastName,
-    List<string> RoleIds) : IRequest<Result<UserDto>>;
+    List<string> RoleIds,
+    string? ActorId = null) : IRequest<Result<UserDto>>;

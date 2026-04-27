@@ -11,5 +11,6 @@ public sealed record UpdateEventCommand(
     DateTime StartsAt,
     DateTime EndsAt,
     string? Location,
-    int? MemberCap
+    int? MemberCap,
+    string? ActorId = null
 ) : IRequest<Result<EventDto>>;

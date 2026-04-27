@@ -109,6 +109,11 @@ public static class Claims
             public const string Assign = "PermissionControl.Assign";
         }
 
+        public static class Analytics
+        {
+            public const string View = "Analytics.View";
+        }
+
         public static class Videos
         {
             public const string View = "Videos.View";
@@ -263,6 +268,8 @@ public static class Claims
         , new PermissionDef(Permissions.Documents.View,   "View and download documents", "Documents")
         , new PermissionDef(Permissions.Documents.Upload, "Upload documents",            "Documents")
         , new PermissionDef(Permissions.Documents.Delete, "Delete documents",            "Documents")
+          // Index 70 - Analytics
+        , new PermissionDef(Permissions.Analytics.View, "View analytics and telemetry", "Analytics")
     };
 
     public static class RolePermissions
@@ -321,6 +328,7 @@ public static class Claims
               Permissions.Reports.View
             , Permissions.Reports.Create
             , Permissions.Reports.CreateAll
+            , Permissions.Analytics.View
         };
 
         public static readonly IReadOnlyList<string> User = new[]

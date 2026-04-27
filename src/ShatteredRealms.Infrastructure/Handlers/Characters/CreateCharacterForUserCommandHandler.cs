@@ -1,7 +1,9 @@
 using MediatR;
 using ShatteredRealms.Application.DTOs.Characters;
 using ShatteredRealms.Application.Features.Characters.Commands;
+using ShatteredRealms.Application.Interfaces;
 using ShatteredRealms.Domain.Entities.ActivityLog;
+using ShatteredRealms.Domain.Entities.Telemetry;
 using ShatteredRealms.Domain.Errors;
 using ShatteredRealms.Domain.Shared;
 using ShatteredRealms.Infrastructure.Data;
@@ -11,8 +13,13 @@ namespace ShatteredRealms.Infrastructure.Handlers.Characters;
 public sealed class CreateCharacterForUserCommandHandler : IRequestHandler<CreateCharacterForUserCommand, Result<CharacterDto>>
 {
     private readonly ApplicationDbContext _context;
+    private readonly IAnalyticsService _analytics;
 
-    public CreateCharacterForUserCommandHandler(ApplicationDbContext context) => _context = context;
+    public CreateCharacterForUserCommandHandler(ApplicationDbContext context, IAnalyticsService analytics)
+    {
+        _context = context;
+        _analytics = analytics;
+    }
 
     public async Task<Result<CharacterDto>> Handle(CreateCharacterForUserCommand request, CancellationToken cancellationToken)
     {
@@ -37,16 +44,23 @@ public sealed class CreateCharacterForUserCommandHandler : IRequestHandler<Creat
         };
 
         _context.Character.Add(character);
+        await _context.SaveChangesAsync(cancellationToken);
 
         _context.ActivityLog.Add(new ActivityLog
         {
             Id          = Guid.NewGuid(),
             UserId      = request.RequestingUserId,
+            CharacterId = character.Id,
             Description = $"Admin created character '{character.Name}' for user '{request.TargetUserId}'",
             Date        = DateTime.UtcNow,
         });
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        await _analytics.TrackAsync(TelemetryEventType.CharacterCreated, request.RequestingUserId, string.Empty,
+            targetId: character.Id.ToString(), targetName: character.Name,
+            details: $"Created for user {request.TargetUserId}", cancellationToken: cancellationToken);
+
         return Result.Success(CreateCharacterCommandHandler.MapToDto(character, null));
     }
 }

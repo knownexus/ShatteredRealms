@@ -66,7 +66,7 @@ public sealed class AnnouncementsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(
-            new UpdateAnnouncementCommand(id, request.Title, request.Body, request.LinkedEventId),
+            new UpdateAnnouncementCommand(id, request.Title, request.Body, request.LinkedEventId, User.GetUserId()),
             cancellationToken);
 
         return result.IsFailure
@@ -78,7 +78,7 @@ public sealed class AnnouncementsController : ControllerBase
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new DeleteAnnouncementCommand(id), cancellationToken);
+        var result = await _mediator.Send(new DeleteAnnouncementCommand(id, User.GetUserId()), cancellationToken);
         return result.IsFailure
             ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)
             : NoContent();

@@ -1,7 +1,9 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Moq;
 using ShatteredRealms.Application.Features.Characters.Commands;
+using ShatteredRealms.Application.Interfaces;
 using ShatteredRealms.Domain.Errors;
 using ShatteredRealms.Infrastructure.Data;
 using ShatteredRealms.Infrastructure.Handlers.Characters;
@@ -20,7 +22,7 @@ public sealed class CreateCharacterCommandHandlerTests
     public async Task Handle_ReturnsCharacterDto_WhenAllFieldsValid()
     {
         await using var ctx = CreateContext();
-        var handler = new CreateCharacterCommandHandler(ctx);
+        var handler = new CreateCharacterCommandHandler(ctx, new Mock<IAnalyticsService>().Object);
 
         var result = await handler.Handle(
             new CreateCharacterCommand("user-1", "Aldric", "Norman", "Kingdom of England"),
@@ -38,7 +40,7 @@ public sealed class CreateCharacterCommandHandlerTests
     public async Task Handle_ReturnsFailure_WhenNameIsEmpty()
     {
         await using var ctx = CreateContext();
-        var handler = new CreateCharacterCommandHandler(ctx);
+        var handler = new CreateCharacterCommandHandler(ctx, new Mock<IAnalyticsService>().Object);
 
         var result = await handler.Handle(
             new CreateCharacterCommand("user-1", "", "Norman", "Kingdom of England"),
@@ -52,7 +54,7 @@ public sealed class CreateCharacterCommandHandlerTests
     public async Task Handle_ReturnsFailure_WhenNationalityIsEmpty()
     {
         await using var ctx = CreateContext();
-        var handler = new CreateCharacterCommandHandler(ctx);
+        var handler = new CreateCharacterCommandHandler(ctx, new Mock<IAnalyticsService>().Object);
 
         var result = await handler.Handle(
             new CreateCharacterCommand("user-1", "Aldric", "", "Kingdom of England"),
@@ -66,7 +68,7 @@ public sealed class CreateCharacterCommandHandlerTests
     public async Task Handle_ReturnsFailure_WhenFactionIsEmpty()
     {
         await using var ctx = CreateContext();
-        var handler = new CreateCharacterCommandHandler(ctx);
+        var handler = new CreateCharacterCommandHandler(ctx, new Mock<IAnalyticsService>().Object);
 
         var result = await handler.Handle(
             new CreateCharacterCommand("user-1", "Aldric", "Norman", ""),
@@ -80,7 +82,7 @@ public sealed class CreateCharacterCommandHandlerTests
     public async Task Handle_PersistsCharacter_ToDatabase()
     {
         await using var ctx = CreateContext();
-        var handler = new CreateCharacterCommandHandler(ctx);
+        var handler = new CreateCharacterCommandHandler(ctx, new Mock<IAnalyticsService>().Object);
 
         await handler.Handle(
             new CreateCharacterCommand("user-1", "Aldric", "Norman", "Kingdom of England"),
@@ -94,7 +96,7 @@ public sealed class CreateCharacterCommandHandlerTests
     public async Task Handle_WritesActivityLog_OnSuccess()
     {
         await using var ctx = CreateContext();
-        var handler = new CreateCharacterCommandHandler(ctx);
+        var handler = new CreateCharacterCommandHandler(ctx, new Mock<IAnalyticsService>().Object);
 
         await handler.Handle(
             new CreateCharacterCommand("user-1", "Aldric", "Norman", "Kingdom of England"),

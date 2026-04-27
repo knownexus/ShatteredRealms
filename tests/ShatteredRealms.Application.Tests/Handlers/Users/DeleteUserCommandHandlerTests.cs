@@ -11,11 +11,12 @@ namespace ShatteredRealms.Application.Tests.Handlers.Users;
 public sealed class DeleteUserCommandHandlerTests
 {
     private readonly IUserService _userService = Substitute.For<IUserService>();
+    private readonly IAnalyticsService _analytics = Substitute.For<IAnalyticsService>();
     private readonly DeleteUserCommandHandler _handler;
 
     public DeleteUserCommandHandlerTests()
     {
-        _handler = new DeleteUserCommandHandler(_userService);
+        _handler = new DeleteUserCommandHandler(_userService, _analytics);
     }
 
     [Fact]

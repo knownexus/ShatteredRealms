@@ -147,6 +147,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IForumService, ForumService>();
         services.AddScoped<IPermissionService, PermissionService>();
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
+        services.AddScoped<IAnalyticsService, AnalyticsService>();
 
         // MediatR - scan the Infrastructure assembly for all handlers
         services.AddMediatR(cfg =>

@@ -2,7 +2,9 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ShatteredRealms.Application.DTOs.Characters;
 using ShatteredRealms.Application.Features.Characters.Commands;
+using ShatteredRealms.Application.Interfaces;
 using ShatteredRealms.Domain.Entities.ActivityLog;
+using ShatteredRealms.Domain.Entities.Telemetry;
 using ShatteredRealms.Domain.Errors;
 using ShatteredRealms.Domain.Shared;
 using ShatteredRealms.Infrastructure.Data;
@@ -12,8 +14,13 @@ namespace ShatteredRealms.Infrastructure.Handlers.Characters;
 public sealed class AssignPositionCommandHandler : IRequestHandler<AssignPositionCommand, Result<CharacterDto>>
 {
     private readonly ApplicationDbContext _context;
+    private readonly IAnalyticsService _analytics;
 
-    public AssignPositionCommandHandler(ApplicationDbContext context) => _context = context;
+    public AssignPositionCommandHandler(ApplicationDbContext context, IAnalyticsService analytics)
+    {
+        _context = context;
+        _analytics = analytics;
+    }
 
     public async Task<Result<CharacterDto>> Handle(AssignPositionCommand request, CancellationToken cancellationToken)
     {
@@ -47,11 +54,17 @@ public sealed class AssignPositionCommandHandler : IRequestHandler<AssignPositio
         {
             Id          = Guid.NewGuid(),
             UserId      = request.RequestingUserId,
+            CharacterId = character.Id,
             Description = $"Assigned position '{positionName}' to character '{character.Name}'",
             Date        = DateTime.UtcNow,
         });
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        await _analytics.TrackAsync(TelemetryEventType.CharacterPositionAssigned, request.RequestingUserId, string.Empty,
+            targetId: character.Id.ToString(), targetName: character.Name,
+            details: $"Position: {positionName}", cancellationToken: cancellationToken);
+
         return Result.Success(CreateCharacterCommandHandler.MapToDto(character, null));
     }
 }

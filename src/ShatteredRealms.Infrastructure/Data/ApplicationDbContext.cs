@@ -8,6 +8,7 @@ using ShatteredRealms.Domain.Entities.Document;
 using ShatteredRealms.Domain.Entities.Event;
 using ShatteredRealms.Domain.Entities.Character;
 using ShatteredRealms.Domain.Entities.Forum;
+using ShatteredRealms.Domain.Entities.Telemetry;
 using ShatteredRealms.Domain.Entities.User;
 using ShatteredRealms.Domain.Entities.Wiki;
 using ShatteredRealms.Domain.Shared;
@@ -42,6 +43,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Document> Document { get; set; }
     public DbSet<Character> Character { get; set; }
     public DbSet<Position> Position { get; set; }
+    public DbSet<TelemetryEvent> TelemetryEvent { get; set; }
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -135,6 +137,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         ConfigureDocuments(builder);
         ConfigureCharacters(builder);
         ConfigurePositions(builder);
+        ConfigureTelemetry(builder);
 
         SeedRoles(builder);
         SeedPermissions(builder);
@@ -347,6 +350,24 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             e.HasKey(p => p.Id);
             e.Property(p => p.Name).IsRequired().HasMaxLength(64);
             e.Property(p => p.Description).HasMaxLength(256);
+        });
+    }
+
+    private static void ConfigureTelemetry(ModelBuilder builder)
+    {
+        builder.Entity<TelemetryEvent>(e =>
+        {
+            e.ToTable("TelemetryEvent");
+            e.HasKey(t => t.Id);
+            e.Property(t => t.ActorId).IsRequired().HasMaxLength(450);
+            e.Property(t => t.ActorEmail).IsRequired().HasMaxLength(256);
+            e.Property(t => t.TargetId).HasMaxLength(450);
+            e.Property(t => t.TargetName).HasMaxLength(512);
+            e.Property(t => t.Details).HasMaxLength(1024);
+            e.Property(t => t.EventType).IsRequired();
+            e.HasIndex(t => t.OccurredAt);
+            e.HasIndex(t => t.ActorId);
+            e.HasIndex(t => t.EventType);
         });
     }
 

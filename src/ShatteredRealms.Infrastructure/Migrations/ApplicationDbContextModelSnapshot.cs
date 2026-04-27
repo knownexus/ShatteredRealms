@@ -1218,6 +1218,15 @@ namespace ShatteredRealms.Infrastructure.Migrations
                         },
                         new
                         {
+                            Id = 171,
+                            Category = "Analytics",
+                            ClaimType = "permission",
+                            ClaimValue = "Analytics.View",
+                            Description = "View analytics and telemetry",
+                            RoleId = "00000000-0000-0000-0000-000000000001"
+                        },
+                        new
+                        {
                             Id = 201,
                             Category = "Users",
                             ClaimType = "permission",
@@ -1848,6 +1857,15 @@ namespace ShatteredRealms.Infrastructure.Migrations
                         },
                         new
                         {
+                            Id = 271,
+                            Category = "Analytics",
+                            ClaimType = "permission",
+                            ClaimValue = "Analytics.View",
+                            Description = "View analytics and telemetry",
+                            RoleId = "00000000-0000-0000-0000-000000000002"
+                        },
+                        new
+                        {
                             Id = 354,
                             Category = "ActivityLogs",
                             ClaimType = "permission",
@@ -1871,6 +1889,15 @@ namespace ShatteredRealms.Infrastructure.Migrations
                             ClaimType = "permission",
                             ClaimValue = "Reports.CreateAll",
                             Description = "Generate all reports",
+                            RoleId = "00000000-0000-0000-0000-000000000005"
+                        },
+                        new
+                        {
+                            Id = 371,
+                            Category = "Analytics",
+                            ClaimType = "permission",
+                            ClaimValue = "Analytics.View",
+                            Description = "View analytics and telemetry",
                             RoleId = "00000000-0000-0000-0000-000000000005"
                         },
                         new
@@ -2570,6 +2597,51 @@ namespace ShatteredRealms.Infrastructure.Migrations
                             NormalizedName = "UNVERIFIED",
                             Priority = 5
                         });
+                });
+
+            modelBuilder.Entity("ShatteredRealms.Domain.Entities.Telemetry.TelemetryEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ActorEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("ActorId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Details")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<int>("EventType")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("OccurredAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TargetId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("TargetName")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorId");
+
+                    b.HasIndex("EventType");
+
+                    b.HasIndex("OccurredAt");
+
+                    b.ToTable("TelemetryEvent", (string)null);
                 });
 
             modelBuilder.Entity("ShatteredRealms.Domain.Entities.User.EmergencyContact", b =>

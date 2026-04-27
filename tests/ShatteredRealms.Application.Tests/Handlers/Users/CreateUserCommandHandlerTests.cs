@@ -15,11 +15,12 @@ public sealed class CreateUserCommandHandlerTests
 {
     private readonly IUserService _userService = Substitute.For<IUserService>();
     private readonly IPermissionService _permissionService = Substitute.For<IPermissionService>();
+    private readonly IAnalyticsService _analytics = Substitute.For<IAnalyticsService>();
     private readonly CreateUserCommandHandler _handler;
 
     public CreateUserCommandHandlerTests()
     {
-        _handler = new CreateUserCommandHandler(_userService, _permissionService);
+        _handler = new CreateUserCommandHandler(_userService, _permissionService, _analytics);
     }
 
     [Fact]

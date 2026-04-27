@@ -88,7 +88,7 @@ public sealed class UsersController : ControllerBase
         _logger.LogInformation("Create user - requested by UserId: {UserId}", User.GetUserId());
 
         var result = await _mediator.Send(
-            new CreateUserCommand(request.Email, request.Password, request.FirstName, request.LastName, request.RoleIds),
+            new CreateUserCommand(request.Email, request.Password, request.FirstName, request.LastName, request.RoleIds, User.GetUserId()),
             cancellationToken);
 
         if (result.IsFailure)
@@ -158,7 +158,7 @@ public sealed class UsersController : ControllerBase
         _logger.LogInformation("Update user {TargetUserId} - requested by UserId: {UserId}", id, User.GetUserId());
 
         var result = await _mediator.Send(
-            new UpdateUserCommand(id, request.Email, request.FirstName, request.LastName, request.RoleIds),
+            new UpdateUserCommand(id, request.Email, request.FirstName, request.LastName, request.RoleIds, User.GetUserId()),
             cancellationToken);
 
         if (result.IsFailure)
@@ -190,7 +190,7 @@ public sealed class UsersController : ControllerBase
     {
         _logger.LogInformation("Approve user {TargetUserId} - requested by UserId: {UserId}", id, User.GetUserId());
 
-        var result = await _mediator.Send(new ApproveUserCommand(id), cancellationToken);
+        var result = await _mediator.Send(new ApproveUserCommand(id, User.GetUserId()), cancellationToken);
         if (result.IsFailure)
         {
             return Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title);
@@ -207,7 +207,7 @@ public sealed class UsersController : ControllerBase
     {
         _logger.LogInformation("Delete user {TargetUserId} - requested by UserId: {UserId}", id, User.GetUserId());
 
-        var result = await _mediator.Send(new DeleteUserCommand(id), cancellationToken);
+        var result = await _mediator.Send(new DeleteUserCommand(id, User.GetUserId()), cancellationToken);
         if (result.IsFailure)
         {
             return Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title);

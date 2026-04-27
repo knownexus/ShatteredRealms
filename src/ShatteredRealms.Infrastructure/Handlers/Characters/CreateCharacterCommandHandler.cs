@@ -1,7 +1,9 @@
 using MediatR;
 using ShatteredRealms.Application.DTOs.Characters;
 using ShatteredRealms.Application.Features.Characters.Commands;
+using ShatteredRealms.Application.Interfaces;
 using ShatteredRealms.Domain.Entities.ActivityLog;
+using ShatteredRealms.Domain.Entities.Telemetry;
 using ShatteredRealms.Domain.Errors;
 using ShatteredRealms.Domain.Shared;
 using ShatteredRealms.Infrastructure.Data;
@@ -11,8 +13,13 @@ namespace ShatteredRealms.Infrastructure.Handlers.Characters;
 public sealed class CreateCharacterCommandHandler : IRequestHandler<CreateCharacterCommand, Result<CharacterDto>>
 {
     private readonly ApplicationDbContext _context;
+    private readonly IAnalyticsService _analytics;
 
-    public CreateCharacterCommandHandler(ApplicationDbContext context) => _context = context;
+    public CreateCharacterCommandHandler(ApplicationDbContext context, IAnalyticsService analytics)
+    {
+        _context = context;
+        _analytics = analytics;
+    }
 
     public async Task<Result<CharacterDto>> Handle(CreateCharacterCommand request, CancellationToken cancellationToken)
     {
@@ -38,15 +45,21 @@ public sealed class CreateCharacterCommandHandler : IRequestHandler<CreateCharac
 
         _context.Character.Add(character);
 
+        await _context.SaveChangesAsync(cancellationToken);
+
         _context.ActivityLog.Add(new ActivityLog
         {
             Id          = Guid.NewGuid(),
             UserId      = request.UserId,
+            CharacterId = character.Id,
             Description = $"Created character '{character.Name}'",
             Date        = DateTime.UtcNow,
         });
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        await _analytics.TrackAsync(TelemetryEventType.CharacterCreated, request.UserId, string.Empty,
+            targetId: character.Id.ToString(), targetName: character.Name, cancellationToken: cancellationToken);
 
         return Result.Success(MapToDto(character, null));
     }

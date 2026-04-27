@@ -2,6 +2,8 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ShatteredRealms.Application.DTOs.Characters;
 using ShatteredRealms.Application.Features.Characters.Commands;
+using ShatteredRealms.Application.Interfaces;
+using ShatteredRealms.Domain.Entities.Telemetry;
 using ShatteredRealms.Domain.Errors;
 using ShatteredRealms.Domain.Shared;
 using ShatteredRealms.Infrastructure.Data;
@@ -11,8 +13,13 @@ namespace ShatteredRealms.Infrastructure.Handlers.Characters;
 public sealed class UpdateOwnCharacterCommandHandler : IRequestHandler<UpdateOwnCharacterCommand, Result<CharacterDto>>
 {
     private readonly ApplicationDbContext _context;
+    private readonly IAnalyticsService _analytics;
 
-    public UpdateOwnCharacterCommandHandler(ApplicationDbContext context) => _context = context;
+    public UpdateOwnCharacterCommandHandler(ApplicationDbContext context, IAnalyticsService analytics)
+    {
+        _context = context;
+        _analytics = analytics;
+    }
 
     public async Task<Result<CharacterDto>> Handle(UpdateOwnCharacterCommand request, CancellationToken cancellationToken)
     {
@@ -41,6 +48,10 @@ public sealed class UpdateOwnCharacterCommandHandler : IRequestHandler<UpdateOwn
         character.Faction     = request.Faction.Trim();
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        await _analytics.TrackAsync(TelemetryEventType.CharacterUpdated, request.RequestingUserId, string.Empty,
+            targetId: character.Id.ToString(), targetName: character.Name, cancellationToken: cancellationToken);
+
         return Result.Success(CreateCharacterCommandHandler.MapToDto(character, null));
     }
 }

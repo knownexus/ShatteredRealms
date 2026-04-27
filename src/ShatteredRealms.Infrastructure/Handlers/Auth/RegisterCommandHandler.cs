@@ -6,6 +6,7 @@ using ShatteredRealms.Application.DTOs.Users;
 using ShatteredRealms.Application.Features.Auth.Commands;
 using ShatteredRealms.Application.Interfaces;
 using ShatteredRealms.Application.Settings;
+using ShatteredRealms.Domain.Entities.Telemetry;
 using ShatteredRealms.Domain.Shared;
 
 namespace ShatteredRealms.Infrastructure.Handlers.Auth;
@@ -14,17 +15,20 @@ public sealed class RegisterCommandHandler : IRequestHandler<RegisterCommand, Re
 {
     private readonly IUserService _userService;
     private readonly IEmailService _emailService;
+    private readonly IAnalyticsService _analytics;
     private readonly IConfiguration _configuration;
     private readonly IOptionsMonitor<ConfirmationSettings> _confirmationSettings;
 
     public RegisterCommandHandler(
         IUserService userService,
         IEmailService emailService,
+        IAnalyticsService analytics,
         IConfiguration configuration,
         IOptionsMonitor<ConfirmationSettings> confirmationSettings)
     {
         _userService = userService;
         _emailService = emailService;
+        _analytics = analytics;
         _configuration = configuration;
         _confirmationSettings = confirmationSettings;
     }
@@ -46,6 +50,9 @@ public sealed class RegisterCommandHandler : IRequestHandler<RegisterCommand, Re
         }
 
         var user = userResult.Value;
+
+        await _analytics.TrackAsync(TelemetryEventType.UserRegistered, user.Id, user.Email ?? string.Empty,
+            targetName: $"{user.FirstName} {user.LastName}", cancellationToken: cancellationToken);
 
         // Read CurrentValue at request time so live appsettings changes take effect immediately
         if (!_confirmationSettings.CurrentValue.RequireEmailConfirmation)

@@ -2,6 +2,8 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ShatteredRealms.Application.DTOs.Announcements;
 using ShatteredRealms.Application.Features.Announcements.Commands;
+using ShatteredRealms.Application.Interfaces;
+using ShatteredRealms.Domain.Entities.Telemetry;
 using ShatteredRealms.Domain.Errors;
 using ShatteredRealms.Domain.Shared;
 using ShatteredRealms.Infrastructure.Data;
@@ -11,8 +13,13 @@ namespace ShatteredRealms.Infrastructure.Handlers.Announcements;
 public sealed class UpdateAnnouncementCommandHandler : IRequestHandler<UpdateAnnouncementCommand, Result<AnnouncementDto>>
 {
     private readonly ApplicationDbContext _context;
+    private readonly IAnalyticsService _analytics;
 
-    public UpdateAnnouncementCommandHandler(ApplicationDbContext context) => _context = context;
+    public UpdateAnnouncementCommandHandler(ApplicationDbContext context, IAnalyticsService analytics)
+    {
+        _context = context;
+        _analytics = analytics;
+    }
 
     public async Task<Result<AnnouncementDto>> Handle(UpdateAnnouncementCommand request, CancellationToken cancellationToken)
     {
@@ -43,6 +50,12 @@ public sealed class UpdateAnnouncementCommandHandler : IRequestHandler<UpdateAnn
             : null;
 
         var author = await _context.Users.FindAsync([announcement.AuthorId], cancellationToken);
+
+        if (!string.IsNullOrEmpty(request.ActorId))
+        {
+            await _analytics.TrackAsync(TelemetryEventType.AnnouncementUpdated, request.ActorId, string.Empty,
+                targetId: announcement.Id.ToString(), targetName: announcement.Title, cancellationToken: cancellationToken);
+        }
 
         return Result.Success(new AnnouncementDto
         {

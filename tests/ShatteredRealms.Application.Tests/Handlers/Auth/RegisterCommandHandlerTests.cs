@@ -22,6 +22,7 @@ public sealed class RegisterCommandHandlerTests
 {
     private readonly IUserService _userService = Substitute.For<IUserService>();
     private readonly IEmailService _emailService = Substitute.For<IEmailService>();
+    private readonly IAnalyticsService _analytics = Substitute.For<IAnalyticsService>();
     private readonly IConfiguration _configuration = Substitute.For<IConfiguration>();
     private readonly ApplicationDbContext _context;
     private readonly RegisterCommandHandler _handler;
@@ -36,7 +37,7 @@ public sealed class RegisterCommandHandlerTests
         var confirmationSettings = Substitute.For<IOptionsMonitor<ConfirmationSettings>>();
         confirmationSettings.CurrentValue.Returns(new ConfirmationSettings { RequireEmailConfirmation = false });
         confirmationSettings.Get(Arg.Any<string>()).Returns(new ConfirmationSettings { RequireEmailConfirmation = false });
-        _handler = new RegisterCommandHandler(_userService, _emailService, _configuration, confirmationSettings);
+        _handler = new RegisterCommandHandler(_userService, _emailService, _analytics, _configuration, confirmationSettings);
     }
 
     [Fact]

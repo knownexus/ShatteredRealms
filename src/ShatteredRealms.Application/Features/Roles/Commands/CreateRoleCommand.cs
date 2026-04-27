@@ -7,4 +7,5 @@ namespace ShatteredRealms.Application.Features.Roles.Commands;
 public sealed record CreateRoleCommand(
     string Name,
     string Description,
-    List<int> PermissionIds) : IRequest<Result<RoleDto>>;
+    List<int> PermissionIds,
+    string? ActorId = null) : IRequest<Result<RoleDto>>;
