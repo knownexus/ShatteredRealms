@@ -66,6 +66,10 @@ public class EventClientService
 
     public async Task<Result<EventDto>> CreateAsync(CreateEventRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.Title) || string.IsNullOrWhiteSpace(request.Description ))
+        {
+            Result.Failure<EventDto>(new Error("Error", "Empty Request", (int)HttpStatusCode.BadRequest));
+        }
         var response = await _httpClient.PostAsJsonAsync("api/events", request);
         if (response.IsSuccessStatusCode)
         {

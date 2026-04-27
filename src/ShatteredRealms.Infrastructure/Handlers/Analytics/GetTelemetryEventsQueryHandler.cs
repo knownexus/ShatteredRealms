@@ -81,7 +81,7 @@ public sealed class GetTelemetryEventsQueryHandler : IRequestHandler<GetTelemetr
                         Domain.Entities.Telemetry.FlagRuleType.User =>
                             rule.TargetUserId == ev.ActorId,
                         Domain.Entities.Telemetry.FlagRuleType.EventType =>
-                            rule.EventType.HasValue && rule.EventType.Value == ev.EventType,
+                            !rule.EventType.HasValue || rule.EventType.Value == ev.EventType,
                         Domain.Entities.Telemetry.FlagRuleType.RoleAction =>
                             !string.IsNullOrEmpty(rule.ActorRole) &&
                             string.Equals(rule.ActorRole, ev.ActorRole, StringComparison.OrdinalIgnoreCase) &&

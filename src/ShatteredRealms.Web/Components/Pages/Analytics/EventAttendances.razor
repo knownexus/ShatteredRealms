@@ -120,7 +120,7 @@
                                                     <span class="attendee-name">@(string.IsNullOrEmpty(a.UserName) ? a.UserId : a.UserName)</span>
                                                 </td>
                                                 <td class="attendee-email">@a.UserEmail</td>
-                                                <td class="attendee-time">@a.RegisteredAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                                <td class="attendee-time">@ToUk(a.RegisteredAt, "yyyy-MM-dd HH:mm")</td>
                                             </tr>
                                         }
                                     </tbody>
@@ -151,7 +151,7 @@
                                                     <span class="attendee-name">@(string.IsNullOrEmpty(c.UserName) ? c.UserId : c.UserName)</span>
                                                 </td>
                                                 <td class="attendee-email">@c.UserEmail</td>
-                                                <td class="attendee-time cancelled-time">@c.CancelledAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                                <td class="attendee-time cancelled-time">@ToUk(c.CancelledAt, "yyyy-MM-dd HH:mm")</td>
                                             </tr>
                                         }
                                     </tbody>
@@ -304,5 +304,14 @@
         if (!_expanded.Add(eventId))
             _expanded.Remove(eventId);
         StateHasChanged();
+    }
+
+    private static readonly TimeZoneInfo UkTz = TimeZoneInfo.FindSystemTimeZoneById(
+        OperatingSystem.IsWindows() ? "GMT Standard Time" : "Europe/London");
+
+    private static string ToUk(DateTime utc, string fmt = "yyyy-MM-dd HH:mm")
+    {
+        var local = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(utc, DateTimeKind.Utc), UkTz);
+        return local.ToString(fmt) + (UkTz.IsDaylightSavingTime(local) ? " BST" : " GMT");
     }
 }

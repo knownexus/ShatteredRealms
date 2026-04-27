@@ -24,8 +24,8 @@ public class AnalyticsClientService
         var query = $"api/analytics?page={page}&pageSize={pageSize}";
         if (eventType.HasValue)     query += $"&eventType={(int)eventType.Value}";
         if (!string.IsNullOrEmpty(actorSearch)) query += $"&actorSearch={Uri.EscapeDataString(actorSearch)}";
-        if (from.HasValue)          query += $"&from={from.Value:O}";
-        if (to.HasValue)            query += $"&to={to.Value:O}";
+        if (from.HasValue)          query += $"&from={from.Value:s}";
+        if (to.HasValue)            query += $"&to={to.Value:s}";
 
         var response = await _httpClient.GetAsync(query);
         if (response.IsSuccessStatusCode)
@@ -108,7 +108,7 @@ public class AnalyticsClientService
         TelemetryEventType? eventType = null,
         string? actorSearch = null)
     {
-        var query = $"api/analytics/chart?from={from:O}&to={to:O}&groupBy={groupBy}";
+        var query = $"api/analytics/chart?from={from:s}&to={to:s}&groupBy={groupBy}";
         if (eventType.HasValue)                    query += $"&eventType={(int)eventType.Value}";
         if (!string.IsNullOrEmpty(actorSearch))    query += $"&actorSearch={Uri.EscapeDataString(actorSearch)}";
 
