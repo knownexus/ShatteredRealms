@@ -14,15 +14,23 @@
     <div class="chars-header">
         <div class="chars-title-group">
             <h1 class="chars-title">Characters</h1>
-            <p class="chars-subtitle">Your in-world identities</p>
+            <p class="chars-subtitle">@(_viewAll ? "All member characters" : "Your in-world identities")</p>
         </div>
-        @if (_canCreate)
-        {
-            <button class="chars-btn chars-btn--primary" @onclick="ShowCreateModal">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                New Character
-            </button>
-        }
+        <div class="chars-header-actions">
+            @if (_canViewAny)
+            {
+                <button class="chars-btn @(_viewAll ? "chars-btn--ghost" : "chars-btn--secondary")" @onclick="ToggleView">
+                    @(_viewAll ? "My Characters" : "All Characters")
+                </button>
+            }
+            @if (_canCreate && !_viewAll)
+            {
+                <button class="chars-btn chars-btn--primary" @onclick="ShowCreateModal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    New Character
+                </button>
+            }
+        </div>
     </div>
 
     @if (_loading)
@@ -40,8 +48,8 @@
     {
         <div class="chars-empty">
             <svg class="chars-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <p>No characters yet.</p>
-            @if (_canCreate)
+            <p>@(_viewAll ? "No characters found." : "No characters yet.")</p>
+            @if (_canCreate && !_viewAll)
             {
                 <button class="chars-btn chars-btn--primary" @onclick="ShowCreateModal">Create your first character</button>
             }
@@ -77,7 +85,7 @@
                                 <span class="char-stat__value">@c.Experience</span>
                             </span>
                         </div>
-                        @if (!string.IsNullOrEmpty(c.OwnerName) && _canViewAny)
+                        @if (!string.IsNullOrEmpty(c.OwnerName) && (_canViewAny || _viewAll))
                         {
                             <div class="char-card__owner">Owner: @c.OwnerName</div>
                         }
@@ -101,9 +109,18 @@
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                             </button>
                         }
-                        <button class="char-action-btn char-action-btn--danger" title="Delete" @onclick="() => ShowDeleteConfirm(c)">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-                        </button>
+                        @if (_canViewAny)
+                        {
+                            <button class="char-action-btn char-action-btn--info" title="View History" @onclick="() => ShowHistoryModal(c)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            </button>
+                        }
+                        @if (_canDelete || c.UserId == _currentUserId)
+                        {
+                            <button class="char-action-btn char-action-btn--danger" title="Delete" @onclick="() => ShowDeleteConfirm(c)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                            </button>
+                        }
                     </div>
                 </div>
             }
@@ -265,6 +282,58 @@
     </div>
 }
 
+@* ── History Modal ────────────────────────────────────────────────────────── *@
+@if (_showHistory && _historyTarget is not null)
+{
+    <div class="modal-backdrop" @onclick="CloseHistoryViaBackdrop" @onmousedown="() => _historyBackdropDown = true">
+        <div class="modal-panel modal-panel--lg" @onclick:stopPropagation @onmousedown:stopPropagation>
+            <div class="modal-header">
+                <h2 class="modal-title">History — @_historyTarget.Name</h2>
+                <button class="modal-close" @onclick="CloseHistory">✕</button>
+            </div>
+            <div class="modal-body">
+                @if (_historyLoading)
+                {
+                    <div class="chars-loading"><div class="chars-spinner"></div><span>Loading…</span></div>
+                }
+                else if (_historyError is not null)
+                {
+                    <div class="form-error-banner">@_historyError</div>
+                }
+                else if (_history.Count == 0)
+                {
+                    <p class="history-empty">No history recorded yet.</p>
+                }
+                else
+                {
+                    <div class="history-list">
+                        @foreach (var entry in _history)
+                        {
+                            var parts = entry.Description.Split(" — ", 2);
+                            var mainDesc = parts[0];
+                            var note = parts.Length > 1 ? parts[1] : null;
+                            <div class="history-entry">
+                                <div class="history-entry__meta">
+                                    <span class="history-entry__date">@entry.Date.ToLocalTime().ToString("dd MMM yyyy HH:mm")</span>
+                                    <span class="history-entry__by">@entry.PerformedByName</span>
+                                </div>
+                                <div class="history-entry__desc">@mainDesc</div>
+                                @if (note is not null)
+                                {
+                                    <div class="history-entry__note">@note</div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button class="chars-btn chars-btn--ghost" @onclick="CloseHistory">Close</button>
+            </div>
+        </div>
+    </div>
+}
+
 @* ── Delete Confirm ───────────────────────────────────────────────────────── *@
 @if (_showDelete && _deleteTarget is not null)
 {
@@ -288,13 +357,18 @@
 }
 
 @code {
+    [SupplyParameterFromQuery(Name = "all")]
+    private bool ShowAll { get; set; }
+
     private List<CharacterDto> _characters = [];
     private bool _loading = true;
     private string? _error;
     private string? _currentUserId;
+    private bool _viewAll;
 
     private bool _canCreate;
     private bool _canEdit;
+    private bool _canDelete;
     private bool _canViewAny;
     private bool _canAssignXp;
     private bool _canAssignPosition;
@@ -330,6 +404,14 @@
     private string _selectedPositionId = string.Empty;
     private List<PositionDto> _positions = [];
 
+    // History modal
+    private bool _showHistory;
+    private bool _historyBackdropDown;
+    private bool _historyLoading;
+    private string? _historyError;
+    private CharacterDto? _historyTarget;
+    private List<CharacterHistoryDto> _history = [];
+
     // Delete confirm
     private bool _showDelete;
     private bool _deleteBackdropDown;
@@ -342,19 +424,30 @@
         _currentUserId     = await AuthService.GetUserIdAsync();
         _canCreate         = await AuthService.HasPermissionAsync(Claims.Permissions.Characters.CreateOwn);
         _canEdit           = await AuthService.HasPermissionAsync(Claims.Permissions.Characters.Update);
+        _canDelete         = await AuthService.HasPermissionAsync(Claims.Permissions.Characters.Delete);
         _canViewAny        = await AuthService.HasPermissionAsync(Claims.Permissions.Characters.View);
         _canAssignXp       = await AuthService.HasPermissionAsync(Claims.Permissions.Characters.AssignExperience);
         _canAssignPosition = await AuthService.HasPermissionAsync(Claims.Permissions.Characters.AssignPosition);
 
+        if (ShowAll && _canViewAny) _viewAll = true;
+
         await LoadCharacters();
         StateHasChanged();
+    }
+
+    private async Task ToggleView()
+    {
+        _viewAll = !_viewAll;
+        await LoadCharacters();
     }
 
     private async Task LoadCharacters()
     {
         _loading = true;
         _error = null;
-        var result = await CharacterService.GetMineAsync();
+        var result = _viewAll
+            ? await CharacterService.GetAllAsync()
+            : await CharacterService.GetMineAsync();
         if (result.IsFailure)
             _error = result.Error.Message;
         else
@@ -500,6 +593,31 @@
         _showPosition = false;
     }
 
+    // ── History ──────────────────────────────────────────────────────────────
+
+    private async Task ShowHistoryModal(CharacterDto c)
+    {
+        _historyTarget = c;
+        _history = [];
+        _historyError = null;
+        _historyLoading = true;
+        _showHistory = true;
+
+        var result = await CharacterService.GetHistoryAsync(c.Id);
+        _historyLoading = false;
+        if (result.IsFailure)
+            _historyError = result.Error.Message;
+        else
+            _history = result.Value;
+    }
+
+    private void CloseHistory() => _showHistory = false;
+    private void CloseHistoryViaBackdrop()
+    {
+        if (_historyBackdropDown) { CloseHistory(); }
+        _historyBackdropDown = false;
+    }
+
     // ── Delete ───────────────────────────────────────────────────────────────
 
     private void ShowDeleteConfirm(CharacterDto c) { _deleteTarget = c; _showDelete = true; }
@@ -516,7 +634,7 @@
         _saving = true;
 
         Result result;
-        if (_canEdit && _deleteTarget.UserId != _currentUserId)
+        if (_canDelete && _deleteTarget.UserId != _currentUserId)
             result = await CharacterService.DeleteAsync(_deleteTarget.Id);
         else
             result = await CharacterService.DeleteOwnAsync(_deleteTarget.Id);

@@ -73,10 +73,28 @@
                 </NavLink>
             </div>
 
+            @if (_isOrganiser && !_isAdmin)
+            {
+                <div class="nav-section"><span class="nav-label">Management</span></div>
+
+                <div class="nav-item nav-item--indented">
+                    <NavLink class="nav-link" href="/characters?all=true" title="All Characters">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        <span class="nav-label">All Characters</span>
+                    </NavLink>
+                </div>
+            }
+
             @if (_isAdmin)
             {
                 <div class="nav-section"><span class="nav-label">Administration</span></div>
 
+                <div class="nav-item nav-item--indented">
+                    <NavLink class="nav-link" href="/characters?all=true" title="All Characters">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        <span class="nav-label">All Characters</span>
+                    </NavLink>
+                </div>
                 <div class="nav-item nav-item--indented">
                     <NavLink class="nav-link" href="/users" title="Users">
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -136,6 +154,7 @@
 @code {
     private bool _isAuthenticated;
     private bool _isAdmin;
+    private bool _isOrganiser;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -150,6 +169,7 @@
     {
         _isAuthenticated = await AuthService.IsAuthenticatedAsync();
         _isAdmin = _isAuthenticated && await AuthService.HasPermissionAsync(Claims.Permissions.Users.View);
+        _isOrganiser = _isAuthenticated && await AuthService.HasPermissionAsync(Claims.Permissions.Characters.View);
     }
 
     private async Task HandleAuthStateChanged()
@@ -163,6 +183,7 @@
         await AuthService.LogoutAsync();
         _isAuthenticated = false;
         _isAdmin = false;
+        _isOrganiser = false;
         StateHasChanged();
         Navigation.NavigateTo("/login");
     }
