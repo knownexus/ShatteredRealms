@@ -12,7 +12,7 @@ using ShatteredRealms.Infrastructure.Data;
 namespace ShatteredRealms.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260427115059_AddActivityLogCharacterLink")]
+    [Migration("20260427115728_AddActivityLogCharacterLink")]
     partial class AddActivityLogCharacterLink
     {
         /// <inheritdoc />
@@ -2856,7 +2856,7 @@ namespace ShatteredRealms.Infrastructure.Migrations
                     b.HasOne("ShatteredRealms.Domain.Entities.Character.Character", "Character")
                         .WithMany()
                         .HasForeignKey("CharacterId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("ShatteredRealms.Domain.Entities.User.User", "User")
                         .WithMany("ActivityLogs")

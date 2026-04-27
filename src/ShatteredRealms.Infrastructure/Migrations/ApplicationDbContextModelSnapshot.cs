@@ -2853,7 +2853,7 @@ namespace ShatteredRealms.Infrastructure.Migrations
                     b.HasOne("ShatteredRealms.Domain.Entities.Character.Character", "Character")
                         .WithMany()
                         .HasForeignKey("CharacterId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("ShatteredRealms.Domain.Entities.User.User", "User")
                         .WithMany("ActivityLogs")
