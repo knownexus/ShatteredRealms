@@ -35,8 +35,7 @@ namespace ShatteredRealms.Infrastructure.Migrations
                 table: "ActivityLog",
                 column: "CharacterId",
                 principalTable: "Character",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.SetNull);
+                principalColumn: "Id");
         }
 
         /// <inheritdoc />

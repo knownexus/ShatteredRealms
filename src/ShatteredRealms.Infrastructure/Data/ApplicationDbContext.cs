@@ -92,7 +92,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
              .WithMany()
              .HasForeignKey(al => al.CharacterId)
              .IsRequired(false)
-             .OnDelete(DeleteBehavior.SetNull);
+             .OnDelete(DeleteBehavior.NoAction);
         });
 
         builder.Entity<RefreshToken>(e =>
