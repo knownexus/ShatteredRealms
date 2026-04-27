@@ -7,5 +7,6 @@ public class ActivityLog
     public required DateTime Date { get; set; }
     public required string UserId { get; set; } = string.Empty;
     public User.User User { get; set; }
-
+    public int? CharacterId { get; set; }
+    public Character.Character? Character { get; set; }
 }

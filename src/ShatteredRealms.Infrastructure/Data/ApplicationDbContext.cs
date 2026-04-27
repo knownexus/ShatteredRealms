@@ -83,10 +83,16 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         {
             e.ToTable("ActivityLog");
             e.HasKey(al => al.Id);
+            e.Property(al => al.Description).HasMaxLength(1024);
             e.HasOne(al => al.User)
              .WithMany(u => u.ActivityLogs)
              .HasForeignKey(al => al.UserId)
              .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(al => al.Character)
+             .WithMany()
+             .HasForeignKey(al => al.CharacterId)
+             .IsRequired(false)
+             .OnDelete(DeleteBehavior.SetNull);
         });
 
         builder.Entity<RefreshToken>(e =>
