@@ -421,9 +421,6 @@
                             </button>
                         </div>
                     }
-                    <button class="btn-xs btn-secondary flag-user-btn" @onclick="FlagUserFromDetail">
-                        Flag All Events by This User
-                    </button>
                 </div>
 
                 @if (!string.IsNullOrEmpty(_detailError))
@@ -568,7 +565,6 @@
     .detail-flag-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 0.75rem; padding-top: 0.5rem; border-top: 1px solid var(--border); }
     .flag-form { display: flex; gap: 0.5rem; align-items: center; flex: 1; }
     .flag-reason-input { flex: 1; min-width: 150px; }
-    .flag-user-btn { margin-left: auto; }
 </style>
 
 @code {
@@ -754,24 +750,6 @@
             _detailEvent.FlaggedAt  = null;
             var row = _events.FirstOrDefault(e => e.Id == _detailEvent.Id);
             if (row is not null) { row.IsFlagged = false; row.FlagReason = null; }
-        }
-        else _detailError = result.Error.Message;
-
-        StateHasChanged();
-    }
-
-    private async Task FlagUserFromDetail()
-    {
-        if (_detailEvent is null) return;
-        _detailError = null;
-        var reason = $"User flagged from analytics detail view";
-        var result = await AnalyticsService.CreateRuleAsync(new CreateFlagRulePayload(
-            FlagRuleType.User, _detailEvent.ActorId, null, null, reason));
-
-        if (result.IsSuccess)
-        {
-            _rules.Insert(0, result.Value);
-            await LoadEvents();
         }
         else _detailError = result.Error.Message;
 

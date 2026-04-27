@@ -95,35 +95,28 @@
             }
             else
             {
-                var maxCount = _chart.DataPoints.Max(p => p.Count);
-                var chartH   = 220;
+                var maxCount  = _chart.DataPoints.Max(p => p.Count);
+                const int barAreaH = 200; // px available for bars (label row is separate)
 
                 <div class="bar-chart-container">
                     <div class="bar-chart-yaxis">
                         @for (int i = 4; i >= 0; i--)
                         {
-                            var val = (int)Math.Round(maxCount * i / 4.0);
-                            <span class="yaxis-label">@val</span>
+                            <span class="yaxis-label">@((int)Math.Round(maxCount * i / 4.0))</span>
                         }
                     </div>
                     <div class="bar-chart-inner">
-                        <div class="gridlines">
-                            @for (int i = 1; i <= 4; i++)
-                            {
-                                var top = (int)Math.Round(chartH * i / 4.0);
-                                <div class="gridline" style="bottom: @(chartH - top)px;"></div>
-                            }
-                        </div>
-                        <div class="bars-row" style="height: @(chartH)px;">
+                        <div class="bars-and-grid" style="height:@(barAreaH)px;">
+                            <div class="gridline" style="bottom:25%;"></div>
+                            <div class="gridline" style="bottom:50%;"></div>
+                            <div class="gridline" style="bottom:75%;"></div>
                             @foreach (var pt in _chart.DataPoints)
                             {
-                                var barH    = maxCount > 0 ? (int)Math.Round(pt.Count * chartH / (double)maxCount) : 0;
-                                var label   = _groupBy == "month" ? pt.Date.ToString("MMM yy")
-                                            : _groupBy == "week"  ? pt.Date.ToString("MMM d")
-                                                                   : pt.Date.ToString("MMM d");
+                                var barH    = maxCount > 0 ? (int)Math.Round(pt.Count * barAreaH / (double)maxCount) : 0;
+                                var label   = _groupBy == "month" ? pt.Date.ToString("MMM yy") : pt.Date.ToString("MMM d");
                                 var showLbl = ShouldShowLabel(pt.Date, _chart.DataPoints.Count);
                                 <div class="bar-col" title="@pt.Date.ToString("yyyy-MM-dd"): @pt.Count event(s)">
-                                    <div class="bar @(pt.Count == 0 ? "bar--zero" : "")" style="height: @barH px;"></div>
+                                    <div class="bar @(pt.Count == 0 ? "bar--zero" : "")" style="height:@(barH)px;"></div>
                                     @if (showLbl)
                                     {
                                         <span class="bar-label">@label</span>
@@ -202,18 +195,18 @@
     .no-data { font-family: var(--font-body); color: var(--text-muted); text-align: center; padding: 2rem; }
 
     /* Bar Chart */
-    .bar-chart-container { display: flex; gap: 0.5rem; overflow: hidden; }
-    .bar-chart-yaxis { display: flex; flex-direction: column; justify-content: space-between; padding-bottom: 20px; min-width: 32px; text-align: right; }
+    .bar-chart-container { display: flex; gap: 0.5rem; }
+    .bar-chart-yaxis { display: flex; flex-direction: column; justify-content: space-between; min-width: 32px; text-align: right; flex-shrink: 0; }
     .yaxis-label { font-family: var(--font-body); font-size: 0.7rem; color: var(--text-muted); line-height: 1; }
-    .bar-chart-inner { flex: 1; position: relative; overflow-x: auto; }
-    .gridlines { position: absolute; inset: 0 0 20px 0; pointer-events: none; }
-    .gridline { position: absolute; left: 0; right: 0; height: 1px; background: rgba(255,255,255,0.06); }
-    .bars-row { display: flex; align-items: flex-end; gap: 2px; padding-bottom: 20px; min-width: min-content; }
-    .bar-col { flex: 1; min-width: 6px; max-width: 32px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; position: relative; cursor: default; }
-    .bar { width: 100%; background: var(--gold); border-radius: 2px 2px 0 0; transition: opacity 0.15s; min-height: 1px; }
+    .bar-chart-inner { flex: 1; overflow-x: auto; padding-bottom: 22px; }
+    /* bars-and-grid: fixed-height container; bars + gridlines sit inside it */
+    .bars-and-grid { position: relative; display: flex; align-items: flex-end; gap: 2px; min-width: min-content; }
+    .gridline { position: absolute; left: 0; right: 0; height: 1px; background: rgba(255,255,255,0.07); pointer-events: none; }
+    .bar-col { flex: 1; min-width: 7px; max-width: 32px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; position: relative; cursor: default; }
+    .bar { width: 100%; background: var(--gold); border-radius: 2px 2px 0 0; transition: opacity 0.15s; }
     .bar:hover { opacity: 0.75; }
-    .bar--zero { background: rgba(201,168,76,0.15); min-height: 2px; }
-    .bar-label { position: absolute; bottom: 0; font-family: var(--font-body); font-size: 0.62rem; color: var(--text-muted); white-space: nowrap; transform: translateX(-50%) translateY(100%); left: 50%; padding-top: 2px; }
+    .bar--zero { background: rgba(201,168,76,0.18); height: 2px !important; }
+    .bar-label { position: absolute; top: calc(100% + 4px); left: 50%; transform: translateX(-50%); font-family: var(--font-body); font-size: 0.62rem; color: var(--text-muted); white-space: nowrap; }
 
     /* Breakdown */
     .breakdown-list { display: flex; flex-direction: column; gap: 0.6rem; }
