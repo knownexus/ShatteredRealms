@@ -100,6 +100,33 @@ public class AnalyticsClientService
         var p = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         return Result.Failure(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to update rule", (int)response.StatusCode));
     }
+
+    public async Task<Result<ActivityChartDto>> GetChartAsync(
+        DateTime from,
+        DateTime to,
+        string groupBy = "day",
+        TelemetryEventType? eventType = null,
+        string? actorSearch = null)
+    {
+        var query = $"api/analytics/chart?from={from:O}&to={to:O}&groupBy={groupBy}";
+        if (eventType.HasValue)                    query += $"&eventType={(int)eventType.Value}";
+        if (!string.IsNullOrEmpty(actorSearch))    query += $"&actorSearch={Uri.EscapeDataString(actorSearch)}";
+
+        var response = await _httpClient.GetAsync(query);
+        if (response.IsSuccessStatusCode)
+            return Result.Success(await response.Content.ReadFromJsonAsync<ActivityChartDto>() ?? new ActivityChartDto());
+        var p = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        return Result.Failure<ActivityChartDto>(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to load chart", (int)response.StatusCode));
+    }
+
+    public async Task<Result<List<EventAttendanceOverviewDto>>> GetEventAttendancesAsync()
+    {
+        var response = await _httpClient.GetAsync("api/analytics/event-attendances");
+        if (response.IsSuccessStatusCode)
+            return Result.Success(await response.Content.ReadFromJsonAsync<List<EventAttendanceOverviewDto>>() ?? []);
+        var p = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        return Result.Failure<List<EventAttendanceOverviewDto>>(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to load attendances", (int)response.StatusCode));
+    }
 }
 
 public record CreateFlagRulePayload(

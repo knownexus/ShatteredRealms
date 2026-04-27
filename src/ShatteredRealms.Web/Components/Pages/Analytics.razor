@@ -16,9 +16,16 @@
             <h1 class="analytics-title">Analytics</h1>
             <p class="analytics-subtitle">Telemetry and activity tracking</p>
         </div>
-        <button class="btn-gold-outline" @onclick="() => _showRulesPanel = !_showRulesPanel">
-            @(_showRulesPanel ? "Hide Flag Rules" : "Manage Flag Rules")
-        </button>
+        <div class="analytics-header-right">
+            <div class="analytics-nav">
+                <span class="nav-pill nav-pill--active">Event Log</span>
+                <a href="/analytics/charts" class="nav-pill">Charts</a>
+                <a href="/analytics/event-attendances" class="nav-pill">Event Attendances</a>
+            </div>
+            <button class="btn-gold-outline" @onclick="() => _showRulesPanel = !_showRulesPanel">
+                @(_showRulesPanel ? "Hide Flag Rules" : "Manage Flag Rules")
+            </button>
+        </div>
     </div>
 
     @if (!string.IsNullOrEmpty(_error))
@@ -434,6 +441,11 @@
     .analytics-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
     .analytics-title { font-family: var(--font-heading); font-size: 2rem; color: var(--gold); margin: 0 0 0.25rem; }
     .analytics-subtitle { font-family: var(--font-body); color: var(--text-muted); margin: 0; font-size: 0.95rem; }
+    .analytics-header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 0.75rem; }
+    .analytics-nav { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: flex-end; }
+    .nav-pill { display: inline-block; padding: 0.35rem 0.85rem; border-radius: 20px; font-family: var(--font-body); font-size: 0.8rem; text-decoration: none; border: 1px solid var(--border); color: var(--text-muted); background: transparent; transition: border-color 0.15s, color 0.15s; }
+    .nav-pill:hover { border-color: rgba(201,168,76,0.4); color: var(--gold); }
+    .nav-pill--active { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.08); }
     .btn-gold-outline {
         padding: 0.5rem 1.1rem; border: 1px solid var(--gold);
         background: transparent; color: var(--gold); border-radius: 6px;

@@ -1,0 +1,308 @@
+@page "/analytics/event-attendances"
+@using ShatteredRealms.Application.DTOs.Analytics
+@using ShatteredRealms.Web.Services
+@inject AnalyticsClientService AnalyticsService
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Event Attendances — Shattered Realms</PageTitle>
+
+<div class="attendance-page">
+    <div class="attendance-header">
+        <div>
+            <h1 class="attendance-title">Event Attendances</h1>
+            <p class="attendance-subtitle">Who's going, sign-up times, and cancellations</p>
+        </div>
+        <div class="analytics-nav">
+            <a href="/analytics" class="nav-pill">Event Log</a>
+            <a href="/analytics/charts" class="nav-pill">Charts</a>
+            <span class="nav-pill nav-pill--active">Event Attendances</span>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <div class="alert alert-danger">@_error</div>
+    }
+
+    <!-- Filter / search -->
+    <div class="section-card filter-card">
+        <div class="filter-inline">
+            <div class="form-group">
+                <label class="form-label">Search Events</label>
+                <input class="form-control" placeholder="Event title…" @bind="_search" @oninput="OnSearchInput" />
+            </div>
+            <div class="filter-toggles">
+                <label class="toggle-label">
+                    <input type="checkbox" @bind="_showEmpty" /> Show events with no attendees
+                </label>
+                <label class="toggle-label">
+                    <input type="checkbox" @bind="_showDeleted" /> Include deleted events
+                </label>
+                <label class="toggle-label">
+                    <input type="checkbox" @bind="_upcomingOnly" @bind:after="OnUpcomingToggle" /> Upcoming only
+                </label>
+            </div>
+        </div>
+    </div>
+
+    @if (_loading)
+    {
+        <div class="attendance-loading"><div class="loading-orb"></div><span>Loading attendance data…</span></div>
+    }
+    else if (_filtered.Count == 0)
+    {
+        <p class="no-data">No events match the current filters.</p>
+    }
+    else
+    {
+        <div class="event-count-bar">
+            Showing @_filtered.Count event(s) · @_filtered.Sum(e => e.CurrentAttendees.Count) total attendees · @_filtered.Sum(e => e.Cancellations.Count) total cancellations
+        </div>
+
+        @foreach (var ev in _filtered)
+        {
+            var isExpanded = _expanded.Contains(ev.EventId);
+            <div class="event-card @(ev.IsDeleted ? "event-card--deleted" : "")">
+                <div class="event-card-header" @onclick="() => ToggleExpand(ev.EventId)">
+                    <div class="event-card-info">
+                        <span class="event-card-title">
+                            @ev.Title
+                            @if (ev.IsDeleted)
+                            {
+                                <span class="badge badge-deleted">Deleted</span>
+                            }
+                        </span>
+                        <span class="event-card-date">@ev.StartsAt.ToString("ddd, MMM d yyyy")</span>
+                    </div>
+                    <div class="event-card-stats">
+                        <span class="stat-pill stat-pill--going" title="Currently going">
+                            @ev.CurrentAttendees.Count Going
+                        </span>
+                        @if (ev.Cancellations.Count > 0)
+                        {
+                            <span class="stat-pill stat-pill--cancelled" title="Cancelled (not re-registered)">
+                                @ev.Cancellations.Count Cancelled
+                            </span>
+                        }
+                        <span class="expand-chevron">@(isExpanded ? "▲" : "▼")</span>
+                    </div>
+                </div>
+
+                @if (isExpanded)
+                {
+                    <div class="event-card-body">
+                        <!-- Current Attendees -->
+                        <div class="attendee-section">
+                            <h3 class="attendee-section-title">
+                                <span class="dot dot--green"></span> Currently Going (@ev.CurrentAttendees.Count)
+                            </h3>
+                            @if (ev.CurrentAttendees.Count == 0)
+                            {
+                                <p class="attendee-empty">No attendees yet.</p>
+                            }
+                            else
+                            {
+                                <table class="attendee-table">
+                                    <thead>
+                                        <tr>
+                                            <th>User</th>
+                                            <th>Email</th>
+                                            <th>Signed Up</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var a in ev.CurrentAttendees)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <span class="attendee-name">@(string.IsNullOrEmpty(a.UserName) ? a.UserId : a.UserName)</span>
+                                                </td>
+                                                <td class="attendee-email">@a.UserEmail</td>
+                                                <td class="attendee-time">@a.RegisteredAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            }
+                        </div>
+
+                        <!-- Cancellations -->
+                        @if (ev.Cancellations.Count > 0)
+                        {
+                            <div class="attendee-section attendee-section--cancel">
+                                <h3 class="attendee-section-title">
+                                    <span class="dot dot--red"></span> Cancelled (@ev.Cancellations.Count)
+                                </h3>
+                                <table class="attendee-table">
+                                    <thead>
+                                        <tr>
+                                            <th>User</th>
+                                            <th>Email</th>
+                                            <th>Cancelled At</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var c in ev.Cancellations)
+                                        {
+                                            <tr class="row-cancelled">
+                                                <td>
+                                                    <span class="attendee-name">@(string.IsNullOrEmpty(c.UserName) ? c.UserId : c.UserName)</span>
+                                                </td>
+                                                <td class="attendee-email">@c.UserEmail</td>
+                                                <td class="attendee-time cancelled-time">@c.CancelledAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>
+
+<style>
+    .attendance-page { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+
+    .attendance-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+    .attendance-title { font-family: var(--font-heading); font-size: 2rem; color: var(--gold); margin: 0 0 0.25rem; }
+    .attendance-subtitle { font-family: var(--font-body); color: var(--text-muted); margin: 0; font-size: 0.95rem; }
+
+    .analytics-nav { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .nav-pill { display: inline-block; padding: 0.35rem 0.85rem; border-radius: 20px; font-family: var(--font-body); font-size: 0.8rem; text-decoration: none; border: 1px solid var(--border); color: var(--text-muted); background: transparent; transition: border-color 0.15s, color 0.15s; }
+    .nav-pill:hover { border-color: rgba(201,168,76,0.4); color: var(--gold); }
+    .nav-pill--active { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.08); }
+
+    .alert { padding: 0.75rem 1rem; border-radius: 6px; font-family: var(--font-body); font-size: 0.88rem; margin-bottom: 1rem; }
+    .alert-danger { background: rgba(255,69,58,0.12); border: 1px solid rgba(255,69,58,0.3); color: #ff453a; }
+
+    .section-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .filter-card { padding: 1.1rem 1.5rem; }
+    .filter-inline { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 1.25rem; }
+    .filter-toggles { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
+    .toggle-label { display: flex; align-items: center; gap: 0.4rem; font-family: var(--font-body); font-size: 0.82rem; color: var(--text-muted); cursor: pointer; user-select: none; }
+    .toggle-label input { cursor: pointer; accent-color: var(--gold); }
+    .form-group { display: flex; flex-direction: column; gap: 0.3rem; }
+    .form-label { font-family: var(--font-body); font-size: 0.75rem; color: var(--text-muted); letter-spacing: 0.04em; }
+    .form-control { background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 0.42rem 0.65rem; font-family: var(--font-body); font-size: 0.82rem; min-width: 200px; }
+    .form-control:focus { outline: none; border-color: rgba(201,168,76,0.5); }
+
+    .attendance-loading { display: flex; align-items: center; gap: 1rem; justify-content: center; padding: 4rem; color: var(--text-muted); font-family: var(--font-body); }
+    .loading-orb { width: 22px; height: 22px; border: 2px solid rgba(201,168,76,0.2); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @@keyframes spin { to { transform: rotate(360deg); } }
+
+    .no-data { font-family: var(--font-body); color: var(--text-muted); text-align: center; padding: 2rem; }
+
+    .event-count-bar { font-family: var(--font-body); font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem; }
+
+    /* Event Cards */
+    .event-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 0.75rem; overflow: hidden; }
+    .event-card--deleted { opacity: 0.6; border-style: dashed; }
+    .event-card-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; cursor: pointer; transition: background 0.1s; flex-wrap: wrap; gap: 0.75rem; }
+    .event-card-header:hover { background: rgba(255,255,255,0.03); }
+    .event-card-info { display: flex; flex-direction: column; gap: 0.2rem; }
+    .event-card-title { font-family: var(--font-heading); font-size: 1rem; color: var(--text); display: flex; align-items: center; gap: 0.5rem; }
+    .event-card-date { font-family: var(--font-body); font-size: 0.78rem; color: var(--text-muted); }
+    .event-card-stats { display: flex; align-items: center; gap: 0.5rem; }
+    .stat-pill { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 12px; font-family: var(--font-body); font-size: 0.75rem; font-weight: 600; }
+    .stat-pill--going { background: rgba(52,199,89,0.1); border: 1px solid rgba(52,199,89,0.3); color: #34c759; }
+    .stat-pill--cancelled { background: rgba(255,69,58,0.1); border: 1px solid rgba(255,69,58,0.3); color: #ff453a; }
+    .expand-chevron { font-size: 0.7rem; color: var(--text-muted); margin-left: 0.5rem; }
+
+    .badge { display: inline-block; padding: 0.1rem 0.45rem; border-radius: 4px; font-family: var(--font-body); font-size: 0.68rem; font-weight: 600; }
+    .badge-deleted { background: rgba(255,69,58,0.12); border: 1px solid rgba(255,69,58,0.25); color: #ff453a; }
+
+    .event-card-body { padding: 0 1.25rem 1.25rem; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 1.25rem; }
+    .attendee-section { padding-top: 1.25rem; }
+    .attendee-section--cancel { }
+    .attendee-section-title { display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-heading); font-size: 0.85rem; color: var(--text-muted); letter-spacing: 0.05em; text-transform: uppercase; margin: 0 0 0.75rem; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .dot--green { background: #34c759; }
+    .dot--red { background: #ff453a; }
+    .attendee-empty { font-family: var(--font-body); color: var(--text-muted); font-size: 0.85rem; margin: 0; }
+
+    .attendee-table { width: 100%; border-collapse: collapse; font-family: var(--font-body); font-size: 0.83rem; }
+    .attendee-table th { text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; }
+    .attendee-table td { padding: 0.45rem 0.6rem; border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--text); vertical-align: middle; }
+    .attendee-name { font-weight: 500; }
+    .attendee-email { color: var(--text-muted); font-size: 0.78rem; }
+    .attendee-time { color: var(--text-muted); font-size: 0.78rem; white-space: nowrap; }
+    .row-cancelled td { background: rgba(255,69,58,0.04); }
+    .cancelled-time { color: #ff6b63; }
+</style>
+
+@code {
+    private List<EventAttendanceOverviewDto> _all = [];
+    private List<EventAttendanceOverviewDto> _filtered = [];
+    private HashSet<int> _expanded = [];
+    private bool _loading = true;
+    private string? _error;
+
+    private string _search = "";
+    private bool _showEmpty = true;
+    private bool _showDeleted;
+    private bool _upcomingOnly;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        if (!await AuthService.IsAuthenticatedAsync())
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+        if (!await AuthService.HasPermissionAsync(Domain.Shared.Claims.Permissions.Analytics.View))
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        await LoadData();
+        StateHasChanged();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        _error   = null;
+        var result = await AnalyticsService.GetEventAttendancesAsync();
+        _loading = false;
+        if (result.IsSuccess) { _all = result.Value; ApplyFilters(); }
+        else _error = result.Error.Message;
+    }
+
+    private void ApplyFilters()
+    {
+        _filtered = _all
+            .Where(e => !e.IsDeleted || _showDeleted)
+            .Where(e => !_upcomingOnly || e.StartsAt >= DateTime.UtcNow)
+            .Where(e => _showEmpty || e.CurrentAttendees.Count > 0 || e.Cancellations.Count > 0)
+            .Where(e => string.IsNullOrEmpty(_search) || e.Title.Contains(_search, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+    }
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        _search = e.Value?.ToString() ?? "";
+        ApplyFilters();
+        StateHasChanged();
+    }
+
+    private void OnUpcomingToggle()
+    {
+        ApplyFilters();
+        StateHasChanged();
+    }
+
+    private void ToggleExpand(int eventId)
+    {
+        if (!_expanded.Add(eventId))
+            _expanded.Remove(eventId);
+        StateHasChanged();
+    }
+}

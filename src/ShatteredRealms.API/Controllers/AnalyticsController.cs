@@ -122,6 +122,36 @@ public sealed class AnalyticsController : ControllerBase
             ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)
             : NoContent();
     }
+
+    [RequirePermission(Claims.Permissions.Analytics.View)]
+    [HttpGet("chart")]
+    public async Task<ActionResult<ActivityChartDto>> GetChart(
+        [FromQuery] DateTime? from = null,
+        [FromQuery] DateTime? to = null,
+        [FromQuery] string groupBy = "day",
+        [FromQuery] TelemetryEventType? eventType = null,
+        [FromQuery] string? actorSearch = null,
+        CancellationToken cancellationToken = default)
+    {
+        var effectiveFrom = from ?? DateTime.UtcNow.AddDays(-30);
+        var effectiveTo   = to   ?? DateTime.UtcNow;
+        var result = await _mediator.Send(
+            new GetActivityChartQuery(effectiveFrom, effectiveTo, groupBy, eventType, actorSearch),
+            cancellationToken);
+        return result.IsFailure
+            ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)
+            : Ok(result.Value);
+    }
+
+    [RequirePermission(Claims.Permissions.Analytics.View)]
+    [HttpGet("event-attendances")]
+    public async Task<ActionResult<List<EventAttendanceOverviewDto>>> GetEventAttendances(CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetEventAttendanceOverviewQuery(), cancellationToken);
+        return result.IsFailure
+            ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)
+            : Ok(result.Value);
+    }
 }
 
 public record FlagEventRequest(string? Reason);
