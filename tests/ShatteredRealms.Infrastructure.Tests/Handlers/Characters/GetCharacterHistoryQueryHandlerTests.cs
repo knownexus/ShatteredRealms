@@ -48,7 +48,7 @@ public sealed class GetCharacterHistoryQueryHandlerTests
         ctx.ActivityLog.Add(new ActivityLog
         {
             Id = Guid.NewGuid(), UserId = "em-1", CharacterId = character.Id,
-            Description = "Assigned 100 XP to character 'Aldric' (new total: 100) — Spring Event",
+            Description = "Assigned 100 XP to character 'Aldric' (new total: 100) - Spring Event",
             Date = DateTime.UtcNow.AddHours(-2)
         });
         ctx.ActivityLog.Add(new ActivityLog

@@ -24,7 +24,7 @@ public sealed class ResendConfirmationEmailCommandHandler : IRequestHandler<Rese
 
     public async Task<Result> Handle(ResendConfirmationEmailCommand request, CancellationToken cancellationToken)
     {
-        // Always succeed — never reveal whether an email address is registered
+        // Always succeed - never reveal whether an email address is registered
         var userResult = await _userService.GetUserByEmailAsync(request.Email, cancellationToken);
         if (userResult.IsFailure || userResult.Value.EmailConfirmed)
         {

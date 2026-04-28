@@ -5,7 +5,7 @@
 @inject EventClientService EventService
 @rendermode InteractiveServer
 
-<PageTitle>@(_event?.Title ?? "Event") — Shattered Realms</PageTitle>
+<PageTitle>@(_event?.Title ?? "Event") - Shattered Realms</PageTitle>
 
 <div class="event-detail-page">
     <LoadingSpinner IsVisible="_loading" Message="Loading event..." />
@@ -13,7 +13,7 @@
     {
         <div class="detail-error">
             <p>@_error</p>
-            <button class="btn-back" @onclick='() => Navigation.NavigateTo("/events")'>← Back to Actions</button>
+            <button class="btn-back" @onclick='() => Navigation.NavigateTo("/events")'>← Back to actions</button>
         </div>
     }
     else if (_event is not null)
@@ -29,7 +29,7 @@
 
         <div class="event-detail-body">
             <div class="event-detail-header">
-                <button class="btn-back" @onclick='() => Navigation.NavigateTo("/events")'>← Actions</button>
+                <button class="btn-back" @onclick='() => Navigation.NavigateTo("/events")'>← Events</button>
                 <div class="event-detail-actions">
                     @if (_canUpdate)
                     {
@@ -95,7 +95,7 @@
                             @if (_event.IsGoing)
                             {
                                 <button class="btn-going btn-going--active" @onclick="CancelRegistration" disabled="@_toggling">
-                                    @(_toggling ? "Updating..." : "✓ Going — Cancel")
+                                    @(_toggling ? "Updating..." : "✓ Going - Cancel")
                                 </button>
                             }
                             else

@@ -61,7 +61,7 @@ public sealed class AuthController : ControllerBase
         [FromBody] ResendConfirmationRequest request,
         CancellationToken cancellationToken)
     {
-        // Always return 200 — never reveal whether an email address is registered
+        // Always return 200 - never reveal whether an email address is registered
         await _mediator.Send(new ResendConfirmationEmailCommand(request.Email), cancellationToken);
         return Ok(new { message = "If that address is registered and unconfirmed, a new link has been sent." });
     }

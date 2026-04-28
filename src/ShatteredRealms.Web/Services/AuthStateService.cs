@@ -18,7 +18,7 @@ public class AuthStateService
         foreach (var handler in OnAuthStateChanged.GetInvocationList().Cast<Func<Task>>())
         {
             _ = handler.Invoke().ContinueWith(
-                t => { /* swallow — component may already be disposed */ },
+                t => { /* swallow - component may already be disposed */ },
                 TaskContinuationOptions.OnlyOnFaulted);
         }
     }

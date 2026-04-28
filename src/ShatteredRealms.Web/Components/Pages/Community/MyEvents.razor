@@ -6,10 +6,10 @@
 @inject EventClientService EventService
 @rendermode InteractiveServer
 
-<PageTitle>My Actions — Shattered Realms</PageTitle>
+<PageTitle>My Events - Shattered Realms</PageTitle>
 
 <div class="my-events-page">
-    <PageHeader Title="My Actions" Subtitle="Actions you've marked as Going" />
+    <PageHeader Title="My Events" Subtitle="Events you've marked as Going" />
 
     <AlertBanner Message="@_error" />
     <LoadingSpinner IsVisible="_loading" Message="Loading your events..." />
@@ -18,7 +18,7 @@
         <div class="my-events-empty">
             <div class="empty-icon">📅</div>
             <p>You haven't signed up for any events yet.</p>
-            <button class="btn-gold-outline" @onclick='() => Navigation.NavigateTo("/events")'>Browse Actions</button>
+            <button class="btn-gold-outline" @onclick='() => Navigation.NavigateTo("/events")'>Browse Events</button>
         </div>
     }
     else

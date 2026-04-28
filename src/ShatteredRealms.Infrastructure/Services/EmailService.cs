@@ -28,7 +28,7 @@ public sealed class EmailService : IEmailService
         if (string.IsNullOrWhiteSpace(smtpHost))
         {
             _logger.LogInformation(
-                "EMAIL CONFIRMATION (no SMTP configured — dev mode)\nTo: {Email}\nConfirmation link: {Link}",
+                "EMAIL CONFIRMATION (no SMTP configured - dev mode)\nTo: {Email}\nConfirmation link: {Link}",
                 toEmail, confirmationLink);
             return;
         }

@@ -88,7 +88,7 @@
 .form-control-number { background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 0.45rem; font-family: var(--font-body); box-sizing: content-box; font-size: 0.85rem; width: 5ch; flex: 0 0 auto; }
 .form-control-number:focus { outline: none; border-color: rgba(201,168,76,0.5); }
 
-/* Modal — detail */
+/* Modal - detail */
 .detail-modal { border-color: rgba(201,168,76,0.25); }
 .detail-header-inner { display: flex; align-items: center; gap: 0.75rem; }
 .detail-flag-badge { display: inline-block; padding: 0.2rem 0.65rem; border-radius: 4px; font-family: var(--font-body); font-size: 0.75rem; font-weight: 600; }

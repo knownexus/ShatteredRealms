@@ -8,7 +8,7 @@
 @inject AnalyticsClientService AnalyticsService
 @rendermode InteractiveServer
 
-<PageTitle>Analytics — Shattered Realms</PageTitle>
+<PageTitle>Analytics - Shattered Realms</PageTitle>
 
 <div class="analytics-page">
     <PageHeader Title="Analytics" Subtitle="Telemetry and activity tracking">
@@ -718,5 +718,5 @@
     }
 
     private static string ToUk(DateTime? utc, string fmt = "yyyy-MM-dd HH:mm:ss") =>
-        utc.HasValue ? ToUk(utc.Value, fmt) : "—";
+        utc.HasValue ? ToUk(utc.Value, fmt) : "-";
 }

@@ -7,7 +7,7 @@
 @inject AuthService AuthService
 @rendermode InteractiveServer
 
-<PageTitle>Characters — Shattered Realms</PageTitle>
+<PageTitle>Characters - Shattered Realms</PageTitle>
 
 <div class="chars-page">
 
@@ -61,7 +61,7 @@
                 <label class="group-option">
                     <input type="radio" name="groupBy" value="none"
                            checked="@(_groupBy == "none")"
-                           @onchange="@(() => OnGroupChanged("none"))"/> None
+                           @onchange="@(() => OnGroupChanged("none"))"/>
                 </label>
                 <label class="group-option">
                     <input type="radio" name="groupBy" value="user" checked="@(_groupBy == "user")"
@@ -98,42 +98,34 @@
                 {
                     <div class="char-card">
                         <div class="char-card__crest">
-                            <div class="char-card__avatar">@(c.Name.Length > 0 ? c.Name[0].ToString().ToUpper() : "?")</div>
-                            <div class="char-card__level-badge">Lvl @c.Level</div>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            </svg>
                         </div>
                         <div class="char-card__body">
                             <div class="char-card__name">@c.Name</div>
-                            @if (!string.IsNullOrEmpty(c.Nationality))
+                            <div class="char-card__nationality">@c.Nationality</div>
+                            @if (!string.IsNullOrEmpty(c.Faction))
                             {
-                                <div class="char-card__nationality">@c.Nationality</div>
+                                <div class="char-card__faction">@c.Faction</div>
                             }
-                            <div class="char-card__badges">
-                                @if (!string.IsNullOrEmpty(c.Faction))
-                                {
-                                    <span class="char-badge char-badge--faction">@c.Faction</span>
-                                }
-                                @if (!string.IsNullOrEmpty(c.PositionName))
-                                {
-                                    <span class="char-badge char-badge--position">@c.PositionName</span>
-                                }
-                            </div>
-                            <div class="char-card__xp-section">
-                                <div class="char-xp-bar-header">
-                                    <span class="char-stat__label">Experience</span>
-                                    <span class="char-xp-value">@c.Experience.ToString("N0") XP</span>
-                                </div>
-                                <div class="char-xp-bar">
-                                    <div class="char-xp-bar__fill" style="width: @(Math.Min(100, (c.Experience % 1000) / 10))%"></div>
-                                </div>
+                            @if (!string.IsNullOrEmpty(c.PositionName))
+                            {
+                                <div class="char-card__position">@c.PositionName</div>
+                            }
+                            <div class="char-card__stats">
+                                <span class="char-stat">
+                                    <span class="char-stat__label">Level</span>
+                                    <span class="char-stat__value">@c.Level</span>
+                                </span>
+                                <span class="char-stat">
+                                    <span class="char-stat__label">XP</span>
+                                    <span class="char-stat__value">@c.Experience</span>
+                                </span>
                             </div>
                             @if (!string.IsNullOrEmpty(c.OwnerName) && (_canViewAny || _viewAll))
                             {
-                                <div class="char-card__owner">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="char-owner__icon">
-                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-                                    </svg>
-                                    @c.OwnerName
-                                </div>
+                                <div class="char-card__owner">Owner: @c.OwnerName</div>
                             }
                         </div>
                         <div class="char-card__actions">
@@ -144,43 +136,44 @@
                                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                                     </svg>
-                                    <span class="char-action-label">Edit</span>
                                 </button>
                             }
                             @if (_canAssignXp)
                             {
-                                <button class="char-action-btn char-action-btn--gold" title="Assign XP" @onclick="() => ShowXpModal(c)">
+                                <button class="char-action-btn char-action-btn--gold" title="Assign XP"
+                                        @onclick="() => ShowXpModal(c)">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                                     </svg>
-                                    <span class="char-action-label">XP</span>
                                 </button>
                             }
                             @if (_canAssignPosition)
                             {
-                                <button class="char-action-btn char-action-btn--teal" title="Assign Position" @onclick="() => ShowPositionModal(c)">
+                                <button class="char-action-btn char-action-btn--teal" title="Assign Position"
+                                        @onclick="() => ShowPositionModal(c)">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                                         <circle cx="9" cy="7" r="4"/>
                                         <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
                                         <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                                     </svg>
-                                    <span class="char-action-label">Position</span>
                                 </button>
                             }
                             @if (_canViewAny)
                             {
-                                <button class="char-action-btn char-action-btn--info" title="View History" @onclick="() => ShowHistoryModal(c)">
+                                <button class="char-action-btn char-action-btn--info" title="View History"
+                                        @onclick="() => ShowHistoryModal(c)">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <circle cx="12" cy="12" r="10"/>
                                         <polyline points="12 6 12 12 16 14"/>
                                     </svg>
-                                    <span class="char-action-label">History</span>
                                 </button>
                             }
                             @if (_canDelete || c.UserId == _currentUserId)
                             {
-                                <button class="char-action-btn char-action-btn--danger" title="Delete" @onclick="() => ShowDeleteConfirm(c)">
+                                <button class="char-action-btn char-action-btn--danger" title="Delete"
+                                        @onclick="() => ShowDeleteConfirm(c)">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <polyline points="3 6 5 6 21 6"/>
                                         <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
@@ -188,7 +181,6 @@
                                         <path d="M14 11v6"/>
                                         <path d="M9 6V4h6v2"/>
                                     </svg>
-                                    <span class="char-action-label">Delete</span>
                                 </button>
                             }
                         </div>
@@ -219,93 +211,86 @@
                             @group.Key <span class="char-group__count">@group.Value.Count character(s)</span>
                         </h3>
                         <div class="chars-grid">
-                            @foreach (var gc in group.Value)
+                            @foreach (var c in group.Value)
                             {
                                 <div class="char-card">
                                     <div class="char-card__crest">
-                                        <div class="char-card__avatar">@(gc.Name.Length > 0 ? gc.Name[0].ToString().ToUpper() : "?")</div>
-                                        <div class="char-card__level-badge">Lvl @gc.Level</div>
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                        </svg>
                                     </div>
                                     <div class="char-card__body">
-                                        <div class="char-card__name">@gc.Name</div>
-                                        @if (!string.IsNullOrEmpty(gc.Nationality))
+                                        <div class="char-card__name">@c.Name</div>
+                                        <div class="char-card__nationality">@c.Nationality</div>
+                                        @if (!string.IsNullOrEmpty(c.Faction))
                                         {
-                                            <div class="char-card__nationality">@gc.Nationality</div>
+                                            <div class="char-card__faction">@c.Faction</div>
                                         }
-                                        <div class="char-card__badges">
-                                            @if (!string.IsNullOrEmpty(gc.Faction))
-                                            {
-                                                <span class="char-badge char-badge--faction">@gc.Faction</span>
-                                            }
-                                            @if (!string.IsNullOrEmpty(gc.PositionName))
-                                            {
-                                                <span class="char-badge char-badge--position">@gc.PositionName</span>
-                                            }
-                                        </div>
-                                        <div class="char-card__xp-section">
-                                            <div class="char-xp-bar-header">
-                                                <span class="char-stat__label">Experience</span>
-                                                <span class="char-xp-value">@gc.Experience.ToString("N0") XP</span>
-                                            </div>
-                                            <div class="char-xp-bar">
-                                                <div class="char-xp-bar__fill" style="width: @(Math.Min(100, (gc.Experience % 1000) / 10))%"></div>
-                                            </div>
-                                        </div>
-                                        @if (!string.IsNullOrEmpty(gc.OwnerName) && (_canViewAny || _viewAll))
+                                        @if (!string.IsNullOrEmpty(c.PositionName))
                                         {
-                                            <div class="char-card__owner">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="char-owner__icon">
-                                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-                                                </svg>
-                                                @gc.OwnerName
-                                            </div>
+                                            <div class="char-card__position">@c.PositionName</div>
+                                        }
+                                        <div class="char-card__stats">
+                                            <span class="char-stat">
+                                                <span class="char-stat__label">Level</span>
+                                                <span class="char-stat__value">@c.Level</span>
+                                            </span>
+                                            <span class="char-stat">
+                                                <span class="char-stat__label">XP</span>
+                                                <span class="char-stat__value">@c.Experience</span>
+                                            </span>
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(c.OwnerName) && (_canViewAny || _viewAll))
+                                        {
+                                            <div class="char-card__owner">Owner: @c.OwnerName</div>
                                         }
                                     </div>
                                     <div class="char-card__actions">
-                                        @if (_canEdit || gc.UserId == _currentUserId)
+                                        @if (_canEdit || c.UserId == _currentUserId)
                                         {
-                                            <button class="char-action-btn" title="Edit" @onclick="() => ShowEditModal(gc)">
+                                            <button class="char-action-btn" title="Edit" @onclick="() => ShowEditModal(c)">
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                                                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                                                 </svg>
-                                                <span class="char-action-label">Edit</span>
                                             </button>
                                         }
                                         @if (_canAssignXp)
                                         {
-                                            <button class="char-action-btn char-action-btn--gold" title="Assign XP" @onclick="() => ShowXpModal(gc)">
+                                            <button class="char-action-btn char-action-btn--gold" title="Assign XP"
+                                                    @onclick="() => ShowXpModal(c)">
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                                                    <polygon
+                                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                                                 </svg>
-                                                <span class="char-action-label">XP</span>
                                             </button>
                                         }
                                         @if (_canAssignPosition)
                                         {
-                                            <button class="char-action-btn char-action-btn--teal" title="Assign Position" @onclick="() => ShowPositionModal(gc)">
+                                            <button class="char-action-btn char-action-btn--teal" title="Assign Position"
+                                                    @onclick="() => ShowPositionModal(c)">
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                                                     <circle cx="9" cy="7" r="4"/>
                                                     <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
                                                     <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                                                 </svg>
-                                                <span class="char-action-label">Position</span>
                                             </button>
                                         }
                                         @if (_canViewAny)
                                         {
-                                            <button class="char-action-btn char-action-btn--info" title="View History" @onclick="() => ShowHistoryModal(gc)">
+                                            <button class="char-action-btn char-action-btn--info" title="View History"
+                                                    @onclick="() => ShowHistoryModal(c)">
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                     <circle cx="12" cy="12" r="10"/>
                                                     <polyline points="12 6 12 12 16 14"/>
                                                 </svg>
-                                                <span class="char-action-label">History</span>
                                             </button>
                                         }
-                                        @if (_canDelete || gc.UserId == _currentUserId)
+                                        @if (_canDelete || c.UserId == _currentUserId)
                                         {
-                                            <button class="char-action-btn char-action-btn--danger" title="Delete" @onclick="() => ShowDeleteConfirm(gc)">
+                                            <button class="char-action-btn char-action-btn--danger" title="Delete"
+                                                    @onclick="() => ShowDeleteConfirm(c)">
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                     <polyline points="3 6 5 6 21 6"/>
                                                     <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
@@ -313,7 +298,6 @@
                                                     <path d="M14 11v6"/>
                                                     <path d="M9 6V4h6v2"/>
                                                 </svg>
-                                                <span class="char-action-label">Delete</span>
                                             </button>
                                         }
                                     </div>
@@ -332,6 +316,7 @@
 {
     <ModalDialog IsVisible="_showCreate" OnClose="CloseCreate" Title="New Character">
         <ChildContent>
+
             @if (_createError is not null)
             {
                 <div class="form-error-banner">@_createError</div>
@@ -348,6 +333,7 @@
                 <label class="form-label">Faction</label>
                 <input class="form-input" @bind="_createForm.Faction" placeholder="e.g. Kingdom of England, Norse Clan..." maxlength="128" />
             </div>
+
         </ChildContent>
         <Footer>
             <button class="chars-btn chars-btn--ghost" @onclick="CloseCreate">Cancel</button>
@@ -363,6 +349,7 @@
 {
     <ModalDialog IsVisible="_showEdit && _editTarget is not null" OnClose="CloseEdit" Title="Edit Character">
         <ChildContent>
+
             @if (_editError is not null)
             {
                 <div class="form-error-banner">@_editError</div>
@@ -390,6 +377,7 @@
                     <input class="form-input" type="number" min="0" @bind="_editAdminForm.Experience" />
                 </div>
             }
+
         </ChildContent>
         <Footer>
             <button class="chars-btn chars-btn--ghost" @onclick="CloseEdit">Cancel</button>
@@ -405,6 +393,7 @@
 {
     <ModalDialog IsVisible="_showXp && _xpTarget is not null" OnClose="CloseXp" Title="@_xpTitle">
         <ChildContent>
+
             @if (_xpError is not null)
             {
                 <div class="form-error-banner">@_xpError</div>
@@ -428,6 +417,7 @@
     </ModalDialog>
 }
 
+
 @* ── Assign Position Modal ───────────────────────────────────────────────── *@
 <ModalDialog IsVisible="_showPosition && _positionTarget is not null" OnClose="ClosePosition" Title="@_positionTitle" PanelClass="modal-panel--sm">
     <ChildContent>
@@ -438,7 +428,7 @@
         <div class="form-group">
             <label class="form-label">Position</label>
             <select class="form-input" @bind="_selectedPositionId">
-                <option value="">— None —</option>
+                <option value="">- None -</option>
                 @foreach (var pos in _positions)
                 {
                     <option value="@pos.Id">@pos.Name</option>
@@ -458,41 +448,40 @@
 <ModalDialog IsVisible="_showHistory && _historyTarget is not null" OnClose="CloseHistory" Title="@_historyTitle" PanelClass="modal-panel--lg">
     <ChildContent>
         @if (_historyLoading)
-        {
-            <div class="chars-loading">
-                <div class="chars-spinner"></div><span>Loading...</span>
-            </div>
-        }
-        else if (_historyError is not null)
-        {
-            <div class="form-error-banner">@_historyError</div>
-        }
-        else if (_history.Count == 0)
-        {
-            <p class="history-empty">No history recorded yet.</p>
-        }
-        else
-        {
-            <div class="history-list">
-                @foreach (var entry in _history)
-                {
-                    var parts = entry.Description.Split(" — ", 2);
-                    var mainDesc = parts[0];
-                    var note = parts.Length > 1 ? parts[1] : null;
-                    <div class="history-entry">
-                        <div class="history-entry__meta">
-                            <span class="history-entry__date">@entry.Date.ToLocalTime().ToString("dd MMM yyyy HH:mm")</span>
-                            <span class="history-entry__by">@entry.PerformedByName</span>
-                        </div>
-                        <div class="history-entry__desc">@mainDesc</div>
-                        @if (note is not null)
-                        {
-                            <div class="history-entry__note">@note</div>
-                        }
+    {
+        <div class="chars-loading">
+            <div class="chars-spinner"></div><span>Loading...</span></div>
+    }
+    else if (_historyError is not null)
+    {
+        <div class="form-error-banner">@_historyError</div>
+    }
+    else if (_history.Count == 0)
+    {
+        <p class="history-empty">No history recorded yet.</p>
+    }
+    else
+    {
+        <div class="history-list">
+            @foreach (var entry in _history)
+            {
+                var parts = entry.Description.Split(" - ", 2);
+                var mainDesc = parts[0];
+                var note = parts.Length > 1 ? parts[1] : null;
+                <div class="history-entry">
+                    <div class="history-entry__meta">
+                        <span class="history-entry__date">@entry.Date.ToLocalTime().ToString("dd MMM yyyy HH:mm")</span>
+                        <span class="history-entry__by">@entry.PerformedByName</span>
                     </div>
-                }
-            </div>
-        }
+                    <div class="history-entry__desc">@mainDesc</div>
+                    @if (note is not null)
+                    {
+                        <div class="history-entry__note">@note</div>
+                    }
+                </div>
+            }
+        </div>
+    }
     </ChildContent>
     <Footer>
         <button class="chars-btn chars-btn--ghost" @onclick="CloseHistory">Close</button>
@@ -646,9 +635,12 @@
 
     private void ApplyGrouping()
     {
+        // Grouping is now handled in the markup based on _groupBy
+        // Just trigger a re-render
         StateHasChanged();
     }
 
+    // Grouping helper
     private Dictionary<string, List<CharacterDto>> GetGroupedCharacters()
     {
         if (_groupBy == "none")
@@ -737,7 +729,7 @@
 
     // ── XP ──────────────────────────────────────────────────────────────────
 
-    private void ShowXpModal(CharacterDto c) { _xpTarget = c; _xpTitle = $"Assign XP — {c.Name}"; _xpAmount = 0; _xpNote = null; _xpError = null; _showXp = true; }
+    private void ShowXpModal(CharacterDto c) { _xpTarget = c; _xpTitle = $"Assign XP - {c.Name}"; _xpAmount = 0; _xpNote = null; _xpError = null; _showXp = true; }
     private void CloseXp() => _showXp = false;
 
     private async Task SubmitXp()
@@ -759,7 +751,7 @@
     private async Task ShowPositionModal(CharacterDto c)
     {
         _positionTarget = c;
-        _positionTitle = $"Assign Position — {c.Name}";
+        _positionTitle = $"Assign Position - {c.Name}";
         _selectedPositionId = c.PositionId?.ToString() ?? string.Empty;
         _positionError = null;
         _showPosition = true;
@@ -795,7 +787,7 @@
     private async Task ShowHistoryModal(CharacterDto c)
     {
         _historyTarget = c;
-        _historyTitle = $"History — {c.Name}";
+        _historyTitle = $"History - {c.Name}";
         _history = [];
         _historyError = null;
         _historyLoading = true;

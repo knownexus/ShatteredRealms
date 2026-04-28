@@ -28,7 +28,7 @@ public sealed class UpdateOwnProfileCommandHandler : IRequestHandler<UpdateOwnPr
 
     public async Task<Result<UserDto>> Handle(UpdateOwnProfileCommand request, CancellationToken cancellationToken)
     {
-        // Preserve the user's existing roles — profile edits must not alter role assignments
+        // Preserve the user's existing roles - profile edits must not alter role assignments
         var currentRoleIds = await _context.UserRoles
             .Where(ur => ur.UserId == request.UserId)
             .Select(ur => ur.RoleId)

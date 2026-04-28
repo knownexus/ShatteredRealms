@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════
-   ShatteredRealms — Obsidian & Gold Design System
+   ShatteredRealms - Obsidian & Gold Design System
    ═══════════════════════════════════════════════════════════ */
 
 :root {
@@ -15,7 +15,7 @@
     --border-subtle:   #111c2b;
     --border-glow:     rgba(201, 168, 76, 0.35);
 
-    /* Gold / Amber — primary accent */
+    /* Gold / Amber - primary accent */
     --gold:            #c9a84c;
     --gold-bright:     #e8c76a;
     --gold-dim:        #7d6830;

@@ -43,7 +43,7 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, Result<A
         var userResult = await _userService.GetUserByEmailAsync(request.Email, cancellationToken);
         if (userResult.IsFailure)
         {
-            // Return generic credentials error — do not reveal whether the email exists
+            // Return generic credentials error - do not reveal whether the email exists
             return Result.Failure<AuthResponse>(DomainErrors.Authentication.InvalidCredentials);
         }
 

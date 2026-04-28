@@ -54,11 +54,11 @@ Commands and queries live in `Application/Features/{Domain}/`, handlers in `Infr
 
 ### Error Handling
 
-Use `Result<T>` (in `Domain/Shared/`) throughout — handlers return `Result<T>`, not raw values or thrown exceptions. API controllers unwrap results and map to appropriate HTTP responses.
+Use `Result<T>` (in `Domain/Shared/`) throughout - handlers return `Result<T>`, not raw values or thrown exceptions. API controllers unwrap results and map to appropriate HTTP responses.
 
 ### Authorization
 
-Permission-based RBAC. 60+ named permissions (e.g., `Users.View`, `Forum.Thread.Create`) are stored as ASP.NET Identity role claims. The `[RequirePermission("...")]` filter (in `API/Authorization/`) validates them. Five built-in roles: System (100), Admin (90), Analyst (80), EventOrganizer (50), User (10) — priority determines conflict resolution.
+Permission-based RBAC. 60+ named permissions (e.g., `Users.View`, `Forum.Thread.Create`) are stored as ASP.NET Identity role claims. The `[RequirePermission("...")]` filter (in `API/Authorization/`) validates them. Five built-in roles: System (100), Admin (90), Analyst (80), EventOrganizer (50), User (10) - priority determines conflict resolution.
 
 ### Soft Deletes
 
@@ -84,7 +84,7 @@ SQL Server. Connection string in `appsettings.json` is dev-only (`sa / P@$$w0rd`
 ### Testing
 
 - Unit tests use NSubstitute for mocks and FluentAssertions for assertions.
-- Integration tests (`API.Tests`) use `WebApplicationFactory` and SQLite (in-memory) — see `appsettings.Testing.json`.
+- Integration tests (`API.Tests`) use `WebApplicationFactory` and SQLite (in-memory) - see `appsettings.Testing.json`.
 - `Infrastructure.Tests` may hit a real DB; check test fixture setup before running.
 - When making changes write or modify a Unit test first against the expected functionality, before writing the functional change.
 

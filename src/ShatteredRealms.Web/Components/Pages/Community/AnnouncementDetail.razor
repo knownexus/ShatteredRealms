@@ -5,7 +5,7 @@
 @inject AnnouncementClientService AnnouncementService
 @rendermode InteractiveServer
 
-<PageTitle>@(_announcement?.Title ?? "Announcement") — Shattered Realms</PageTitle>
+<PageTitle>@(_announcement?.Title ?? "Announcement") - Shattered Realms</PageTitle>
 
 <div class="ann-detail-page">
     <LoadingSpinner IsVisible="_loading" Message="Loading announcement..." />
@@ -28,7 +28,7 @@
                 </div>
             </div>
 
-            <AlertBanner Message="@_actionError" />
+            <AlertBanner Message="@_eventError" />
 
             <div class="ann-detail-header">
                 <div class="ann-meta-line">
@@ -115,7 +115,7 @@
     private AnnouncementDto? _announcement;
     private bool _loading = true;
     private string? _error;
-    private string? _actionError;
+    private string? _eventError;
 
     private bool _canUpdate;
     private bool _canDelete;
@@ -193,7 +193,7 @@
         else
         {
             _showDeleteConfirm = false;
-            _actionError = result.Error.Message;
+            _eventError = result.Error.Message;
         }
     }
 }

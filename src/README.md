@@ -132,29 +132,29 @@ The application automatically seeds the following data on first run:
 
 The system defines 60 permissions across the following categories:
 
-**Users** — `Users.ViewOwn`, `Users.UpdateOwn`, `Users.View`, `Users.Create`, `Users.Update`, `Users.Delete`
+**Users** - `Users.ViewOwn`, `Users.UpdateOwn`, `Users.View`, `Users.Create`, `Users.Update`, `Users.Delete`
 
-**Characters** — `Characters.ViewOwn`, `Characters.CreateOwn`, `Characters.Create`, `Characters.UpdateOwn`, `Characters.View`, `Characters.Update`, `Characters.Delete`, `Characters.DeleteOwn`, `Characters.AssignPosition`, `Characters.AssignExperience`
+**Characters** - `Characters.ViewOwn`, `Characters.CreateOwn`, `Characters.Create`, `Characters.UpdateOwn`, `Characters.View`, `Characters.Update`, `Characters.Delete`, `Characters.DeleteOwn`, `Characters.AssignPosition`, `Characters.AssignExperience`
 
-**Roles** — `Role.View`, `Role.Create`, `Role.Update`, `Role.Delete`, `Role.Assign`
+**Roles** - `Role.View`, `Role.Create`, `Role.Update`, `Role.Delete`, `Role.Assign`
 
-**PermissionControl** — `PermissionControl.View`, `PermissionControl.Assign`
+**PermissionControl** - `PermissionControl.View`, `PermissionControl.Assign`
 
-**Forum (Category)** — `Forum.Category.Create`, `Forum.Category.Update`, `Forum.Category.Delete`
+**Forum (Category)** - `Forum.Category.Create`, `Forum.Category.Update`, `Forum.Category.Delete`
 
-**Forum (Thread)** — `Forum.Thread.Create`, `Forum.Thread.UpdateOwn`, `Forum.Thread.Update`, `Forum.Thread.DeleteOwn`, `Forum.Thread.Delete`, `Forum.Thread.Lock`, `Forum.Thread.Pin`
+**Forum (Thread)** - `Forum.Thread.Create`, `Forum.Thread.UpdateOwn`, `Forum.Thread.Update`, `Forum.Thread.DeleteOwn`, `Forum.Thread.Delete`, `Forum.Thread.Lock`, `Forum.Thread.Pin`
 
-**Forum (Post)** — `Forum.Post.Create`, `Forum.Post.UpdateOwn`, `Forum.Post.Update`, `Forum.Post.DeleteOwn`, `Forum.Post.Delete`
+**Forum (Post)** - `Forum.Post.Create`, `Forum.Post.UpdateOwn`, `Forum.Post.Update`, `Forum.Post.DeleteOwn`, `Forum.Post.Delete`
 
-**Wiki** — `Wiki.Page.Create`, `Wiki.Page.UpdateOwn`, `Wiki.Page.Update`, `Wiki.Page.DeleteOwn`, `Wiki.Page.Delete`, `Wiki.Category.Manage`
+**Wiki** - `Wiki.Page.Create`, `Wiki.Page.UpdateOwn`, `Wiki.Page.Update`, `Wiki.Page.DeleteOwn`, `Wiki.Page.Delete`, `Wiki.Category.Manage`
 
-**Videos** — `Videos.View`, `Videos.Create`, `Videos.Update`, `Videos.Delete`, `Videos.DeleteOwn`, `Videos.Approve`
+**Videos** - `Videos.View`, `Videos.Create`, `Videos.Update`, `Videos.Delete`, `Videos.DeleteOwn`, `Videos.Approve`
 
-**ActivityLog** — `ActivityLog.View`, `ActivityLog.Update`, `ActivityLog.Delete`
+**ActivityLog** - `ActivityLog.View`, `ActivityLog.Update`, `ActivityLog.Delete`
 
-**Reports** — `Reports.View`, `Reports.Create`, `Reports.CreateAll`
+**Reports** - `Reports.View`, `Reports.Create`, `Reports.CreateAll`
 
-**Announcements** — `Announcements.View`, `Announcements.Create`, `Announcements.Update`, `Announcements.Delete`
+**Announcements** - `Announcements.View`, `Announcements.Create`, `Announcements.Update`, `Announcements.Delete`
 
 ## API Endpoints
 

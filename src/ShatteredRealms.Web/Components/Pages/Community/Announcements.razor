@@ -8,7 +8,7 @@
 @inject EventClientService EventService
 @rendermode InteractiveServer
 
-<PageTitle>Announcements — Shattered Realms</PageTitle>
+<PageTitle>Announcements - Shattered Realms</PageTitle>
 
 <div class="announcements-page">
     <PageHeader Title="Announcements" Subtitle="News and updates from the community">
@@ -87,7 +87,7 @@
             <div class="form-group">
                 <label class="form-label">Linked Event (optional)</label>
                 <select class="form-control" @bind="_linkedEventStr">
-                    <option value="">— No linked event —</option>
+                    <option value="">- No linked event -</option>
                     @foreach (var ev in _allEvents)
                     {
                         <option value="@ev.Id">@ev.Title (@ev.StartsAt.ToString("MMM d, yyyy"))</option>

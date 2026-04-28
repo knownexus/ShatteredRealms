@@ -7,7 +7,7 @@
 @inject IJSRuntime JS
 @rendermode InteractiveServer
 
-<PageTitle>Documents — Shattered Realms</PageTitle>
+<PageTitle>Documents - Shattered Realms</PageTitle>
 
 <div class="documents-page">
     <PageHeader Title="Documents" Subtitle="Community resources, guides, and files">
@@ -204,7 +204,7 @@
         }
 
         _uploading = true;
-        // No StateHasChanged() here — re-rendering before the stream is read removes
+        // No StateHasChanged() here - re-rendering before the stream is read removes
         // the InputFile from the DOM, which breaks the underlying JS file interop.
 
         await using var stream = file.OpenReadStream(maxAllowedSize: 20 * 1024 * 1024);

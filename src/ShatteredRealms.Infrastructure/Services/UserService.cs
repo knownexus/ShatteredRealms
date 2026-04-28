@@ -98,7 +98,7 @@ public sealed class UserService : IUserService
 
         if (request.RoleIds is { Count: > 0 })
         {
-            // Admin-created user with explicit roles — skip Unverified, assign those directly
+            // Admin-created user with explicit roles - skip Unverified, assign those directly
             var assignResult = await AssignRolesToUserAsync(user.Id, request.RoleIds, cancellationToken);
             if (assignResult.IsFailure)
             {
@@ -107,7 +107,7 @@ public sealed class UserService : IUserService
         }
         else
         {
-            // Self-registered user — starts as Unverified until an admin approves them
+            // Self-registered user - starts as Unverified until an admin approves them
             _context.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = Claims.Roles.UnverifiedId });
         }
 
