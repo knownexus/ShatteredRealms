@@ -40,7 +40,7 @@ public sealed class CancelRegistrationCommandHandler : IRequestHandler<CancelReg
         _context.EventAttendee.Remove(attendee);
         await _context.SaveChangesAsync(cancellationToken);
 
-        await _analytics.TrackAsync(TelemetryEventType.EventRegistrationCancelled, request.UserId, string.Empty,
+        await _analytics.TrackAsync(TelemetryActionType.EventRegistrationCancelled, request.UserId, string.Empty,
             targetId: request.EventId.ToString(), cancellationToken: cancellationToken);
 
         return Result.Success();

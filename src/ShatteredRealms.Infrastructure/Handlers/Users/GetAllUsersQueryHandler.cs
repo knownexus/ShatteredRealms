@@ -29,7 +29,7 @@ public sealed class GetAllUsersQueryHandler : IRequestHandler<GetAllUsersQuery, 
 
         var dtos = users.Value.Select(u => UserMapper.ToDto(
             u,
-            roles: u.UserRoles.Select(ur => ur.Role.Name!).ToList(),
+            roles: u.UserRoles.Where(ur => ur.Role != null).Select(ur => ur.Role!.Name!).ToList(),
             permissions: new List<string>())).ToList();
 
         return Result.Success(dtos);

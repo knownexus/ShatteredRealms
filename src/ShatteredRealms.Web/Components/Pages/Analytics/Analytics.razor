@@ -15,7 +15,7 @@
         <Actions>
             <div class="analytics-header-right">
                 <div class="analytics-nav">
-                    <span class="nav-pill nav-pill--active">Event Log</span>
+                    <span class="nav-pill nav-pill--active">Activity Log</span>
                     <a href="/analytics/charts" class="nav-pill">Charts</a>
                     <a href="/analytics/event-attendances" class="nav-pill">Event Attendances</a>
                 </div>
@@ -33,19 +33,19 @@
     {
         <div class="summary-grid">
             <div class="stat-card">
-                <span class="stat-value">@_summary.TotalEventsToday</span>
-                <span class="stat-label">Events Today</span>
+                <span class="stat-value">@_summary.TotalActionsToday</span>
+                <span class="stat-label">Actions Today</span>
             </div>
             <div class="stat-card">
-                <span class="stat-value">@_summary.TotalEventsThisWeek</span>
-                <span class="stat-label">Events This Week</span>
+                <span class="stat-value">@_summary.TotalActionsThisWeek</span>
+                <span class="stat-label">Actions This Week</span>
             </div>
             <div class="stat-card">
-                <span class="stat-value">@_summary.TotalEventsThisMonth</span>
-                <span class="stat-label">Events This Month</span>
+                <span class="stat-value">@_summary.TotalActionsThisMonth</span>
+                <span class="stat-label">Actions This Month</span>
             </div>
             <div class="stat-card">
-                <span class="stat-value">@_summary.UniqueActorsThisWeek</span>
+                <span class="stat-value">@_summary.UniqueUsersThisWeek</span>
                 <span class="stat-label">Unique Users (Week)</span>
             </div>
             <div class="stat-card">
@@ -58,16 +58,16 @@
             </div>
         </div>
 
-        @if (_summary.TopEventTypes.Count > 0)
+        @if (_summary.TopActionTypes.Count > 0)
         {
             <div class="section-card">
-                <h2 class="section-title">Top Event Types This Week</h2>
-                <div class="top-events-list">
-                    @foreach (var et in _summary.TopEventTypes)
+                <h2 class="section-title">Top Action Types This Week</h2>
+                <div class="top-actions-list">
+                    @foreach (var at in _summary.TopActionTypes)
                     {
-                        <div class="top-event-row">
-                            <span class="top-event-name">@et.EventType</span>
-                            <span class="top-event-count">@et.Count</span>
+                        <div class="top-action-row">
+                            <span class="top-action-name">@at.ActionType</span>
+                            <span class="top-action-count">@at.Count</span>
                         </div>
                     }
                 </div>
@@ -80,7 +80,7 @@
     {
         <div class="section-card rules-panel">
             <h2 class="section-title">Flag Rules</h2>
-            <p class="rules-desc">Flag rules automatically highlight matching events in the log. Flagged rows appear with a red indicator.</p>
+            <p class="rules-desc">Flag rules automatically highlight matching Actions in the log. Flagged rows appear with a red indicator.</p>
 
             <AlertBanner Message="@_rulesError" />
 
@@ -91,7 +91,7 @@
                         <label class="form-label">Rule Type</label>
                         <select class="form-control" @bind="_newRuleType">
                             <option value="@FlagRuleType.User">Flag by User</option>
-                            <option value="@FlagRuleType.EventType">Flag by Event Type</option>
+                            <option value="@FlagRuleType.ActionType">Flag by Action Type</option>
                             <option value="@FlagRuleType.RoleAction">Flag by Role + Action</option>
                         </select>
                     </div>
@@ -102,16 +102,16 @@
                             <input class="form-control" placeholder="User ID to flag" @bind="_newRuleUserId" />
                         </div>
                     }
-                    @if (_newRuleType == FlagRuleType.EventType || _newRuleType == FlagRuleType.RoleAction)
+                    @if (_newRuleType == FlagRuleType.ActionType || _newRuleType == FlagRuleType.RoleAction)
                     {
                         <div class="form-group">
-                            <label class="form-label">Event Type</label>
-                            <select class="form-control" @bind="_newRuleEventTypeStr">
+                            <label class="form-label">Actions Type</label>
+                            <select class="form-control" @bind="_newRuleActionTypeStr">
                                 @if (_newRuleType == FlagRuleType.RoleAction)
                                 {
                                     <option value="">Any</option>
                                 }
-                                @foreach (var name in Enum.GetNames<TelemetryEventType>())
+                                @foreach (var name in Enum.GetNames<TelemetryActionType>())
                                 {
                                     <option value="@name">@name</option>
                                 }
@@ -138,11 +138,11 @@
             <LoadingSpinner IsVisible="_loadingRules" Message="Loading rules..." />
             @if (_rules.Count == 0)
             {
-                <p class="no-events">No flag rules defined.</p>
+                <p class="no-actions">No flag rules defined.</p>
             }
             else
             {
-                <table class="events-table rules-table">
+                <table class="actions-table rules-table">
                     <thead>
                         <tr>
                             <th>Type</th>
@@ -163,13 +163,13 @@
                                     {
                                         <span>@(rule.TargetUserName ?? rule.TargetUserId)</span>
                                     }
-                                    else if (rule.RuleType == FlagRuleType.EventType)
+                                    else if (rule.RuleType == FlagRuleType.ActionType)
                                     {
-                                        <span>@rule.EventTypeName</span>
+                                        <span>@rule.ActionTypeName</span>
                                     }
                                     else
                                     {
-                                        <span>@rule.ActorRole@(rule.EventType.HasValue ? $" → {rule.EventTypeName}" : "")</span>
+                                        <span>@rule.ActorRole@(rule.ActionType.HasValue ? $" → {rule.ActionTypeName}" : "")</span>
                                     }
                                 </td>
                                 <td>@rule.Reason</td>
@@ -198,15 +198,15 @@
         </div>
     }
 
-    <!-- Event Log -->
+    <!-- Action Log -->
     <div class="section-card">
         <div class="filter-bar">
-            <h2 class="section-title">Event Log</h2>
+            <h2 class="section-title">Action Log</h2>
             <div class="filter-controls">
                 
-                <select class="form-control filter-select" @bind="_filterEventType">
+                <select class="form-control filter-select" @bind="_filterActionType">
                     <option value="">All types</option>
-                    @foreach (var name in Enum.GetNames<TelemetryEventType>())
+                    @foreach (var name in Enum.GetNames<TelemetryActionType>())
                     {
                         <option value="@name">@name</option>
                     }
@@ -219,56 +219,56 @@
             </div>
         </div>
 
-        <LoadingSpinner IsVisible="_loadingEvents" Message="Loading events..." />
-        @if (_events.Count == 0)
+        <LoadingSpinner IsVisible="_loadingActions" Message="Loading Actions..." />
+        @if (_actions.Count == 0)
         {
-            <p class="no-events">No events found for the selected filters.</p>
+            <p class="no-actions">No actions found for the selected filters.</p>
         }
         else
         {
-            <div class="events-table-wrapper">
-                <table class="events-table">
+            <div class="actions-table-wrapper">
+                <table class="actions-table">
                     <thead>
                         <tr>
                             <th></th>
                             <th>Time</th>
-                            <th>Event</th>
+                            <th>Action</th>
                             <th>User</th>
                             <th>Role</th>
                             <th>Target</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var ev in _events)
+                        @foreach (var act in _actions)
                         {
-                            <tr class="event-row @(ev.AnyFlagged ? "row-flagged" : "") @(ev.IsFlagged ? "row-flagged-direct" : "")"
-                                @onclick="() => OpenDetail(ev)">
+                            <tr class="action-row @(act.AnyFlagged ? "row-flagged" : "") @(act.IsFlagged ? "row-flagged-direct" : "")"
+                                @onclick="() => OpenDetail(act)">
                                 <td class="cell-flag">
-                                    @if (ev.IsFlagged)
+                                    @if (act.IsFlagged)
                                     {
-                                        <span class="flag-icon flag-direct" title="@($"Manually flagged: {ev.FlagReason}")">⚑</span>
+                                        <span class="flag-icon flag-direct" title="@($"Manually flagged: {act.FlagReason}")">⚑</span>
                                     }
-                                    else if (ev.IsRuleFlagged)
+                                    else if (act.IsRuleFlagged)
                                     {
-                                        <span class="flag-icon flag-rule" title="@($"Rule flag: {ev.MatchedRuleReason}")">⚑</span>
+                                        <span class="flag-icon flag-rule" title="@($"Rule flag: {act.MatchedRuleReason}")">⚑</span>
                                     }
                                 </td>
-                                <td class="cell-time">@ToUk(ev.OccurredAt)</td>
-                                <td class="cell-type">@ev.EventTypeName</td>
+                                <td class="cell-time">@ToUk(act.OccurredAt)</td>
+                                <td class="cell-type">@act.ActionTypeName</td>
                                 <td class="cell-actor">
-                                    <span class="actor-name">@(string.IsNullOrEmpty(ev.ActorName) ? ev.ActorId : ev.ActorName)</span>
-                                    @if (!string.IsNullOrEmpty(ev.ActorEmail) && ev.ActorEmail != ev.ActorName)
+                                    <span class="actor-name">@(string.IsNullOrEmpty(act.ActorName) ? act.ActorId : act.ActorName)</span>
+                                    @if (!string.IsNullOrEmpty(act.ActorEmail) && act.ActorEmail != act.ActorName)
                                     {
-                                        <span class="actor-email">@ev.ActorEmail</span>
+                                        <span class="actor-email">@act.ActorEmail</span>
                                     }
                                 </td>
                                 <td class="cell-role">
-                                    @if (!string.IsNullOrEmpty(ev.ActorRole))
+                                    @if (!string.IsNullOrEmpty(act.ActorRole))
                                     {
-                                        <span class="role-badge">@ev.ActorRole</span>
+                                        <span class="role-badge">@act.ActorRole</span>
                                     }
                                 </td>
-                                <td class="cell-target">@(ev.TargetName ?? ev.TargetId)</td>
+                                <td class="cell-target">@(act.TargetName ?? act.TargetId)</td>
                             </tr>
                         }
                     </tbody>
@@ -288,17 +288,17 @@
     </div>
 </div>
 
-<!-- Event Detail Modal -->
-@if (_detailEvent is not null)
+<!-- Action Detail Modal -->
+@if (_detailAction is not null)
 {
-    <ModalDialog IsVisible="_detailEvent is not null" OnClose="CloseDetail" Title="Event Detail" PanelClass="detail-modal">
+    <ModalDialog IsVisible="_detailAction is not null" OnClose="CloseDetail" Title="Action Detail" PanelClass="detail-modal">
         <ChildContent>
             <div class="detail-header-inner">
-                <h2>Event Detail</h2>
-                @if (_detailEvent.AnyFlagged)
+                <h2>Action Detail</h2>
+                @if (_detailAction.AnyFlagged)
                 {
-                    <span class="detail-flag-badge @(_detailEvent.IsFlagged ? "badge-flagged-direct" : "badge-flagged-rule")">
-                        ⚑ @(_detailEvent.IsFlagged ? "Manually Flagged" : "Rule Flagged")
+                    <span class="detail-flag-badge @(_detailAction.IsFlagged ? "badge-flagged-direct" : "badge-flagged-rule")">
+                        ⚑ @(_detailAction.IsFlagged ? "Manually Flagged" : "Rule Flagged")
                     </span>
                 }
             </div>
@@ -308,30 +308,30 @@
                         <h3 class="detail-section-title">Action</h3>
                         <div class="detail-row">
                             <span class="detail-label">Type</span>
-                            <span class="detail-value type-value">@_detailEvent.EventTypeName</span>
+                            <span class="detail-value type-value">@_detailAction.ActionTypeName</span>
                         </div>
                         <div class="detail-row">
                             <span class="detail-label">Time</span>
-                            <span class="detail-value">@ToUk(_detailEvent.OccurredAt)</span>
+                            <span class="detail-value">@ToUk(_detailAction.OccurredAt)</span>
                         </div>
-                        @if (!string.IsNullOrEmpty(_detailEvent.TargetName) || !string.IsNullOrEmpty(_detailEvent.TargetId))
+                        @if (!string.IsNullOrEmpty(_detailAction.TargetName) || !string.IsNullOrEmpty(_detailAction.TargetId))
                         {
                             <div class="detail-row">
                                 <span class="detail-label">Target</span>
                                 <span class="detail-value">
-                                    @(_detailEvent.TargetName ?? _detailEvent.TargetId)
-                                    @if (!string.IsNullOrEmpty(_detailEvent.TargetId) && _detailEvent.TargetId != _detailEvent.TargetName)
+                                    @(_detailAction.TargetName ?? _detailAction.TargetId)
+                                    @if (!string.IsNullOrEmpty(_detailAction.TargetId) && _detailAction.TargetId != _detailAction.TargetName)
                                     {
-                                        <span class="detail-subtext"> (ID: @_detailEvent.TargetId)</span>
+                                        <span class="detail-subtext"> (ID: @_detailAction.TargetId)</span>
                                     }
                                 </span>
                             </div>
                         }
-                        @if (!string.IsNullOrEmpty(_detailEvent.Details))
+                        @if (!string.IsNullOrEmpty(_detailAction.Details))
                         {
                             <div class="detail-row">
                                 <span class="detail-label">Details</span>
-                                <span class="detail-value">@_detailEvent.Details</span>
+                                <span class="detail-value">@_detailAction.Details</span>
                             </div>
                         }
                     </div>
@@ -340,51 +340,51 @@
                         <h3 class="detail-section-title">Who Did It</h3>
                         <div class="detail-row">
                             <span class="detail-label">Username</span>
-                            <span class="detail-value actor-name-large">@(string.IsNullOrEmpty(_detailEvent.ActorName) ? _detailEvent.ActorId : _detailEvent.ActorName)</span>
+                            <span class="detail-value actor-name-large">@(string.IsNullOrEmpty(_detailAction.ActorName) ? _detailAction.ActorId : _detailAction.ActorName)</span>
                         </div>
-                        @if (!string.IsNullOrEmpty(_detailEvent.ActorEmail))
+                        @if (!string.IsNullOrEmpty(_detailAction.ActorEmail))
                         {
                             <div class="detail-row">
                                 <span class="detail-label">Email</span>
-                                <span class="detail-value">@_detailEvent.ActorEmail</span>
+                                <span class="detail-value">@_detailAction.ActorEmail</span>
                             </div>
                         }
-                        @if (!string.IsNullOrEmpty(_detailEvent.ActorRole))
+                        @if (!string.IsNullOrEmpty(_detailAction.ActorRole))
                         {
                             <div class="detail-row">
                                 <span class="detail-label">Role</span>
-                                <span class="detail-value"><span class="role-badge">@_detailEvent.ActorRole</span></span>
+                                <span class="detail-value"><span class="role-badge">@_detailAction.ActorRole</span></span>
                             </div>
                         }
                         <div class="detail-row">
                             <span class="detail-label">User ID</span>
-                            <span class="detail-value detail-subtext">@_detailEvent.ActorId</span>
+                            <span class="detail-value detail-subtext">@_detailAction.ActorId</span>
                         </div>
                     </div>
 
-                    @if (_detailEvent.IsFlagged || _detailEvent.IsRuleFlagged)
+                    @if (_detailAction.IsFlagged || _detailAction.IsRuleFlagged)
                     {
                         <div class="detail-section detail-flag-info">
                             <h3 class="detail-section-title">Flag Information</h3>
-                            @if (_detailEvent.IsFlagged)
+                            @if (_detailAction.IsFlagged)
                             {
                                 <div class="detail-row">
                                     <span class="detail-label">Flagged At</span>
-                                    <span class="detail-value">@ToUk(_detailEvent.FlaggedAt)</span>
+                                    <span class="detail-value">@ToUk(_detailAction.FlaggedAt)</span>
                                 </div>
-                                @if (!string.IsNullOrEmpty(_detailEvent.FlagReason))
+                                @if (!string.IsNullOrEmpty(_detailAction.FlagReason))
                                 {
                                     <div class="detail-row">
                                         <span class="detail-label">Flag Reason</span>
-                                        <span class="detail-value">@_detailEvent.FlagReason</span>
+                                        <span class="detail-value">@_detailAction.FlagReason</span>
                                     </div>
                                 }
                             }
-                            @if (_detailEvent.IsRuleFlagged && !string.IsNullOrEmpty(_detailEvent.MatchedRuleReason))
+                            @if (_detailAction.IsRuleFlagged && !string.IsNullOrEmpty(_detailAction.MatchedRuleReason))
                             {
                                 <div class="detail-row">
                                     <span class="detail-label">Rule Match</span>
-                                    <span class="detail-value">@_detailEvent.MatchedRuleReason</span>
+                                    <span class="detail-value">@_detailAction.MatchedRuleReason</span>
                                 </div>
                             }
                         </div>
@@ -393,9 +393,9 @@
 
                 <!-- Flag / Unflag section -->
                 <div class="detail-flag-actions">
-                    @if (_detailEvent.IsFlagged)
+                    @if (_detailAction.IsFlagged)
                     {
-                        <button class="btn-secondary" @onclick="UnflagCurrentEvent" disabled="@_flagging">
+                        <button class="btn-secondary" @onclick="UnflagCurrentAction" disabled="@_flagging">
                             @(_flagging ? "Removing flag..." : "Remove Flag")
                         </button>
                     }
@@ -403,8 +403,8 @@
                     {
                         <div class="flag-form">
                             <input class="form-control flag-reason-input" placeholder="Flag reason (optional)" @bind="_flagReason" />
-                            <button class="btn-danger-outline" @onclick="FlagCurrentEvent" disabled="@_flagging">
-                                @(_flagging ? "Flagging..." : "⚑ Flag This Event")
+                            <button class="btn-danger-outline" @onclick="FlagCurrentAction" disabled="@_flagging">
+                                @(_flagging ? "Flagging..." : "⚑ Flag This Action")
                             </button>
                         </div>
                     }
@@ -416,12 +416,12 @@
                 }
 
                 <!-- Quick watch rule for this user -->
-                @if (!string.IsNullOrEmpty(_detailEvent.ActorId))
+                @if (!string.IsNullOrEmpty(_detailAction.ActorId))
                 {
                     <div class="detail-watch-section">
                         <div class="detail-watch-header">
                             <span class="detail-watch-title">Watch User</span>
-                            <span class="detail-watch-actor">@(string.IsNullOrEmpty(_detailEvent.ActorName) ? _detailEvent.ActorId : _detailEvent.ActorName)</span>
+                            <span class="detail-watch-actor">@(string.IsNullOrEmpty(_detailAction.ActorName) ? _detailAction.ActorId : _detailAction.ActorName)</span>
                         </div>
                         @if (!string.IsNullOrEmpty(_watchRuleSuccess))
                         {
@@ -444,10 +444,10 @@
 
 @code {
     private AnalyticsSummaryDto? _summary;
-    private List<TelemetryEventDto> _events = [];
+    private List<TelemetryActionDto> _actions = [];
     private List<AnalyticsFlagRuleDto> _rules = [];
     private bool _loadingSummary = true;
-    private bool _loadingEvents = true;
+    private bool _loadingActions = true;
     private bool _loadingRules;
     private bool _showRulesPanel;
     private string? _error;
@@ -465,13 +465,13 @@
     private int TotalPages => _totalCount == 0 ? 1 : (int)Math.Ceiling(_totalCount / (double)PageSize);
 
     // Filters
-    private string _filterEventType = "";
+    private string _filterActionType = "";
     private string _filterActorSearch = "";
     private DateTime? _filterFrom;
     private DateTime? _filterTo;
 
     // Detail modal
-    private TelemetryEventDto? _detailEvent;
+    private TelemetryActionDto? _detailAction;
     private bool _flagging;
     private string _flagReason = "";
     private string? _detailError;
@@ -482,7 +482,7 @@
     // New rule form
     private FlagRuleType _newRuleType = FlagRuleType.User;
     private string _newRuleUserId = "";
-    private string _newRuleEventTypeStr = "";
+    private string _newRuleActionTypeStr = "";
     private string _newRuleRole = "";
     private string _newRuleReason = "";
     private bool _savingRule;
@@ -491,7 +491,7 @@
 
     protected override async Task OnAuthenticatedAsync()
     {
-        await Task.WhenAll(LoadSummary(), LoadEvents(), LoadRules());
+        await Task.WhenAll(LoadSummary(), LoadActions(), LoadRules());
     }
 
     private async Task LoadSummary()
@@ -503,25 +503,25 @@
         else _error = result.Error.Message;
     }
 
-    private async Task LoadEvents()
+    private async Task LoadActions()
     {
-        _loadingEvents = true;
-        TelemetryEventType? eventType = null;
-        if (!string.IsNullOrEmpty(_filterEventType) && Enum.TryParse<TelemetryEventType>(_filterEventType, out var parsed))
-            eventType = parsed;
+        _loadingActions = true;
+        TelemetryActionType? actionType = null;
+        if (!string.IsNullOrEmpty(_filterActionType) && Enum.TryParse<TelemetryActionType>(_filterActionType, out var parsed))
+            actionType = parsed;
 
-        var result = await AnalyticsService.GetEventsAsync(
+        var result = await AnalyticsService.GetActionsAsync(
             page: _page,
             pageSize: PageSize,
-            eventType: eventType,
+            actionType: actionType,
             actorSearch: string.IsNullOrEmpty(_filterActorSearch) ? null : _filterActorSearch,
             from: _filterFrom,
-            to: _filterTo.HasValue ? _filterTo.Value.AddDays(1) : null);
+            to: _filterTo?.AddDays(1));
 
-        _loadingEvents = false;
+        _loadingActions = false;
         if (result.IsSuccess)
         {
-            _events = result.Value.Events;
+            _actions = result.Value.Actions;
             _totalCount = result.Value.TotalCount;
         }
         else _error = result.Error.Message;
@@ -539,34 +539,34 @@
     private async Task ApplyFilters()
     {
         _page = 1;
-        await LoadEvents();
+        await LoadActions();
         StateHasChanged();
     }
 
     private async Task ClearFilters()
     {
-        _filterEventType = "";
+        _filterActionType = "";
         _filterActorSearch = "";
         _filterFrom = null;
         _filterTo = null;
         _page = 1;
-        await LoadEvents();
+        await LoadActions();
         StateHasChanged();
     }
 
     private async Task PrevPage()
     {
-        if (_page > 1) { _page--; await LoadEvents(); StateHasChanged(); }
+        if (_page > 1) { _page--; await LoadActions(); StateHasChanged(); }
     }
 
     private async Task NextPage()
     {
-        if (_page < TotalPages) { _page++; await LoadEvents(); StateHasChanged(); }
+        if (_page < TotalPages) { _page++; await LoadActions(); StateHasChanged(); }
     }
 
-    private void OpenDetail(TelemetryEventDto ev)
+    private void OpenDetail(TelemetryActionDto ev)
     {
-        _detailEvent       = ev;
+        _detailAction       = ev;
         _flagReason        = "";
         _detailError       = null;
         _quickWatchReason  = "";
@@ -576,45 +576,45 @@
 
     private void CloseDetail()
     {
-        _detailEvent = null;
+        _detailAction = null;
         StateHasChanged();
     }
 
-    private async Task FlagCurrentEvent()
+    private async Task FlagCurrentAction()
     {
-        if (_detailEvent is null) return;
+        if (_detailAction is null) return;
         _flagging = true;
         _detailError = null;
-        var result = await AnalyticsService.FlagEventAsync(_detailEvent.Id, string.IsNullOrEmpty(_flagReason) ? null : _flagReason);
+        var result = await AnalyticsService.FlagActionAsync(_detailAction.Id, string.IsNullOrEmpty(_flagReason) ? null : _flagReason);
         _flagging = false;
 
         if (result.IsSuccess)
         {
-            _detailEvent.IsFlagged  = true;
-            _detailEvent.FlagReason = string.IsNullOrEmpty(_flagReason) ? null : _flagReason;
-            _detailEvent.FlaggedAt  = DateTime.UtcNow;
-            var row = _events.FirstOrDefault(e => e.Id == _detailEvent.Id);
-            if (row is not null) { row.IsFlagged = true; row.FlagReason = _detailEvent.FlagReason; }
+            _detailAction.IsFlagged  = true;
+            _detailAction.FlagReason = string.IsNullOrEmpty(_flagReason) ? null : _flagReason;
+            _detailAction.FlaggedAt  = DateTime.UtcNow;
+            var row = _actions.FirstOrDefault(e => e.Id == _detailAction.Id);
+            if (row is not null) { row.IsFlagged = true; row.FlagReason = _detailAction.FlagReason; }
         }
         else _detailError = result.Error.Message;
 
         StateHasChanged();
     }
 
-    private async Task UnflagCurrentEvent()
+    private async Task UnflagCurrentAction()
     {
-        if (_detailEvent is null) return;
+        if (_detailAction is null) return;
         _flagging = true;
         _detailError = null;
-        var result = await AnalyticsService.UnflagEventAsync(_detailEvent.Id);
+        var result = await AnalyticsService.UnflagActionAsync(_detailAction.Id);
         _flagging = false;
 
         if (result.IsSuccess)
         {
-            _detailEvent.IsFlagged  = false;
-            _detailEvent.FlagReason = null;
-            _detailEvent.FlaggedAt  = null;
-            var row = _events.FirstOrDefault(e => e.Id == _detailEvent.Id);
+            _detailAction.IsFlagged  = false;
+            _detailAction.FlagReason = null;
+            _detailAction.FlaggedAt  = null;
+            var row = _actions.FirstOrDefault(e => e.Id == _detailAction.Id);
             if (row is not null) { row.IsFlagged = false; row.FlagReason = null; }
         }
         else _detailError = result.Error.Message;
@@ -628,14 +628,14 @@
         _savingRule = true;
         _rulesError = null;
 
-        TelemetryEventType? evType = null;
-        if (!string.IsNullOrEmpty(_newRuleEventTypeStr) && Enum.TryParse<TelemetryEventType>(_newRuleEventTypeStr, out var et))
+        TelemetryActionType? evType = null;
+        if (!string.IsNullOrEmpty(_newRuleActionTypeStr) && Enum.TryParse<TelemetryActionType>(_newRuleActionTypeStr, out var et))
             evType = et;
 
         var result = await AnalyticsService.CreateRuleAsync(new CreateFlagRulePayload(
             _newRuleType,
             _newRuleType == FlagRuleType.User ? _newRuleUserId : null,
-            (_newRuleType == FlagRuleType.EventType || _newRuleType == FlagRuleType.RoleAction) ? evType : null,
+            (_newRuleType == FlagRuleType.ActionType || _newRuleType == FlagRuleType.RoleAction) ? evType : null,
             _newRuleType == FlagRuleType.RoleAction ? _newRuleRole : null,
             _newRuleReason));
 
@@ -645,10 +645,10 @@
         {
             _rules.Insert(0, result.Value);
             _newRuleUserId = "";
-            _newRuleEventTypeStr = "";
+            _newRuleActionTypeStr = "";
             _newRuleRole = "";
             _newRuleReason = "";
-            await LoadEvents();
+            await LoadActions();
         }
         else _rulesError = result.Error.Message;
 
@@ -662,7 +662,7 @@
         if (result.IsSuccess)
         {
             rule.IsActive = !rule.IsActive;
-            await LoadEvents();
+            await LoadActions();
         }
         else _rulesError = result.Error.Message;
         StateHasChanged();
@@ -675,7 +675,7 @@
         if (result.IsSuccess)
         {
             _rules.RemoveAll(r => r.Id == id);
-            await LoadEvents();
+            await LoadActions();
         }
         else _rulesError = result.Error.Message;
         StateHasChanged();
@@ -683,13 +683,13 @@
 
     private async Task QuickWatchActor()
     {
-        if (_detailEvent is null || string.IsNullOrWhiteSpace(_quickWatchReason)) return;
+        if (_detailAction is null || string.IsNullOrWhiteSpace(_quickWatchReason)) return;
         _quickWatching    = true;
         _watchRuleSuccess = null;
 
         var result = await AnalyticsService.CreateRuleAsync(new CreateFlagRulePayload(
             FlagRuleType.User,
-            _detailEvent.ActorId,
+            _detailAction.ActorId,
             null,
             null,
             _quickWatchReason));
@@ -700,8 +700,8 @@
         {
             _rules.Insert(0, result.Value);
             _quickWatchReason = "";
-            _watchRuleSuccess = $"Watch rule created for {(string.IsNullOrEmpty(_detailEvent.ActorName) ? _detailEvent.ActorId : _detailEvent.ActorName)}.";
-            await LoadEvents();
+            _watchRuleSuccess = $"Watch rule created for {(string.IsNullOrEmpty(_detailAction.ActorName) ? _detailAction.ActorId : _detailAction.ActorName)}.";
+            await LoadActions();
         }
         else _detailError = result.Error.Message;
 

@@ -36,7 +36,7 @@ public sealed class GetFlagRulesQueryHandler : IRequestHandler<GetFlagRulesQuery
             RuleType       = r.RuleType,
             TargetUserId   = r.TargetUserId,
             TargetUserName = r.TargetUserId is not null && users.TryGetValue(r.TargetUserId, out var tu) ? tu : r.TargetUserId,
-            EventType      = r.EventType,
+            ActionType      = r.EventType,
             ActorRole      = r.ActorRole,
             Reason         = r.Reason,
             CreatedById    = r.CreatedById,

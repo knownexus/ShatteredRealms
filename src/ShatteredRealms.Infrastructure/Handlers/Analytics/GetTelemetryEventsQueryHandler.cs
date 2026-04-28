@@ -19,7 +19,7 @@ public sealed class GetTelemetryEventsQueryHandler : IRequestHandler<GetTelemetr
 
         if (request.EventType.HasValue)
         {
-            query = query.Where(e => e.EventType == request.EventType.Value);
+            query = query.Where(e => e.ActionType == request.EventType.Value);
         }
 
         if (!string.IsNullOrEmpty(request.ActorSearch))
@@ -50,10 +50,10 @@ public sealed class GetTelemetryEventsQueryHandler : IRequestHandler<GetTelemetr
             .OrderByDescending(e => e.OccurredAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(e => new TelemetryEventDto
+            .Select(e => new TelemetryActionDto
             {
                 Id          = e.Id,
-                EventType   = e.EventType,
+                ActionType   = e.ActionType,
                 ActorId     = e.ActorId,
                 ActorName   = e.ActorName,
                 ActorEmail  = e.ActorEmail,
@@ -89,12 +89,12 @@ public sealed class GetTelemetryEventsQueryHandler : IRequestHandler<GetTelemetr
                     {
                         Domain.Entities.Telemetry.FlagRuleType.User =>
                             rule.TargetUserId == ev.ActorId,
-                        Domain.Entities.Telemetry.FlagRuleType.EventType =>
-                            !rule.EventType.HasValue || rule.EventType.Value == ev.EventType,
+                        Domain.Entities.Telemetry.FlagRuleType.ActionType =>
+                            !rule.EventType.HasValue || rule.EventType.Value == ev.ActionType,
                         Domain.Entities.Telemetry.FlagRuleType.RoleAction =>
                             !string.IsNullOrEmpty(rule.ActorRole) &&
                             string.Equals(rule.ActorRole, ev.ActorRole, StringComparison.OrdinalIgnoreCase) &&
-                            (!rule.EventType.HasValue || rule.EventType.Value == ev.EventType),
+                            (!rule.EventType.HasValue || rule.EventType.Value == ev.ActionType),
                         _ => false,
                     };
 
@@ -110,7 +110,7 @@ public sealed class GetTelemetryEventsQueryHandler : IRequestHandler<GetTelemetr
 
         return Result.Success(new PagedTelemetryResult
         {
-            Events     = events,
+            Actions     = events,
             TotalCount = totalCount,
             Page       = page,
             PageSize   = pageSize,

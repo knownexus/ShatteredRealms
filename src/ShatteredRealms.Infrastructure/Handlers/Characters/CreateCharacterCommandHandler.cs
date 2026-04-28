@@ -64,7 +64,7 @@ public sealed class CreateCharacterCommandHandler : IRequestHandler<CreateCharac
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        await _analytics.TrackAsync(TelemetryEventType.CharacterCreated, request.UserId, string.Empty,
+        await _analytics.TrackAsync(TelemetryActionType.CharacterCreated, request.UserId, string.Empty,
             targetId: character.Id.ToString(), targetName: character.Name, cancellationToken: cancellationToken);
 
         return Result.Success(MapToDto(character, null));

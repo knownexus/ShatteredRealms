@@ -33,7 +33,7 @@ public sealed class DeleteEventCommandHandler : IRequestHandler<DeleteEventComma
 
         if (!string.IsNullOrEmpty(request.ActorId))
         {
-            await _analytics.TrackAsync(TelemetryEventType.EventDeleted, request.ActorId, string.Empty,
+            await _analytics.TrackAsync(TelemetryActionType.EventDeleted, request.ActorId, string.Empty,
                 targetId: ev.Id.ToString(), targetName: ev.Title, cancellationToken: cancellationToken);
         }
 

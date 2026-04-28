@@ -47,7 +47,7 @@ public sealed class CreateFlagRuleCommandHandler : IRequestHandler<CreateFlagRul
             RuleType       = rule.RuleType,
             TargetUserId   = rule.TargetUserId,
             TargetUserName = targetUserName,
-            EventType      = rule.EventType,
+            ActionType      = rule.EventType,
             ActorRole      = rule.ActorRole,
             Reason         = rule.Reason,
             CreatedById    = rule.CreatedById,

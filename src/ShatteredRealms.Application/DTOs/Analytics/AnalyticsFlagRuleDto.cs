@@ -9,8 +9,8 @@ public sealed class AnalyticsFlagRuleDto
     public string RuleTypeName => RuleType.ToString();
     public string? TargetUserId { get; set; }
     public string? TargetUserName { get; set; }
-    public TelemetryEventType? EventType { get; set; }
-    public string? EventTypeName => EventType?.ToString();
+    public TelemetryActionType? ActionType { get; set; }
+    public string? ActionTypeName => ActionType?.ToString();
     public string? ActorRole { get; set; }
     public string Reason { get; set; } = string.Empty;
     public string CreatedById { get; set; } = string.Empty;

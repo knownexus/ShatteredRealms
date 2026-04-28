@@ -51,7 +51,7 @@ public sealed class AssignExperienceCommandHandler : IRequestHandler<AssignExper
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        await _analytics.TrackAsync(TelemetryEventType.CharacterXpAssigned, request.RequestingUserId, string.Empty,
+        await _analytics.TrackAsync(TelemetryActionType.CharacterXpAssigned, request.RequestingUserId, string.Empty,
             targetId: character.Id.ToString(), targetName: character.Name,
             details: $"+{request.XpToAdd} XP (total: {character.Experience})", cancellationToken: cancellationToken);
 

@@ -30,7 +30,7 @@ public sealed class UpdateForumThreadCommandHandler
 
         if (result.IsSuccess)
         {
-            await _analytics.TrackAsync(TelemetryEventType.ForumThreadUpdated, request.RequestingUserId, string.Empty,
+            await _analytics.TrackAsync(TelemetryActionType.ForumThreadUpdated, request.RequestingUserId, string.Empty,
                 targetId: request.ThreadId.ToString(), targetName: request.Title, cancellationToken: cancellationToken);
         }
 

@@ -103,7 +103,7 @@ else
                     <td>@string.Join(", ", user.Roles)</td>
                     <td>
                         <button class="btn btn-sm btn-warning" @onclick="() => ShowEditModal(user)">Edit</button>
-                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteUser(user.Id)">Delete</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => ConfirmDelete(user)">Delete</button>
                     </td>
                 </tr>
             }
@@ -146,11 +146,12 @@ else
                 {
                     @foreach (var role in roles)
                     {
-                        <div class="form-check">
+                        <div class="form-check" @key="@role.Id">
                             <input class="form-check-input" type="checkbox"
+                                   id="role-@role.Id"
                                    checked="@selectedRoleIds.Contains(role.Id)"
                                    @onchange="(ChangeEventArgs e) => ToggleRole(role.Id, (bool)e.Value!)"/>
-                            <label class="form-check-label">@role.Name</label>
+                            <label class="form-check-label" for="role-@role.Id">@role.Name</label>
                         </div>
                     }
                 }
@@ -163,7 +164,30 @@ else
             <button type="button" class="btn btn-primary" @onclick="SaveUser">Save</button>
         </Footer>
     </ModalDialog>
+    
 }
+@if (_showDeleteConfirm)
+{
+    <ModalDialog IsVisible="_showDeleteConfirm" OnClose="() => _showDeleteConfirm = false" Title="Delete User"
+                 PanelClass="modal-panel--narrow">
+        <ChildContent>
+
+            <p style="font-family: var(--font-body); color: var(--text-muted);">
+                Are you sure you want to delete <strong style="color: var(--text)">@_userIdToDelete?.Email</strong>? This action
+                cannot be undone.
+            </p>
+
+
+        </ChildContent>
+        <Footer>
+            <button class="btn-secondary" @onclick="() => _showDeleteConfirm = false">Cancel</button>
+            <button class="btn-danger" @onclick="DeleteUser" disabled="@_deleting">
+                @(_deleting ? "Deleting..." : "Delete User")
+            </button>
+        </Footer>
+    </ModalDialog>
+}
+
 
 @code {
     private List<UserDto>? users;
@@ -186,6 +210,9 @@ else
     private string _originalFirstName = string.Empty;
     private string _originalLastName = string.Empty;
     private List<string> _originalRoleIds = new();
+    private bool _showDeleteConfirm;
+    private bool _deleting;
+    private UserDto? _userIdToDelete;
 
     private bool HasChanges =>
         currentEmail != _originalEmail ||
@@ -348,17 +375,31 @@ else
         }
     }
 
-    private async Task DeleteUser(string userId)
+    private void ConfirmDelete(UserDto user)
     {
+        _showDeleteConfirm = true;
+        _userIdToDelete = user;
+    }
+
+    private async Task DeleteUser()
+    {
+        if (_userIdToDelete == null)
+        {
+            errorCode = "404";
+            errorMessage = "No user selected for deletion.";
+            return;
+        }
         try
         {
-            var result = await UserService.DeleteUserAsync(userId);
+            var result = await UserService.DeleteUserAsync(_userIdToDelete.Id);
             if (result.IsFailure)
             {
                 errorCode = result.Error.Code.ToString();
                 errorMessage = result.Error.Message;
                 return;
             }
+            _showDeleteConfirm = false;
+
             await LoadUsers();
         }
         catch (Exception ex)

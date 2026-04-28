@@ -65,7 +65,7 @@ public sealed class AssignPositionCommandHandler : IRequestHandler<AssignPositio
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        await _analytics.TrackAsync(TelemetryEventType.CharacterPositionAssigned, request.RequestingUserId, string.Empty,
+        await _analytics.TrackAsync(TelemetryActionType.CharacterPositionAssigned, request.RequestingUserId, string.Empty,
             targetId: character.Id.ToString(), targetName: character.Name,
             details: $"Position: {positionName}", cancellationToken: cancellationToken);
 

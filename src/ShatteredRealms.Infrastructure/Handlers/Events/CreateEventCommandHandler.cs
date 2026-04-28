@@ -44,7 +44,7 @@ public sealed class CreateEventCommandHandler : IRequestHandler<CreateEventComma
         _context.Event.Add(ev);
         await _context.SaveChangesAsync(cancellationToken);
 
-        await _analytics.TrackAsync(TelemetryEventType.EventCreated, request.CreatedById, string.Empty,
+        await _analytics.TrackAsync(TelemetryActionType.EventCreated, request.CreatedById, string.Empty,
             targetId: ev.Id.ToString(), targetName: ev.Title, cancellationToken: cancellationToken);
 
         return Result.Success(new EventDto

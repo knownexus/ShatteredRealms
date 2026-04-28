@@ -13,18 +13,18 @@ public class AnalyticsClientService
 
     public AnalyticsClientService(HttpClient httpClient) => _httpClient = httpClient;
 
-    public async Task<Result<PagedTelemetryResult>> GetEventsAsync(
+    public async Task<Result<PagedTelemetryResult>> GetActionsAsync(
         int page = 1,
         int pageSize = 50,
-        TelemetryEventType? eventType = null,
+        TelemetryActionType? actionType = null,
         string? actorSearch = null,
         DateTime? from = null,
         DateTime? to = null)
     {
         var query = $"api/analytics?page={page}&pageSize={pageSize}";
-        if (eventType.HasValue)
+        if (actionType.HasValue)
         {
-            query += $"&eventType={(int)eventType.Value}";
+            query += $"&actionType={(int)actionType.Value}";
         }
 
         if (!string.IsNullOrEmpty(actorSearch))
@@ -65,7 +65,7 @@ public class AnalyticsClientService
         return Result.Failure<AnalyticsSummaryDto>(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to load summary", (int)response.StatusCode));
     }
 
-    public async Task<Result> FlagEventAsync(Guid eventId, string? reason)
+    public async Task<Result> FlagActionAsync(Guid eventId, string? reason)
     {
         var response = await _httpClient.PutAsJsonAsync($"api/analytics/{eventId}/flag", new { reason });
         if (response.IsSuccessStatusCode)
@@ -77,7 +77,7 @@ public class AnalyticsClientService
         return Result.Failure(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to flag event", (int)response.StatusCode));
     }
 
-    public async Task<Result> UnflagEventAsync(Guid eventId)
+    public async Task<Result> UnflagActionAsync(Guid eventId)
     {
         var response = await _httpClient.DeleteAsync($"api/analytics/{eventId}/flag");
         if (response.IsSuccessStatusCode)
@@ -141,13 +141,13 @@ public class AnalyticsClientService
         DateTime from,
         DateTime to,
         string groupBy = "day",
-        TelemetryEventType? eventType = null,
+        TelemetryActionType? eventType = null,
         string? actorSearch = null)
     {
         var query = $"api/analytics/chart?from={from:s}&to={to:s}&groupBy={groupBy}";
         if (eventType.HasValue)
         {
-            query += $"&eventType={(int)eventType.Value}";
+            query += $"&actionType={(int)eventType.Value}";
         }
 
         if (!string.IsNullOrEmpty(actorSearch))
@@ -181,7 +181,7 @@ public class AnalyticsClientService
 public record CreateFlagRulePayload(
     FlagRuleType RuleType,
     string? TargetUserId,
-    TelemetryEventType? EventType,
+    TelemetryActionType? EventType,
     string? ActorRole,
     string Reason
 );

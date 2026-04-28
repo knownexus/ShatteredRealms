@@ -46,7 +46,7 @@ public sealed class CreateAnnouncementCommandHandler : IRequestHandler<CreateAnn
         _context.Announcement.Add(announcement);
         await _context.SaveChangesAsync(cancellationToken);
 
-        await _analytics.TrackAsync(TelemetryEventType.AnnouncementCreated, request.AuthorId, string.Empty,
+        await _analytics.TrackAsync(TelemetryActionType.AnnouncementCreated, request.AuthorId, string.Empty,
             targetId: announcement.Id.ToString(), targetName: announcement.Title, cancellationToken: cancellationToken);
 
         var author = await _context.Users.FindAsync([request.AuthorId], cancellationToken);

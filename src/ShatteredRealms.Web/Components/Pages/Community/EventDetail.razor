@@ -13,7 +13,7 @@
     {
         <div class="detail-error">
             <p>@_error</p>
-            <button class="btn-back" @onclick='() => Navigation.NavigateTo("/events")'>← Back to Events</button>
+            <button class="btn-back" @onclick='() => Navigation.NavigateTo("/events")'>← Back to Actions</button>
         </div>
     }
     else if (_event is not null)
@@ -29,7 +29,7 @@
 
         <div class="event-detail-body">
             <div class="event-detail-header">
-                <button class="btn-back" @onclick='() => Navigation.NavigateTo("/events")'>← Events</button>
+                <button class="btn-back" @onclick='() => Navigation.NavigateTo("/events")'>← Actions</button>
                 <div class="event-detail-actions">
                     @if (_canUpdate)
                     {

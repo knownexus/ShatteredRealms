@@ -57,7 +57,7 @@
                     <label class="form-label">Event Type</label>
                     <select class="form-control" @bind="_filterEventType">
                         <option value="">All types</option>
-                        @foreach (var name in Enum.GetNames<TelemetryEventType>())
+                        @foreach (var name in Enum.GetNames<TelemetryActionType>())
                         {
                             <option value="@name">@name</option>
                         }
@@ -192,8 +192,8 @@
         _loading = true;
         _error   = null;
 
-        TelemetryEventType? evType = null;
-        if (!string.IsNullOrEmpty(_filterEventType) && Enum.TryParse<TelemetryEventType>(_filterEventType, out var parsed))
+        TelemetryActionType? evType = null;
+        if (!string.IsNullOrEmpty(_filterEventType) && Enum.TryParse<TelemetryActionType>(_filterEventType, out var parsed))
             evType = parsed;
 
         var result = await AnalyticsService.GetChartAsync(

@@ -22,7 +22,7 @@ public sealed class DeleteForumCategoryCommandHandler : IRequestHandler<DeleteFo
         var result = await _forumService.DeleteCategoryAsync(request.CategoryId, cancellationToken);
         if (result.IsSuccess && !string.IsNullOrEmpty(request.ActorId))
         {
-            await _analytics.TrackAsync(TelemetryEventType.ForumCategoryDeleted, request.ActorId, string.Empty,
+            await _analytics.TrackAsync(TelemetryActionType.ForumCategoryDeleted, request.ActorId, string.Empty,
                 targetId: request.CategoryId.ToString(), cancellationToken: cancellationToken);
         }
         return result;

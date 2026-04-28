@@ -25,7 +25,7 @@ public sealed class AnalyticsController : ControllerBase
     public async Task<ActionResult<PagedTelemetryResult>> GetEvents(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50,
-        [FromQuery] TelemetryEventType? eventType = null,
+        [FromQuery] TelemetryActionType? eventType = null,
         [FromQuery] string? actorSearch = null,
         [FromQuery] DateTime? from = null,
         [FromQuery] DateTime? to = null,
@@ -133,7 +133,7 @@ public sealed class AnalyticsController : ControllerBase
         [FromQuery] DateTime? from = null,
         [FromQuery] DateTime? to = null,
         [FromQuery] string groupBy = "day",
-        [FromQuery] TelemetryEventType? eventType = null,
+        [FromQuery] TelemetryActionType? eventType = null,
         [FromQuery] string? actorSearch = null,
         CancellationToken cancellationToken = default)
     {
@@ -159,5 +159,5 @@ public sealed class AnalyticsController : ControllerBase
 }
 
 public record FlagEventRequest(string? Reason);
-public record CreateFlagRuleRequest(FlagRuleType RuleType, string? TargetUserId, TelemetryEventType? EventType, string? ActorRole, string Reason);
+public record CreateFlagRuleRequest(FlagRuleType RuleType, string? TargetUserId, TelemetryActionType? EventType, string? ActorRole, string Reason);
 public record SetRuleActiveRequest(bool IsActive);

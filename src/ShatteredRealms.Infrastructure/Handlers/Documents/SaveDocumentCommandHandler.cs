@@ -35,7 +35,7 @@ public sealed class SaveDocumentCommandHandler : IRequestHandler<SaveDocumentCom
         _context.Document.Add(doc);
         await _context.SaveChangesAsync(cancellationToken);
 
-        await _analytics.TrackAsync(TelemetryEventType.DocumentUploaded, request.UploadedById, string.Empty,
+        await _analytics.TrackAsync(TelemetryActionType.DocumentUploaded, request.UploadedById, string.Empty,
             targetId: doc.Id.ToString(), targetName: request.OriginalFileName,
             details: $"{request.FileSizeBytes / 1024.0:F1} KB",
             cancellationToken: cancellationToken);

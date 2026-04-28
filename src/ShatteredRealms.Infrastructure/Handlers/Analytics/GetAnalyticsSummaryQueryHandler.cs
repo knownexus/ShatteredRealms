@@ -34,15 +34,15 @@ public sealed class GetAnalyticsSummaryQueryHandler : IRequestHandler<GetAnalyti
             .CountAsync(cancellationToken);
 
         var loginsToday = await allEvents
-            .CountAsync(e => e.EventType == TelemetryEventType.UserLoggedIn && e.OccurredAt >= todayStart, cancellationToken);
+            .CountAsync(e => e.ActionType == TelemetryActionType.UserLoggedIn && e.OccurredAt >= todayStart, cancellationToken);
 
         var loginsWeek = await allEvents
-            .CountAsync(e => e.EventType == TelemetryEventType.UserLoggedIn && e.OccurredAt >= weekStart, cancellationToken);
+            .CountAsync(e => e.ActionType == TelemetryActionType.UserLoggedIn && e.OccurredAt >= weekStart, cancellationToken);
 
         var topTypes = await allEvents
             .Where(e => e.OccurredAt >= weekStart)
-            .GroupBy(e => e.EventType)
-            .Select(g => new EventTypeCount { EventType = g.Key.ToString(), Count = g.Count() })
+            .GroupBy(e => e.ActionType)
+            .Select(g => new EventTypeCount { ActionType = g.Key.ToString(), Count = g.Count() })
             .OrderByDescending(x => x.Count)
             .Take(10)
             .ToListAsync(cancellationToken);
@@ -50,10 +50,10 @@ public sealed class GetAnalyticsSummaryQueryHandler : IRequestHandler<GetAnalyti
         var recent = await allEvents
             .OrderByDescending(e => e.OccurredAt)
             .Take(20)
-            .Select(e => new TelemetryEventDto
+            .Select(e => new TelemetryActionDto
             {
                 Id          = e.Id,
-                EventType   = e.EventType,
+                ActionType   = e.ActionType,
                 ActorId     = e.ActorId,
                 ActorName   = e.ActorName,
                 ActorEmail  = e.ActorEmail,
@@ -69,13 +69,13 @@ public sealed class GetAnalyticsSummaryQueryHandler : IRequestHandler<GetAnalyti
 
         return Result.Success(new AnalyticsSummaryDto
         {
-            TotalEventsToday      = todayCount,
-            TotalEventsThisWeek   = weekCount,
-            TotalEventsThisMonth  = monthCount,
-            UniqueActorsThisWeek  = uniqueActors,
+            TotalActionsToday      = todayCount,
+            TotalActionsThisWeek   = weekCount,
+            TotalActionsThisMonth  = monthCount,
+            UniqueUsersThisWeek  = uniqueActors,
             LoginsToday           = loginsToday,
             LoginsThisWeek        = loginsWeek,
-            TopEventTypes         = topTypes,
+            TopActionTypes         = topTypes,
             RecentEvents          = recent,
         });
     }

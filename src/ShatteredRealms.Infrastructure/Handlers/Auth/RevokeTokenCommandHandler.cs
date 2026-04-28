@@ -35,7 +35,7 @@ public sealed class RevokeTokenCommandHandler : IRequestHandler<RevokeTokenComma
         storedToken.RevokedByIp = request.RequestingIpAddress;
         await _context.SaveChangesAsync(cancellationToken);
 
-        await _analytics.TrackAsync(TelemetryEventType.UserLoggedOut,
+        await _analytics.TrackAsync(TelemetryActionType.UserLoggedOut,
             storedToken.UserId, storedToken.User?.Email ?? string.Empty,
             cancellationToken: cancellationToken);
 

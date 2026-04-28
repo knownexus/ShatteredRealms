@@ -59,7 +59,7 @@ public sealed class UpdateOwnCharacterCommandHandler : IRequestHandler<UpdateOwn
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        await _analytics.TrackAsync(TelemetryEventType.CharacterUpdated, request.RequestingUserId, string.Empty,
+        await _analytics.TrackAsync(TelemetryActionType.CharacterUpdated, request.RequestingUserId, string.Empty,
             targetId: character.Id.ToString(), targetName: character.Name, cancellationToken: cancellationToken);
 
         return Result.Success(CreateCharacterCommandHandler.MapToDto(character, null));

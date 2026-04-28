@@ -63,7 +63,7 @@ public sealed class RolesController : ControllerBase
         _logger.LogDebug("Create role - UserId: {UserId}", User.GetUserId());
 
         var result = await _mediator.Send(
-            new CreateRoleCommand(request.Name, request.Description, request.PermissionIds, User.GetUserId()),
+            new CreateRoleCommand(request.Name, request.Description, request.PermissionClaimValues, User.GetUserId()),
             cancellationToken);
 
         if (result.IsFailure)
@@ -81,7 +81,7 @@ public sealed class RolesController : ControllerBase
     public async Task<ActionResult<RoleDto>> Update(string id, [FromBody] UpdateRoleRequest request, CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(
-            new UpdateRoleCommand(id, request.Name, request.Description, request.PermissionIds, User.GetUserId()),
+            new UpdateRoleCommand(id, request.Name, request.Description, request.PermissionClaimValues, User.GetUserId()),
             cancellationToken);
 
         if (result.IsFailure)

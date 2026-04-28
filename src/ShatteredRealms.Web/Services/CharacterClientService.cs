@@ -16,9 +16,27 @@ public class CharacterClientService
         _httpClient = httpClient;
     }
 
-    public async Task<Result<List<CharacterDto>>> GetAllAsync()
+    public async Task<Result<List<CharacterDto>>> GetAllAsync(
+        string? search = null,
+        string? userId = null,
+        string? userName = null,
+        string? role = null,
+        string? nation = null)
     {
-        var response = await _httpClient.GetAsync("api/characters");
+        var queryParams = new List<string>();
+        if (!string.IsNullOrEmpty(search)) queryParams.Add($"search={Uri.EscapeDataString(search)}");
+        if (!string.IsNullOrEmpty(userId)) queryParams.Add($"userId={Uri.EscapeDataString(userId)}");
+        if (!string.IsNullOrEmpty(userName)) queryParams.Add($"userName={Uri.EscapeDataString(userName)}");
+        if (!string.IsNullOrEmpty(role)) queryParams.Add($"role={Uri.EscapeDataString(role)}");
+        if (!string.IsNullOrEmpty(nation)) queryParams.Add($"nation={Uri.EscapeDataString(nation)}");
+
+        var url = "api/characters";
+        if (queryParams.Count > 0)
+        {
+            url += "?" + string.Join("&", queryParams);
+        }
+
+        var response = await _httpClient.GetAsync(url);
         if (response.IsSuccessStatusCode)
         {
             return Result.Success(await response.Content.ReadFromJsonAsync<List<CharacterDto>>() ?? []);

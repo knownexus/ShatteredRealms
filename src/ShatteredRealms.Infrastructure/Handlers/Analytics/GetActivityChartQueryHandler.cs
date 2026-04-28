@@ -20,7 +20,7 @@ public sealed class GetActivityChartQueryHandler : IRequestHandler<GetActivityCh
 
         if (request.EventType.HasValue)
         {
-            query = query.Where(e => e.EventType == request.EventType.Value);
+            query = query.Where(e => e.ActionType == request.EventType.Value);
         }
 
         if (!string.IsNullOrEmpty(request.ActorSearch))
@@ -33,7 +33,7 @@ public sealed class GetActivityChartQueryHandler : IRequestHandler<GetActivityCh
         }
 
         var rawEvents = await query
-            .Select(e => new { e.OccurredAt, e.EventType })
+            .Select(e => new { e.OccurredAt, EventType = e.ActionType })
             .ToListAsync(cancellationToken);
 
         var groupByKey = request.GroupBy.ToLower();

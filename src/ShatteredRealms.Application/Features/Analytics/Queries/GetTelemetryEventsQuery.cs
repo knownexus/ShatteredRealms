@@ -8,7 +8,7 @@ namespace ShatteredRealms.Application.Features.Analytics.Queries;
 public sealed record GetTelemetryEventsQuery(
     int Page = 1,
     int PageSize = 50,
-    TelemetryEventType? EventType = null,
+    TelemetryActionType? EventType = null,
     string? ActorSearch = null,
     DateTime? From = null,
     DateTime? To = null
@@ -16,7 +16,7 @@ public sealed record GetTelemetryEventsQuery(
 
 public sealed class PagedTelemetryResult
 {
-    public List<TelemetryEventDto> Events { get; set; } = [];
+    public List<TelemetryActionDto> Actions { get; set; } = [];
     public int TotalCount { get; set; }
     public int Page { get; set; }
     public int PageSize { get; set; }

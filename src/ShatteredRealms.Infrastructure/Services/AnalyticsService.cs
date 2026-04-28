@@ -12,7 +12,7 @@ public sealed class AnalyticsService : IAnalyticsService
     public AnalyticsService(ApplicationDbContext context) => _context = context;
 
     public async Task TrackAsync(
-        TelemetryEventType eventType,
+        TelemetryActionType actionType,
         string actorId,
         string actorEmail,
         string? targetId = null,
@@ -42,7 +42,7 @@ public sealed class AnalyticsService : IAnalyticsService
         _context.TelemetryEvent.Add(new TelemetryEvent
         {
             Id         = Guid.NewGuid(),
-            EventType  = eventType,
+            ActionType  = actionType,
             ActorId    = actorId,
             ActorName  = actorName ?? actorId,
             ActorEmail = actorEmail,

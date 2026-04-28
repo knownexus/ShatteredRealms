@@ -32,7 +32,7 @@ public sealed class DeleteAnnouncementCommandHandler : IRequestHandler<DeleteAnn
 
         if (!string.IsNullOrEmpty(request.ActorId))
         {
-            await _analytics.TrackAsync(TelemetryEventType.AnnouncementDeleted, request.ActorId, string.Empty,
+            await _analytics.TrackAsync(TelemetryActionType.AnnouncementDeleted, request.ActorId, string.Empty,
                 targetId: announcement.Id.ToString(), targetName: announcement.Title, cancellationToken: cancellationToken);
         }
 

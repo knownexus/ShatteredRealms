@@ -29,7 +29,7 @@ public sealed class CreateForumCategoryCommandHandler
 
         if (result.IsSuccess)
         {
-            await _analytics.TrackAsync(TelemetryEventType.ForumCategoryCreated, request.RequestingUserId, string.Empty,
+            await _analytics.TrackAsync(TelemetryActionType.ForumCategoryCreated, request.RequestingUserId, string.Empty,
                 targetId: result.Value.Id.ToString(), targetName: result.Value.Name, cancellationToken: cancellationToken);
         }
 

@@ -22,7 +22,7 @@ public sealed class DeleteRoleCommandHandler : IRequestHandler<DeleteRoleCommand
         var result = await _roleService.DeleteRoleAsync(request.RoleId, cancellationToken);
         if (result.IsSuccess && !string.IsNullOrEmpty(request.ActorId))
         {
-            await _analytics.TrackAsync(TelemetryEventType.RoleDeleted, request.ActorId, string.Empty,
+            await _analytics.TrackAsync(TelemetryActionType.RoleDeleted, request.ActorId, string.Empty,
                 targetId: request.RoleId, cancellationToken: cancellationToken);
         }
         return result;

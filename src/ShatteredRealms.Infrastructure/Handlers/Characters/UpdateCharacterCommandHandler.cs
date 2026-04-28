@@ -57,7 +57,7 @@ public sealed class UpdateCharacterCommandHandler : IRequestHandler<UpdateCharac
         await _context.SaveChangesAsync(cancellationToken);
 
         var actorId = request.ActorId ?? character.UserId;
-        await _analytics.TrackAsync(TelemetryEventType.CharacterUpdated, actorId, string.Empty,
+        await _analytics.TrackAsync(TelemetryActionType.CharacterUpdated, actorId, string.Empty,
             targetId: character.Id.ToString(), targetName: character.Name, cancellationToken: cancellationToken);
 
         return Result.Success(CreateCharacterCommandHandler.MapToDto(character, null));

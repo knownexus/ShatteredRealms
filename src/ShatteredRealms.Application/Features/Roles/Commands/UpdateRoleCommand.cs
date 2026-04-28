@@ -8,5 +8,5 @@ public sealed record UpdateRoleCommand(
     string RoleId,
     string Name,
     string Description,
-    List<int> PermissionIds,
+    List<string> PermissionClaimValues,
     string? ActorId = null) : IRequest<Result<RoleDto>>;

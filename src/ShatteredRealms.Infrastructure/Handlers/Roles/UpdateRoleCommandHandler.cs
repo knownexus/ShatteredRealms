@@ -24,12 +24,12 @@ public sealed class UpdateRoleCommandHandler : IRequestHandler<UpdateRoleCommand
         {
             Name = request.Name,
             Description = request.Description,
-            PermissionIds = request.PermissionIds,
+            PermissionClaimValues = request.PermissionClaimValues,
         }, cancellationToken);
 
         if (result.IsSuccess && !string.IsNullOrEmpty(request.ActorId))
         {
-            await _analytics.TrackAsync(TelemetryEventType.RoleUpdated, request.ActorId, string.Empty,
+            await _analytics.TrackAsync(TelemetryActionType.RoleUpdated, request.ActorId, string.Empty,
                 targetId: request.RoleId, targetName: request.Name, cancellationToken: cancellationToken);
         }
 

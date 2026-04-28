@@ -22,7 +22,7 @@ public sealed class DeleteWikiPageCommandHandler : IRequestHandler<DeleteWikiPag
         var result = await _wikiService.DeletePageAsync(request.PageId, cancellationToken);
         if (result.IsSuccess && !string.IsNullOrEmpty(request.ActorId))
         {
-            await _analytics.TrackAsync(TelemetryEventType.WikiPageDeleted, request.ActorId, string.Empty,
+            await _analytics.TrackAsync(TelemetryActionType.WikiPageDeleted, request.ActorId, string.Empty,
                 targetId: request.PageId.ToString(), cancellationToken: cancellationToken);
         }
         return result;

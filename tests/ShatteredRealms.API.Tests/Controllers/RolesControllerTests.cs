@@ -24,7 +24,7 @@ public sealed class RolesControllerTests
         Id = id,
         Name = name,
         Description = "A test role",
-        PermissionIds = new List<int>(),
+        PermissionClaimValues = new List<string>(),
     };
 
     public RolesControllerTests()
@@ -89,7 +89,7 @@ public sealed class RolesControllerTests
     public async Task Create_ReturnsCreated_WhenRoleCreatedSuccessfully()
     {
         // Arrange
-        var request = new CreateRoleRequest { Name = "NewRole", Description = "Desc", PermissionIds = new List<int>() };
+        var request = new CreateRoleRequest { Name = "NewRole", Description = "Desc", PermissionClaimValues = new List<string>() };
         var role = BuildRoleDto("new-role-id", "NewRole");
 
         _mediator.Send(Arg.Any<CreateRoleCommand>(), Arg.Any<CancellationToken>())
@@ -107,7 +107,7 @@ public sealed class RolesControllerTests
     public async Task Create_ReturnsProblem_WhenNameAlreadyExists()
     {
         // Arrange
-        var request = new CreateRoleRequest { Name = "Existing", Description = "Desc", PermissionIds = new List<int>() };
+        var request = new CreateRoleRequest { Name = "Existing", Description = "Desc", PermissionClaimValues = new List<string>() };
 
         _mediator.Send(Arg.Any<CreateRoleCommand>(), Arg.Any<CancellationToken>())
                  .Returns(Result.Failure<RoleDto>(DomainErrors.Role.AlreadyExists));

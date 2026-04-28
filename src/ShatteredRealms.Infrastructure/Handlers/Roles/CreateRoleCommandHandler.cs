@@ -24,12 +24,12 @@ public sealed class CreateRoleCommandHandler : IRequestHandler<CreateRoleCommand
         {
             Name = request.Name,
             Description = request.Description,
-            PermissionIds = request.PermissionIds,
+            PermissionClaimValues = request.PermissionClaimValues,
         }, cancellationToken);
 
         if (result.IsSuccess && !string.IsNullOrEmpty(request.ActorId))
         {
-            await _analytics.TrackAsync(TelemetryEventType.RoleCreated, request.ActorId, string.Empty,
+            await _analytics.TrackAsync(TelemetryActionType.RoleCreated, request.ActorId, string.Empty,
                 targetId: result.Value.Id, targetName: result.Value.Name, cancellationToken: cancellationToken);
         }
 

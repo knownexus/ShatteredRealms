@@ -45,7 +45,7 @@ public sealed class DeleteCharacterCommandHandler : IRequestHandler<DeleteCharac
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        await _analytics.TrackAsync(TelemetryEventType.CharacterDeleted, request.RequestingUserId, string.Empty,
+        await _analytics.TrackAsync(TelemetryActionType.CharacterDeleted, request.RequestingUserId, string.Empty,
             targetId: request.CharacterId.ToString(), targetName: name, cancellationToken: cancellationToken);
 
         return Result.Success();

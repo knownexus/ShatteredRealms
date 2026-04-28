@@ -57,7 +57,7 @@ public sealed class UpdateAnnouncementCommandHandler : IRequestHandler<UpdateAnn
 
         if (!string.IsNullOrEmpty(request.ActorId))
         {
-            await _analytics.TrackAsync(TelemetryEventType.AnnouncementUpdated, request.ActorId, string.Empty,
+            await _analytics.TrackAsync(TelemetryActionType.AnnouncementUpdated, request.ActorId, string.Empty,
                 targetId: announcement.Id.ToString(), targetName: announcement.Title, cancellationToken: cancellationToken);
         }
 

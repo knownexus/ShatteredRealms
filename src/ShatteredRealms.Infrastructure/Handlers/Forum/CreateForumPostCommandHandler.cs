@@ -29,7 +29,7 @@ public sealed class CreateForumPostCommandHandler
 
         if (result.IsSuccess)
         {
-            await _analytics.TrackAsync(TelemetryEventType.ForumPostCreated, request.RequestingUserId, string.Empty,
+            await _analytics.TrackAsync(TelemetryActionType.ForumPostCreated, request.RequestingUserId, string.Empty,
                 targetId: result.Value.Id.ToString(),
                 details: $"In thread {request.ThreadId}", cancellationToken: cancellationToken);
         }

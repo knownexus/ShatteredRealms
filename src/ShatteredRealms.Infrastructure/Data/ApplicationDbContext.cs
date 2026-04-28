@@ -369,11 +369,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             e.Property(t => t.Details).HasMaxLength(1024);
             e.Property(t => t.FlagReason).HasMaxLength(512);
             e.Property(t => t.FlaggedById).HasMaxLength(450);
-            e.Property(t => t.EventType).IsRequired();
+            e.Property(t => t.ActionType).IsRequired();
             e.HasIndex(t => t.OccurredAt);
             e.HasIndex(t => t.ActorId);
             e.HasIndex(t => t.ActorName);
-            e.HasIndex(t => t.EventType);
+            e.HasIndex(t => t.ActionType);
             e.HasIndex(t => t.IsFlagged);
         });
 

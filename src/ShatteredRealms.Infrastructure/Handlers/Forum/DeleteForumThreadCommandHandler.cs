@@ -22,7 +22,7 @@ public sealed class DeleteForumThreadCommandHandler : IRequestHandler<DeleteForu
         var result = await _forumService.DeleteThreadAsync(request.ThreadId, cancellationToken);
         if (result.IsSuccess && !string.IsNullOrEmpty(request.ActorId))
         {
-            await _analytics.TrackAsync(TelemetryEventType.ForumThreadDeleted, request.ActorId, string.Empty,
+            await _analytics.TrackAsync(TelemetryActionType.ForumThreadDeleted, request.ActorId, string.Empty,
                 targetId: request.ThreadId.ToString(), cancellationToken: cancellationToken);
         }
         return result;

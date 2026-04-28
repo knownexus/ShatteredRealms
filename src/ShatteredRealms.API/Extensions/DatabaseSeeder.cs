@@ -29,10 +29,77 @@ public static class DatabaseSeeder
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
         var userManager = services.GetRequiredService<UserManager<User>>();
+        var roleManager = services.GetRequiredService<RoleManager<Role>>();
         var configuration = services.GetRequiredService<IConfiguration>();
 
+        await SeedRolesAsync(roleManager);
         await SeedPermissionsAsync(context);
         await SeedUsersAsync(context, userManager, configuration);
+    }
+
+    private static async Task SeedRolesAsync(RoleManager<Role> roleManager)
+    {
+        
+        var roles = new List<Role>
+        {
+            new()
+            {
+                Id = Claims.Roles.SystemId, Name = Claims.Roles.SystemName
+              , NormalizedName = Claims.Roles.SystemName.ToUpper()
+              , ConcurrencyStamp = "b1000000-0000-0000-0000-000000000001", Description = Claims.Roles.SystemDescription
+              , Priority = 100, IsSystem = true
+            }
+          , new()
+            {
+                Id = Claims.Roles.AdminId, Name = Claims.Roles.AdminName
+              , NormalizedName = Claims.Roles.AdminName.ToUpper()
+              , ConcurrencyStamp = "b1000000-0000-0000-0000-000000000002", Description = Claims.Roles.AdminDescription
+              , Priority = 90, IsSystem = false
+            }
+          , new()
+            {
+                Id = Claims.Roles.AnalystId, Name = Claims.Roles.AnalystName
+              , NormalizedName = Claims.Roles.AnalystName.ToUpper()
+              , ConcurrencyStamp = "b1000000-0000-0000-0000-000000000005", Description = Claims.Roles.AnalystDescription
+              , Priority = 80, IsSystem = false
+            }
+          , new()
+            {
+                Id = Claims.Roles.EventOrganizerId, Name = Claims.Roles.EventOrganizerName
+              , NormalizedName = Claims.Roles.EventOrganizerName.ToUpper()
+              , ConcurrencyStamp = "b1000000-0000-0000-0000-000000000003"
+              , Description = Claims.Roles.EventOrganizerDescription, Priority = 50, IsSystem = false
+            }
+          , new()
+ {
+                Id = Claims.Roles.UserId, Name = Claims.Roles.UserName, NormalizedName = Claims.Roles.UserName.ToUpper()
+              , ConcurrencyStamp = "b1000000-0000-0000-0000-000000000004", Description = Claims.Roles.UserDescription
+              , Priority = 10, IsSystem = false
+            }
+          , new()
+            {
+                Id = Claims.Roles.UnverifiedId, Name = Claims.Roles.UnverifiedName
+              , NormalizedName = Claims.Roles.UnverifiedName.ToUpper()
+              , ConcurrencyStamp = "b1000000-0000-0000-0000-000000000007"
+              , Description = Claims.Roles.UnverifiedDescription, Priority = 5, IsSystem = false
+            }
+
+        };
+
+        foreach (var role in roles)
+        {
+            var existing = await roleManager.FindByIdAsync(role.Id);
+            if (existing != null)
+            {
+                continue;
+            }
+
+            var result = await roleManager.CreateAsync(role);
+            if (!result.Succeeded)
+            {
+                throw new Exception($"Failed to create role {role.Name}");
+            }
+        }
     }
 
     private static async Task SeedPermissionsAsync(ApplicationDbContext context)

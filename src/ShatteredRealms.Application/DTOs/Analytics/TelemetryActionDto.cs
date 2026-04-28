@@ -2,11 +2,11 @@ using ShatteredRealms.Domain.Entities.Telemetry;
 
 namespace ShatteredRealms.Application.DTOs.Analytics;
 
-public sealed class TelemetryEventDto
+public sealed class TelemetryActionDto
 {
     public Guid Id { get; set; }
-    public TelemetryEventType EventType { get; set; }
-    public string EventTypeName => EventType.ToString();
+    public TelemetryActionType ActionType { get; set; }
+    public string ActionTypeName => ActionType.ToString();
     public string ActorId { get; set; } = string.Empty;
     public string ActorName { get; set; } = string.Empty;
     public string ActorEmail { get; set; } = string.Empty;

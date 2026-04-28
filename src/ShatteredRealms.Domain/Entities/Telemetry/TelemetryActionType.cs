@@ -1,6 +1,6 @@
 namespace ShatteredRealms.Domain.Entities.Telemetry;
 
-public enum TelemetryEventType
+public enum TelemetryActionType
 {
     // Auth
     UserLoggedIn       = 1,

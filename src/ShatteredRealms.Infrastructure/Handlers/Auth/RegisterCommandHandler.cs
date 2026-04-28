@@ -51,7 +51,7 @@ public sealed class RegisterCommandHandler : IRequestHandler<RegisterCommand, Re
 
         var user = userResult.Value;
 
-        await _analytics.TrackAsync(TelemetryEventType.UserRegistered, user.Id, user.Email ?? string.Empty,
+        await _analytics.TrackAsync(TelemetryActionType.UserRegistered, user.Id, user.Email ?? string.Empty,
             targetName: $"{user.FirstName} {user.LastName}", cancellationToken: cancellationToken);
 
         // Read CurrentValue at request time so live appsettings changes take effect immediately

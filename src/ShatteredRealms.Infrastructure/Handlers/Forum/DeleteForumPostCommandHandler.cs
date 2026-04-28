@@ -22,7 +22,7 @@ public sealed class DeleteForumPostCommandHandler : IRequestHandler<DeleteForumP
         var result = await _forumService.DeletePostAsync(request.PostId, request.RequestingUserId, cancellationToken);
         if (result.IsSuccess)
         {
-            await _analytics.TrackAsync(TelemetryEventType.ForumPostDeleted, request.RequestingUserId, string.Empty,
+            await _analytics.TrackAsync(TelemetryActionType.ForumPostDeleted, request.RequestingUserId, string.Empty,
                 targetId: request.PostId.ToString(), cancellationToken: cancellationToken);
         }
         return result;

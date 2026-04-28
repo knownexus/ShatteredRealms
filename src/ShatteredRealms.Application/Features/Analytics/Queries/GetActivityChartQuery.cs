@@ -9,6 +9,6 @@ public record GetActivityChartQuery(
     DateTime From,
     DateTime To,
     string GroupBy = "day",
-    TelemetryEventType? EventType = null,
+    TelemetryActionType? EventType = null,
     string? ActorSearch = null
 ) : IRequest<Result<ActivityChartDto>>;

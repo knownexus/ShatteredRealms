@@ -5,7 +5,7 @@ namespace ShatteredRealms.Application.Interfaces;
 public interface IAnalyticsService
 {
     Task TrackAsync(
-        TelemetryEventType eventType,
+        TelemetryActionType actionType,
         string actorId,
         string actorEmail,
         string? targetId = null,

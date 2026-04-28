@@ -29,7 +29,7 @@ public sealed class UpdateWikiPageCommandHandler
 
         if (result.IsSuccess)
         {
-            await _analytics.TrackAsync(TelemetryEventType.WikiPageUpdated, request.RequestingUserId, string.Empty,
+            await _analytics.TrackAsync(TelemetryActionType.WikiPageUpdated, request.RequestingUserId, string.Empty,
                 targetId: request.PageId.ToString(), targetName: result.Value.Title, cancellationToken: cancellationToken);
         }
 

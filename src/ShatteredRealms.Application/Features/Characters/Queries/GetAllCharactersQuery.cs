@@ -4,4 +4,10 @@ using ShatteredRealms.Domain.Shared;
 
 namespace ShatteredRealms.Application.Features.Characters.Queries;
 
-public sealed record GetAllCharactersQuery : IRequest<Result<List<CharacterDto>>>;
+public sealed record GetAllCharactersQuery(
+    string? Search = null,
+    string? UserId = null,
+    string? UserName = null,
+    string? Role = null,
+    string? Nation = null
+) : IRequest<Result<List<CharacterDto>>>;

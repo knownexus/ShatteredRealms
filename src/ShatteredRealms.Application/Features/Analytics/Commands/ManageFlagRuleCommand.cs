@@ -8,7 +8,7 @@ namespace ShatteredRealms.Application.Features.Analytics.Commands;
 public record CreateFlagRuleCommand(
     FlagRuleType RuleType,
     string? TargetUserId,
-    TelemetryEventType? EventType,
+    TelemetryActionType? EventType,
     string? ActorRole,
     string Reason,
     string CreatedById

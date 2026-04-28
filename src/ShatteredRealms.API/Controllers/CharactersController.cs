@@ -47,9 +47,15 @@ public sealed class CharactersController : ControllerBase
 
     [RequirePermission(Claims.Permissions.Characters.View)]
     [HttpGet]
-    public async Task<ActionResult<List<CharacterDto>>> GetAll(CancellationToken cancellationToken)
+    public async Task<ActionResult<List<CharacterDto>>> GetAll(
+        [FromQuery] string? search = null,
+        [FromQuery] string? userId = null,
+        [FromQuery] string? userName = null,
+        [FromQuery] string? role = null,
+        [FromQuery] string? nation = null,
+        CancellationToken cancellationToken = default)
     {
-        var result = await _mediator.Send(new GetAllCharactersQuery(), cancellationToken);
+        var result = await _mediator.Send(new GetAllCharactersQuery(search, userId, userName, role, nation), cancellationToken);
         return result.IsFailure
             ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)
             : Ok(result.Value);

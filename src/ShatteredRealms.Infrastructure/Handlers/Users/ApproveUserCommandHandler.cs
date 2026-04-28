@@ -44,7 +44,7 @@ public sealed class ApproveUserCommandHandler : IRequestHandler<ApproveUserComma
         }
 
         var actorId = request.ActorId ?? request.TargetUserId;
-        await _analytics.TrackAsync(TelemetryEventType.UserApproved, actorId, string.Empty,
+        await _analytics.TrackAsync(TelemetryActionType.UserApproved, actorId, string.Empty,
             targetId: user.Id, targetName: user.Email, cancellationToken: cancellationToken);
 
         return Result.Success(UserMapper.ToDto(user, rolesResult.Value, permissionsResult.Value));

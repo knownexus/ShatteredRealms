@@ -60,7 +60,7 @@ public sealed class RegisterForEventCommandHandler : IRequestHandler<RegisterFor
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        await _analytics.TrackAsync(TelemetryEventType.EventRegistered, request.UserId, string.Empty,
+        await _analytics.TrackAsync(TelemetryActionType.EventRegistered, request.UserId, string.Empty,
             targetId: request.EventId.ToString(), targetName: ev.Title, cancellationToken: cancellationToken);
 
         return Result.Success();

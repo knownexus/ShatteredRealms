@@ -26,7 +26,7 @@ public sealed class RoleService : IRoleService
                 Id = r.Id,
                 Name = r.Name!,
                 Description = r.Description,
-                PermissionIds = r.Permissions.Select(p => p.Id).ToList(),
+                PermissionClaimValues = r.Permissions.Select(p => p.ClaimValue!).Distinct().ToList(),
             })
             .ToListAsync(cancellationToken);
 
@@ -49,7 +49,7 @@ public sealed class RoleService : IRoleService
             Id = role.Id,
             Name = role.Name!,
             Description = role.Description,
-            PermissionIds = role.Permissions.Select(p => p.Id).ToList(),
+            PermissionClaimValues = role.Permissions.Select(p => p.ClaimValue!).Distinct().ToList(),
         });
     }
 
@@ -64,7 +64,8 @@ public sealed class RoleService : IRoleService
         }
 
         var sourcePermissions = await _context.Set<Permission>()
-            .Where(p => request.PermissionIds.Contains(p.Id))
+            .Where(p => request.PermissionClaimValues.Contains(p.ClaimValue))
+            .DistinctBy(p => p.ClaimValue)
             .ToListAsync(cancellationToken);
 
         var role = new Role
@@ -98,7 +99,7 @@ public sealed class RoleService : IRoleService
             Id = role.Id,
             Name = role.Name,
             Description = role.Description,
-            PermissionIds = sourcePermissions.Select(p => p.Id).ToList(),
+            PermissionClaimValues = sourcePermissions.Select(p => p.ClaimValue!).Distinct().ToList(),
         });
     }
 
@@ -127,7 +128,8 @@ public sealed class RoleService : IRoleService
         }
 
         var sourcePermissions = await _context.Set<Permission>()
-            .Where(p => request.PermissionIds.Contains(p.Id))
+            .Where(p => request.PermissionClaimValues.Contains(p.ClaimValue))
+            .DistinctBy(p => p.ClaimValue)
             .ToListAsync(cancellationToken);
 
         role.Name = request.Name;
@@ -155,7 +157,7 @@ public sealed class RoleService : IRoleService
             Id = role.Id,
             Name = role.Name,
             Description = role.Description,
-            PermissionIds = sourcePermissions.Select(p => p.Id).ToList(),
+            PermissionClaimValues = sourcePermissions.Select(p => p.ClaimValue!).Distinct().ToList(),
         });
     }
 

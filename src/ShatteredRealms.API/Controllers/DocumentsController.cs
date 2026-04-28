@@ -67,7 +67,7 @@ public sealed class DocumentsController : ControllerBase
             var userId = User.GetUserId();
             if (!string.IsNullOrEmpty(userId))
             {
-                await _analytics.TrackAsync(TelemetryEventType.DocumentDownloaded, userId, string.Empty,
+                await _analytics.TrackAsync(TelemetryActionType.DocumentDownloaded, userId, string.Empty,
                     targetId: id.ToString(), targetName: dto.OriginalFileName,
                     cancellationToken: cancellationToken);
             }

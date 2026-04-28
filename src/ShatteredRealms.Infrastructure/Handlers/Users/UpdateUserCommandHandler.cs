@@ -52,7 +52,7 @@ public sealed class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand
         }
 
         var actorId = request.ActorId ?? request.UserId;
-        await _analytics.TrackAsync(TelemetryEventType.UserUpdated, actorId, string.Empty,
+        await _analytics.TrackAsync(TelemetryActionType.UserUpdated, actorId, string.Empty,
             targetId: user.Id, targetName: user.Email, cancellationToken: cancellationToken);
 
         return Result.Success(UserMapper.ToDto(user, rolesResult.Value, permissionsResult.Value));

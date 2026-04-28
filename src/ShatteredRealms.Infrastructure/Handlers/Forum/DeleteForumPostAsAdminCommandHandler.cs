@@ -22,7 +22,7 @@ public sealed class DeleteForumPostAsAdminCommandHandler : IRequestHandler<Delet
         var result = await _forumService.DeletePostAsAdminAsync(request.PostId, cancellationToken);
         if (result.IsSuccess && !string.IsNullOrEmpty(request.ActorId))
         {
-            await _analytics.TrackAsync(TelemetryEventType.ForumPostDeleted, request.ActorId, string.Empty,
+            await _analytics.TrackAsync(TelemetryActionType.ForumPostDeleted, request.ActorId, string.Empty,
                 targetId: request.PostId.ToString(), cancellationToken: cancellationToken);
         }
         return result;

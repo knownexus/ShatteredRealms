@@ -24,7 +24,7 @@ public sealed class GetEventAttendanceOverviewQueryHandler : IRequestHandler<Get
             .ToListAsync(cancellationToken);
 
         var cancellations = await _context.TelemetryEvent
-            .Where(t => t.EventType == TelemetryEventType.EventRegistrationCancelled)
+            .Where(t => t.ActionType == TelemetryActionType.EventRegistrationCancelled)
             .Select(t => new { t.ActorId, t.ActorName, t.ActorEmail, t.TargetId, t.OccurredAt })
             .ToListAsync(cancellationToken);
 

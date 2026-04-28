@@ -42,7 +42,7 @@ public sealed class UserService : IUserService
 
     public async Task<Result<List<User>>> GetAllUsersAsync(CancellationToken cancellationToken = default)
     {
-        var users = await _userManager.Users
+        var users = await _context.Users
                                       .Include(u => u.UserRoles)
                                       .ThenInclude(ur => ur.Role)
                                       .ToListAsync(cancellationToken);
@@ -257,7 +257,7 @@ public sealed class UserService : IUserService
 
     public async Task<Result<List<User>>> GetPendingUsersAsync(CancellationToken cancellationToken = default)
     {
-        var users = await _userManager.Users
+        var users = await _context.Users
             .Include(u => u.UserRoles)
             .ThenInclude(ur => ur.Role)
             .Where(u => u.UserRoles.Any(ur => ur.RoleId == Claims.Roles.UnverifiedId) && u.EmailConfirmed)

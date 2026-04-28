@@ -48,7 +48,7 @@ public sealed class UpdateEventCommandHandler : IRequestHandler<UpdateEventComma
 
         if (!string.IsNullOrEmpty(request.ActorId))
         {
-            await _analytics.TrackAsync(TelemetryEventType.EventUpdated, request.ActorId, string.Empty,
+            await _analytics.TrackAsync(TelemetryActionType.EventUpdated, request.ActorId, string.Empty,
                 targetId: ev.Id.ToString(), targetName: ev.Title, cancellationToken: cancellationToken);
         }
 

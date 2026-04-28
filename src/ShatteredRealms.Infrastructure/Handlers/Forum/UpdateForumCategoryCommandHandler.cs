@@ -29,7 +29,7 @@ public sealed class UpdateForumCategoryCommandHandler
 
         if (result.IsSuccess && !string.IsNullOrEmpty(request.ActorId))
         {
-            await _analytics.TrackAsync(TelemetryEventType.ForumCategoryUpdated, request.ActorId, string.Empty,
+            await _analytics.TrackAsync(TelemetryActionType.ForumCategoryUpdated, request.ActorId, string.Empty,
                 targetId: request.CategoryId.ToString(), targetName: request.Name, cancellationToken: cancellationToken);
         }
 

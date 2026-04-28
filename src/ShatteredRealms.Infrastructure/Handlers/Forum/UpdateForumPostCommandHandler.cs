@@ -26,7 +26,7 @@ public sealed class UpdateForumPostCommandHandler
 
         if (result.IsSuccess)
         {
-            await _analytics.TrackAsync(TelemetryEventType.ForumPostUpdated, request.RequestingUserId, string.Empty,
+            await _analytics.TrackAsync(TelemetryActionType.ForumPostUpdated, request.RequestingUserId, string.Empty,
                 targetId: request.PostId.ToString(), cancellationToken: cancellationToken);
         }
 

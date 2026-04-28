@@ -63,7 +63,7 @@ public sealed class CreateCharacterForUserCommandHandler : IRequestHandler<Creat
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        await _analytics.TrackAsync(TelemetryEventType.CharacterCreated, request.RequestingUserId, string.Empty,
+        await _analytics.TrackAsync(TelemetryActionType.CharacterCreated, request.RequestingUserId, string.Empty,
             targetId: character.Id.ToString(), targetName: character.Name,
             details: $"Created for user {request.TargetUserId}", cancellationToken: cancellationToken);
 

@@ -75,7 +75,7 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, Result<A
             return Result.Failure<AuthResponse>(DomainErrors.Authentication.PendingApproval);
         }
 
-        await _analytics.TrackAsync(TelemetryEventType.UserLoggedIn, user.Id, user.Email ?? string.Empty,
+        await _analytics.TrackAsync(TelemetryActionType.UserLoggedIn, user.Id, user.Email ?? string.Empty,
             cancellationToken: cancellationToken);
 
         return await AuthHelpers.GenerateAuthResponseAsync(

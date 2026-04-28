@@ -32,7 +32,7 @@ public sealed class DeleteDocumentCommandHandler : IRequestHandler<DeleteDocumen
 
         if (!string.IsNullOrEmpty(request.ActorId))
         {
-            await _analytics.TrackAsync(TelemetryEventType.DocumentDeleted, request.ActorId, string.Empty,
+            await _analytics.TrackAsync(TelemetryActionType.DocumentDeleted, request.ActorId, string.Empty,
                 targetId: doc.Id.ToString(), targetName: doc.OriginalFileName,
                 cancellationToken: cancellationToken);
         }

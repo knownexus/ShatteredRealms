@@ -28,7 +28,7 @@ public sealed class CreateWikiCategoryCommandHandler
 
         if (result.IsSuccess && !string.IsNullOrEmpty(request.ActorId))
         {
-            await _analytics.TrackAsync(TelemetryEventType.WikiCategoryCreated, request.ActorId, string.Empty,
+            await _analytics.TrackAsync(TelemetryActionType.WikiCategoryCreated, request.ActorId, string.Empty,
                 targetId: result.Value.Id.ToString(), targetName: result.Value.Name, cancellationToken: cancellationToken);
         }
 

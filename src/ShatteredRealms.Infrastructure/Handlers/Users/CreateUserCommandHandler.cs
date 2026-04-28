@@ -53,7 +53,7 @@ public sealed class CreateUserCommandHandler : IRequestHandler<CreateUserCommand
         }
 
         var actorId = request.ActorId ?? user.Id;
-        await _analytics.TrackAsync(TelemetryEventType.UserCreated, actorId, string.Empty,
+        await _analytics.TrackAsync(TelemetryActionType.UserCreated, actorId, string.Empty,
             targetId: user.Id, targetName: user.Email, cancellationToken: cancellationToken);
 
         return Result.Success(UserMapper.ToDto(user, rolesResult.Value, permissionsResult.Value));

@@ -23,7 +23,7 @@ public sealed class DeleteUserCommandHandler : IRequestHandler<DeleteUserCommand
         if (result.IsSuccess)
         {
             var actorId = request.ActorId ?? request.UserId;
-            await _analytics.TrackAsync(TelemetryEventType.UserDeleted, actorId, string.Empty,
+            await _analytics.TrackAsync(TelemetryActionType.UserDeleted, actorId, string.Empty,
                 targetId: request.UserId, cancellationToken: cancellationToken);
         }
         return result;
