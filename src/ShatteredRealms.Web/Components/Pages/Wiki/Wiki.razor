@@ -2,9 +2,8 @@
 @using ShatteredRealms.Application.DTOs.Wiki
 @using ShatteredRealms.Domain.Shared
 @using ShatteredRealms.Web.Services
+@inherits AuthPageBase
 @inject WikiClientService WikiService
-@inject AuthService AuthService
-@inject NavigationManager Navigation
 @rendermode InteractiveServer
 
 <PageTitle>Wiki</PageTitle>
@@ -23,10 +22,7 @@
     </div>
 </div>
 
-@if (!string.IsNullOrEmpty(_errorMessage))
-{
-    <div class="alert alert-danger">@_errorMessage</div>
-}
+<AlertBanner Message="@_errorMessage" />
 
 <div class="row mb-3">
     <div class="col-md-4">
@@ -94,34 +90,25 @@ else
 
 @if (_showCategoryModal)
 {
-    <div class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,0.5);">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">New Category</h5>
-                    <button type="button" class="btn-close" @onclick="CloseCategoryModal"></button>
-                </div>
-                <div class="modal-body">
-                    @if (!string.IsNullOrEmpty(_categoryModalError))
-                    {
-                        <div class="alert alert-danger">@_categoryModalError</div>
-                    }
-                    <div class="mb-3">
-                        <label class="form-label">Name</label>
-                        <input @bind="_categoryName" class="form-control"/>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <textarea @bind="_categoryDescription" class="form-control" rows="3"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CloseCategoryModal">Cancel</button>
-                    <button type="button" class="btn btn-primary" @onclick="SaveCategory">Save</button>
-                </div>
+    <ModalDialog IsVisible="true" OnClose="CloseCategoryModal" Title="New Category">
+        <ChildContent>
+            <AlertBanner Message="@_categoryModalError" />
+            <div class="mb-3">
+                <label class="form-label">Name</label>
+                <input @bind="_categoryName" class="form-control"/>
             </div>
-        </div>
-    </div>
+            <div class="mb-3">
+                <label class="form-label">Description</label>
+                <textarea @bind="_categoryDescription" class="form-control" rows="3"></textarea>
+            </div>
+
+
+        </ChildContent>
+        <Footer>
+            <button type="button" class="btn btn-secondary" @onclick="CloseCategoryModal">Cancel</button>
+            <button type="button" class="btn btn-primary" @onclick="SaveCategory">Save</button>
+        </Footer>
+    </ModalDialog>
 }
 
 @code {
@@ -141,16 +128,8 @@ else
     private void NavigateToNewPage() => Navigation.NavigateTo("/wiki/new");
     private void NavigateToPage(string slug) => Navigation.NavigateTo($"/wiki/{slug}");
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnAuthenticatedAsync()
     {
-        if (!firstRender) return;
-
-        if (!await AuthService.IsAuthenticatedAsync())
-        {
-            Navigation.NavigateTo("/login");
-            return;
-        }
-
         _canCreatePage = await AuthService.HasPermissionAsync(Claims.Permissions.Wiki.Page.Create);
         _canDeletePage = await AuthService.HasPermissionAsync(Claims.Permissions.Wiki.Page.Delete);
         _canManageCategories = await AuthService.HasPermissionAsync(Claims.Permissions.Wiki.Category.Manage);
@@ -158,7 +137,6 @@ else
         _categories = await WikiService.GetCategoriesAsync();
 
         await LoadPages();
-        StateHasChanged();
     }
 
     private async Task LoadPages()

@@ -1,26 +1,24 @@
 @page "/analytics/charts"
 @using ShatteredRealms.Application.DTOs.Analytics
 @using ShatteredRealms.Domain.Entities.Telemetry
+@using ShatteredRealms.Web.Components.Shared
 @using ShatteredRealms.Web.Services
+@inherits AuthPageBase
 @inject AnalyticsClientService AnalyticsService
-@inject AuthService AuthService
-@inject NavigationManager Navigation
 @rendermode InteractiveServer
 
 <PageTitle>Activity Charts — Shattered Realms</PageTitle>
 
 <div class="charts-page">
-    <div class="charts-header">
-        <div>
-            <h1 class="charts-title">Activity Charts</h1>
-            <p class="charts-subtitle">Activity over time with filters</p>
-        </div>
-        <div class="analytics-nav">
-            <a href="/analytics" class="nav-pill">Event Log</a>
-            <span class="nav-pill nav-pill--active">Charts</span>
-            <a href="/analytics/event-attendances" class="nav-pill">Event Attendances</a>
-        </div>
-    </div>
+    <PageHeader Title="Activity Charts" Subtitle="Activity over time with filters">
+        <Actions>
+            <div class="analytics-nav">
+                <a href="/analytics" class="nav-pill">Event Log</a>
+                <span class="nav-pill nav-pill--active">Charts</span>
+                <a href="/analytics/event-attendances" class="nav-pill">Event Attendances</a>
+            </div>
+        </Actions>
+    </PageHeader>
 
     @if (!string.IsNullOrEmpty(_error))
     {
@@ -70,17 +68,14 @@
                     <input class="form-control" placeholder="Username or email" @bind="_filterActorSearch" />
                 </div>
                 <button class="btn-gold" @onclick="LoadChart" disabled="@_loading">
-                    @(_loading ? "Loading…" : "Apply")
+                    @(_loading ? "Loading..." : "Apply")
                 </button>
             </div>
         </div>
     </div>
 
-    @if (_loading)
-    {
-        <div class="charts-loading"><div class="loading-orb"></div><span>Loading chart data…</span></div>
-    }
-    else if (_chart is not null)
+    <LoadingSpinner IsVisible="_loading" Message="Loading chart data..." />
+    @if (_chart is not null)
     {
         <!-- Activity Over Time -->
         <div class="section-card">
@@ -153,69 +148,6 @@
     }
 </div>
 
-<style>
-    .charts-page { max-width: 1200px; margin: 0 auto; padding: 2rem 1rem 4rem; }
-
-    .charts-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
-    .charts-title { font-family: var(--font-heading); font-size: 2rem; color: var(--gold); margin: 0 0 0.25rem; }
-    .charts-subtitle { font-family: var(--font-body); color: var(--text-muted); margin: 0; font-size: 0.95rem; }
-
-    .analytics-nav { display: flex; gap: 0.4rem; flex-wrap: wrap; }
-    .nav-pill { display: inline-block; padding: 0.35rem 0.85rem; border-radius: 20px; font-family: var(--font-body); font-size: 0.8rem; text-decoration: none; border: 1px solid var(--border); color: var(--text-muted); background: transparent; transition: border-color 0.15s, color 0.15s; }
-    .nav-pill:hover { border-color: rgba(201,168,76,0.4); color: var(--gold); }
-    .nav-pill--active { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.08); }
-
-    .alert { padding: 0.75rem 1rem; border-radius: 6px; font-family: var(--font-body); font-size: 0.88rem; margin-bottom: 1rem; }
-    .alert-danger { background: rgba(255,69,58,0.12); border: 1px solid rgba(255,69,58,0.3); color: #ff453a; }
-
-    .section-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 2rem; }
-    .section-title { font-family: var(--font-heading); font-size: 1.1rem; color: var(--text); margin: 0 0 1.25rem; }
-
-    .filter-card { padding: 1.25rem 1.5rem; }
-    .filter-row { display: flex; flex-direction: column; gap: 1rem; }
-    .preset-group { display: flex; gap: 0.4rem; flex-wrap: wrap; }
-    .preset-btn { padding: 0.3rem 0.8rem; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); font-family: var(--font-body); font-size: 0.78rem; cursor: pointer; transition: all 0.15s; }
-    .preset-btn:hover { border-color: rgba(201,168,76,0.4); color: var(--gold); }
-    .preset-btn--active { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.08); }
-    .filter-inline { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.75rem; }
-    .form-group { display: flex; flex-direction: column; gap: 0.3rem; }
-    .form-label { font-family: var(--font-body); font-size: 0.75rem; color: var(--text-muted); letter-spacing: 0.04em; }
-    .form-control { background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 0.42rem 0.65rem; font-family: var(--font-body); font-size: 0.82rem; }
-    .form-control:focus { outline: none; border-color: rgba(201,168,76,0.5); }
-    .btn-gold { padding: 0.45rem 1.1rem; background: linear-gradient(135deg,#c9a84c,#a8883c); color: #07090f; border: none; border-radius: 6px; font-family: var(--font-heading); font-size: 0.82rem; font-weight: 700; letter-spacing: 0.06em; cursor: pointer; align-self: flex-end; }
-    .btn-gold:disabled { opacity: 0.45; cursor: not-allowed; }
-
-    .charts-loading { display: flex; align-items: center; gap: 1rem; justify-content: center; padding: 4rem; color: var(--text-muted); font-family: var(--font-body); }
-    .loading-orb { width: 22px; height: 22px; border: 2px solid rgba(201,168,76,0.2); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
-    @@keyframes spin { to { transform: rotate(360deg); } }
-
-    .chart-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.5rem; }
-    .chart-meta { font-family: var(--font-body); font-size: 0.8rem; color: var(--text-muted); }
-
-    .no-data { font-family: var(--font-body); color: var(--text-muted); text-align: center; padding: 2rem; }
-
-    /* Bar Chart */
-    .bar-chart-container { display: flex; gap: 0.5rem; }
-    .bar-chart-yaxis { display: flex; flex-direction: column; justify-content: space-between; min-width: 32px; text-align: right; flex-shrink: 0; }
-    .yaxis-label { font-family: var(--font-body); font-size: 0.7rem; color: var(--text-muted); line-height: 1; }
-    .bar-chart-inner { flex: 1; overflow-x: auto; padding-bottom: 22px; }
-    /* bars-and-grid: fixed-height container; bars + gridlines sit inside it */
-    .bars-and-grid { position: relative; display: flex; align-items: flex-end; gap: 2px; min-width: min-content; }
-    .gridline { position: absolute; left: 0; right: 0; height: 1px; background: rgba(255,255,255,0.07); pointer-events: none; }
-    .bar-col { flex: 1; min-width: 7px; max-width: 32px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; position: relative; cursor: default; }
-    .bar { width: 100%; background: var(--gold); border-radius: 2px 2px 0 0; transition: opacity 0.15s; }
-    .bar:hover { opacity: 0.75; }
-    .bar--zero { background: rgba(201,168,76,0.18); height: 2px !important; }
-    .bar-label { position: absolute; top: calc(100% + 4px); left: 50%; transform: translateX(-50%); font-family: var(--font-body); font-size: 0.62rem; color: var(--text-muted); white-space: nowrap; }
-
-    /* Breakdown */
-    .breakdown-list { display: flex; flex-direction: column; gap: 0.6rem; }
-    .breakdown-row { display: flex; align-items: center; gap: 0.75rem; }
-    .breakdown-name { font-family: var(--font-body); font-size: 0.82rem; color: var(--text); min-width: 180px; }
-    .breakdown-bar-track { flex: 1; height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }
-    .breakdown-bar { height: 100%; background: var(--gold); border-radius: 4px; transition: width 0.3s ease; }
-    .breakdown-count { font-family: var(--font-body); font-size: 0.82rem; color: var(--gold); font-weight: 600; min-width: 40px; text-align: right; }
-</style>
 
 @code {
     private ActivityChartDto? _chart;
@@ -238,23 +170,11 @@
         new("Last Year",    365, "month"),
     ];
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override string RequiredPermission => Domain.Shared.Claims.Permissions.Analytics.View;
+
+    protected override async Task OnAuthenticatedAsync()
     {
-        if (!firstRender) return;
-
-        if (!await AuthService.IsAuthenticatedAsync())
-        {
-            Navigation.NavigateTo("/login");
-            return;
-        }
-        if (!await AuthService.HasPermissionAsync(Domain.Shared.Claims.Permissions.Analytics.View))
-        {
-            Navigation.NavigateTo("/");
-            return;
-        }
-
         await LoadChart();
-        StateHasChanged();
     }
 
     private async Task ApplyPreset(Preset preset)

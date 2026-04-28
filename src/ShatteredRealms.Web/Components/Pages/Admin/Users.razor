@@ -3,10 +3,9 @@
 @using ShatteredRealms.Application.DTOs.Users
 @using ShatteredRealms.Application.DTOs.Roles
 @using ShatteredRealms.Web.Services
+@inherits AuthPageBase
 @inject UserService UserService
 @inject RoleService RoleService
-@inject AuthService AuthService
-@inject NavigationManager Navigation
 @rendermode InteractiveServer
 
 <PageTitle>Users</PageTitle>
@@ -18,11 +17,7 @@
 
 @if (!string.IsNullOrEmpty(errorMessage) && !string.IsNullOrEmpty(errorCode))
 {
-    <div class="alert alert-danger">
-        <strong>Error:</strong> @errorMessage
-        <br />
-        <small>@errorCode</small>
-    </div>
+    <AlertBanner Message="@($"Error: {errorMessage} ({errorCode})")" />
 }
 
 @if (pendingUsers is { Count: > 0 })
@@ -57,7 +52,7 @@
                                     @if (_approvingUserId.Contains(pending.Id))
                                     {
                                         <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-                                        <span>Approving…</span>
+                                        <span>Approving...</span>
                                     }
                                     else
                                     {
@@ -118,65 +113,56 @@ else
 
 @if (showModal)
 {
-    <div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">@(isEdit ? "Edit User" : "Create User")</h5>
-                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+    <ModalDialog IsVisible="true" OnClose="CloseModal" Title="@(isEdit ? "Edit User" : "Create User")">
+        <ChildContent>
+            <AlertBanner Message="@errorMessage" />
+
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input @bind="currentEmail" class="form-control" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">First Name</label>
+                <input @bind="currentFirstName" class="form-control" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Last Name</label>
+                <input @bind="currentLastName" class="form-control" />
+            </div>
+
+            @if (!isEdit)
+            {
+                <div class="mb-3">
+                    <label class="form-label">Password</label>
+                    <input @bind="currentPassword" type="password" class="form-control" />
                 </div>
-                <div class="modal-body">
-                    @if (!string.IsNullOrEmpty(errorMessage))
+            }
+
+            <div class="mb-3">
+                <label class="form-label">Roles</label>
+                @if (roles != null)
+                {
+                    @foreach (var role in roles)
                     {
-                        <div class="alert alert-danger">@errorMessage</div>
-                    }
-
-                    <div class="mb-3">
-                        <label class="form-label">Email</label>
-                        <input @bind="currentEmail" class="form-control" />
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">First Name</label>
-                        <input @bind="currentFirstName" class="form-control" />
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Last Name</label>
-                        <input @bind="currentLastName" class="form-control" />
-                    </div>
-
-                    @if (!isEdit)
-                    {
-                        <div class="mb-3">
-                            <label class="form-label">Password</label>
-                            <input @bind="currentPassword" type="password" class="form-control" />
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox"
+                                   checked="@selectedRoleIds.Contains(role.Id)"
+                                   @onchange="(ChangeEventArgs e) => ToggleRole(role.Id, (bool)e.Value!)"/>
+                            <label class="form-check-label">@role.Name</label>
                         </div>
                     }
-
-                    <div class="mb-3">
-                        <label class="form-label">Roles</label>
-                        @if (roles != null)
-                        {
-                            @foreach (var role in roles)
-                            {
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox"
-                                           checked="@selectedRoleIds.Contains(role.Id)"
-                                           @onchange="(ChangeEventArgs e) => ToggleRole(role.Id, (bool)e.Value!)"/>
-                                    <label class="form-check-label">@role.Name</label>
-                                </div>
-                            }
-                        }
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">Close</button>
-                    <button type="button" class="btn btn-primary" @onclick="SaveUser">Save</button>
-                </div>
+                }
             </div>
-        </div>
-    </div>
+
+
+        </ChildContent>
+        <Footer>
+            <button type="button" class="btn btn-secondary" @onclick="CloseModal">Close</button>
+            <button type="button" class="btn btn-primary" @onclick="SaveUser">Save</button>
+        </Footer>
+    </ModalDialog>
 }
 
 @code {
@@ -207,22 +193,11 @@ else
         currentLastName != _originalLastName ||
         !selectedRoleIds.OrderBy(x => x).SequenceEqual(_originalRoleIds.OrderBy(x => x));
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnAuthenticatedAsync()
     {
-        if (firstRender)
-        {
-            var isAuthenticated = await AuthService.IsAuthenticatedAsync();
-            if (!isAuthenticated)
-            {
-                Navigation.NavigateTo("/login");
-                return;
-            }
-
-            await LoadUsers();
-            await LoadPendingUsers();
-            await LoadRoles();
-            StateHasChanged();
-        }
+        await LoadUsers();
+        await LoadPendingUsers();
+        await LoadRoles();
     }
 
     private async Task LoadUsers()

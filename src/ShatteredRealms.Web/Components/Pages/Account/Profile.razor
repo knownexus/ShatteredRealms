@@ -2,24 +2,19 @@
 @using ShatteredRealms.Application.DTOs.Auth
 @using ShatteredRealms.Application.DTOs.Users
 @using ShatteredRealms.Web.Services
+@inherits AuthPageBase
 @inject UserService UserService
-@inject AuthService AuthService
-@inject NavigationManager Navigation
 
 <PageTitle>My Profile — Shattered Realms</PageTitle>
 
 <div class="profile-page">
-
-    @if (_loading)
-    {
-        <div class="profile-loading">
-            <div class="loading-orb"></div>
-            <span>Loading profile…</span>
-        </div>
-    }
+@if (_loading)
+{
+    <LoadingSpinner IsVisible="_loading" Message="Loading profile..." />
+}
     else if (_profile is null)
     {
-        <div class="alert alert-danger">Failed to load profile. Please try again.</div>
+        <AlertBanner Message="@("Failed to load profile. Please try again.")" />
     }
     else
     {
@@ -52,14 +47,8 @@
                     <h2>Personal Information</h2>
                 </div>
 
-                @if (!string.IsNullOrEmpty(_profileSuccess))
-                {
-                    <div class="alert alert-success">@_profileSuccess</div>
-                }
-                @if (!string.IsNullOrEmpty(_profileError))
-                {
-                    <div class="alert alert-danger">@_profileError</div>
-                }
+                <AlertBanner Message="@_profileSuccess" Type="success" />
+                <AlertBanner Message="@_profileError" />
 
                 <div class="form-grid">
                     <div class="form-group">
@@ -80,8 +69,8 @@
                     <button class="btn btn-gold" @onclick="SaveProfile" disabled="@_savingProfile">
                         @if (_savingProfile)
                         {
-                            <span class="btn-spinner"></span>
-                            <span>Saving…</span>
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            <span>Saving...</span>
                         }
                         else
                         {
@@ -100,14 +89,8 @@
                     <h2>Change Password</h2>
                 </div>
 
-                @if (!string.IsNullOrEmpty(_passwordSuccess))
-                {
-                    <div class="alert alert-success">@_passwordSuccess</div>
-                }
-                @if (!string.IsNullOrEmpty(_passwordError))
-                {
-                    <div class="alert alert-danger">@_passwordError</div>
-                }
+                <AlertBanner Message="@_passwordSuccess" Type="success" />
+                <AlertBanner Message="@_passwordError" />
 
                 <div class="form-grid">
                     <div class="form-group form-group--full">
@@ -128,8 +111,8 @@
                     <button class="btn btn-gold" @onclick="ChangePassword" disabled="@_savingPassword">
                         @if (_savingPassword)
                         {
-                            <span class="btn-spinner"></span>
-                            <span>Updating…</span>
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            <span>Updating...</span>
                         }
                         else
                         {
@@ -143,235 +126,6 @@
     }
 </div>
 
-<style>
-    .profile-page {
-        max-width: 860px;
-        margin: 0 auto;
-        padding: 2rem 1rem 4rem;
-    }
-
-    /* Loading */
-    .profile-loading {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        padding: 4rem;
-        justify-content: center;
-        color: var(--text-muted);
-        font-family: var(--font-body);
-    }
-    .loading-orb {
-        width: 24px;
-        height: 24px;
-        border: 2px solid rgba(201,168,76,0.2);
-        border-top-color: var(--gold);
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-    }
-    @@keyframes spin { to { transform: rotate(360deg); } }
-
-    /* Identity card */
-    .identity-card {
-        display: flex;
-        align-items: center;
-        gap: 2rem;
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 2rem 2.5rem;
-        margin-bottom: 2rem;
-        position: relative;
-        overflow: hidden;
-    }
-    .identity-card::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(135deg, rgba(201,168,76,0.04) 0%, transparent 60%);
-        pointer-events: none;
-    }
-
-    .identity-avatar {
-        position: relative;
-        flex-shrink: 0;
-    }
-    .avatar-initials {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #1a1e2a, #0d1219);
-        border: 2px solid var(--gold);
-        font-family: var(--font-heading);
-        font-size: 1.6rem;
-        font-weight: 600;
-        color: var(--gold);
-        letter-spacing: 0.05em;
-    }
-    .avatar-ring {
-        position: absolute;
-        inset: -4px;
-        border-radius: 50%;
-        border: 1px solid rgba(201,168,76,0.2);
-        pointer-events: none;
-    }
-
-    .identity-info {
-        flex: 1;
-        min-width: 0;
-    }
-    .identity-name {
-        font-family: var(--font-heading);
-        font-size: 1.6rem;
-        color: var(--text);
-        margin: 0 0 0.3rem;
-        font-weight: 600;
-    }
-    .identity-email {
-        font-family: var(--font-body);
-        color: var(--text-muted);
-        margin: 0 0 0.8rem;
-        font-size: 0.95rem;
-    }
-    .identity-roles {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-    }
-    .role-badge {
-        display: inline-block;
-        padding: 0.2rem 0.7rem;
-        border-radius: 20px;
-        background: rgba(201,168,76,0.08);
-        border: 1px solid rgba(201,168,76,0.25);
-        color: var(--gold);
-        font-family: var(--font-body);
-        font-size: 0.75rem;
-        font-weight: 600;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-    }
-
-    /* Sections grid */
-    .profile-sections {
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-    }
-
-    /* Profile cards */
-    .profile-card {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        overflow: hidden;
-    }
-    .profile-card-header {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 1.25rem 1.75rem;
-        border-bottom: 1px solid var(--border);
-        background: rgba(201,168,76,0.03);
-    }
-    .profile-card-header h2 {
-        font-family: var(--font-heading);
-        font-size: 1rem;
-        font-weight: 600;
-        color: var(--text);
-        margin: 0;
-        letter-spacing: 0.04em;
-    }
-    .section-icon {
-        width: 18px;
-        height: 18px;
-        color: var(--gold);
-        flex-shrink: 0;
-    }
-
-    /* Form grid */
-    .form-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1.25rem;
-        padding: 1.75rem;
-    }
-    .form-group--full {
-        grid-column: 1 / -1;
-    }
-
-    .profile-card-footer {
-        padding: 1rem 1.75rem 1.5rem;
-        display: flex;
-        justify-content: flex-end;
-    }
-
-    /* Gold button */
-    .btn-gold {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.6rem 1.5rem;
-        background: linear-gradient(135deg, #c9a84c, #a8883c);
-        color: #07090f;
-        border: none;
-        border-radius: 6px;
-        font-family: var(--font-heading);
-        font-size: 0.85rem;
-        font-weight: 700;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        cursor: pointer;
-        transition: opacity 0.15s, transform 0.1s;
-    }
-    .btn-gold:hover:not(:disabled) {
-        opacity: 0.9;
-        transform: translateY(-1px);
-    }
-    .btn-gold:disabled {
-        opacity: 0.55;
-        cursor: not-allowed;
-    }
-
-    /* Button spinner */
-    .btn-spinner {
-        display: inline-block;
-        width: 14px;
-        height: 14px;
-        border: 2px solid rgba(7,9,15,0.3);
-        border-top-color: #07090f;
-        border-radius: 50%;
-        animation: spin 0.7s linear infinite;
-    }
-
-    /* Alerts */
-    .alert {
-        margin: 0 1.75rem 0.5rem;
-        padding: 0.75rem 1rem;
-        border-radius: 6px;
-        font-family: var(--font-body);
-        font-size: 0.9rem;
-    }
-    .alert-success {
-        background: rgba(52,199,89,0.08);
-        border: 1px solid rgba(52,199,89,0.25);
-        color: #34c759;
-    }
-    .alert-danger {
-        background: rgba(255,59,48,0.08);
-        border: 1px solid rgba(255,59,48,0.25);
-        color: #ff3b30;
-    }
-
-    @@media (max-width: 600px) {
-        .identity-card { flex-direction: column; text-align: center; }
-        .identity-roles { justify-content: center; }
-        .form-grid { grid-template-columns: 1fr; }
-        .form-group--full { grid-column: 1; }
-    }
-</style>
 
 @code {
     private UserDto? _profile;
@@ -391,19 +145,9 @@
     private string Initials => _profile is null ? "?" :
         $"{(_profile.FirstName.Length > 0 ? _profile.FirstName[0] : '?')}{(_profile.LastName.Length > 0 ? _profile.LastName[0] : '?')}".ToUpper();
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnAuthenticatedAsync()
     {
-        if (!firstRender) return;
-
-        var isAuth = await AuthService.IsAuthenticatedAsync();
-        if (!isAuth)
-        {
-            Navigation.NavigateTo("/login");
-            return;
-        }
-
         await LoadProfile();
-        StateHasChanged();
     }
 
     private async Task LoadProfile()

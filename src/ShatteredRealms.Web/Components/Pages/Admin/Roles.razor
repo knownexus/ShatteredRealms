@@ -2,10 +2,9 @@
 @using ShatteredRealms.Application.DTOs.Roles
 @using ShatteredRealms.Application.DTOs.Permissions
 @using ShatteredRealms.Web.Services
+@inherits AuthPageBase
 @inject RoleService RoleService
 @inject PermissionService PermissionService
-@inject AuthService AuthService
-@inject NavigationManager Navigation
 @rendermode InteractiveServer
 
 <PageTitle>Roles</PageTitle>
@@ -17,7 +16,7 @@
 
 @if (roles == null)
 {
-    <p>Loading...</p>
+    <LoadingSpinner IsVisible="true" Message="Loading roles..." />
 }
 else
 {
@@ -49,64 +48,56 @@ else
 
 @if (showModal)
 {
-    <div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">@(isEdit ? "Edit Role" : "Create Role")</h5>
-                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
-                </div>
-                <div class="modal-body">
-                    @if (!string.IsNullOrEmpty(errorMessage))
-                    {
-                        <div class="alert alert-danger">@errorMessage</div>
-                    }
+<ModalDialog IsVisible="true" OnClose="CloseModal" Title="@(isEdit ? "Edit Role" : "Create Role")" PanelClass="modal-panel--lg">
+    <ChildContent>
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger">@errorMessage</div>
+            }
 
-                    <div class="mb-3">
-                        <label class="form-label">Name</label>
-                        <input @bind="currentName" class="form-control" />
-                    </div>
+            <div class="mb-3">
+                <label class="form-label">Name</label>
+                <input @bind="currentName" class="form-control" />
+            </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <input @bind="currentDescription" class="form-control" />
-                    </div>
+            <div class="mb-3">
+                <label class="form-label">Description</label>
+                <input @bind="currentDescription" class="form-control" />
+            </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Permissions</label>
-                        @if (permissions != null)
+            <div class="mb-3">
+                <label class="form-label">Permissions</label>
+                @if (permissions != null)
+                {
+                    <div class="row">
+                        @foreach (var category in permissions.GroupBy(p => p.Category))
                         {
-                            <div class="row">
-                                @foreach (var category in permissions.GroupBy(p => p.Category))
+                            <div class="col-md-6">
+                                <h6>@category.Key</h6>
+                                @foreach (var permission in category)
                                 {
-                                    <div class="col-md-6">
-                                        <h6>@category.Key</h6>
-                                        @foreach (var permission in category)
-                                        {
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio"
-                                                       id="perm-@permission.Id"
-                                                       checked="@selectedPermissionIds.Contains(permission.Id)"
-                                                       @onchange="(ChangeEventArgs e) => TogglePermission(permission.Id, (bool)e.Value!)"/>
-                                                <label class="form-check-label" for="perm-@permission.Id">
-                                                    <strong>@permission.Name</strong><br />
-                                                    <small class="text-muted">@permission.Description</small>
-                                                </label>
-                                            </div>
-                                        }
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox"
+                                               id="perm-@permission.Id"
+                                               checked="@selectedPermissionIds.Contains(permission.Id)"
+                                               @onchange="(ChangeEventArgs e) => TogglePermission(permission.Id, (bool)e.Value!)"/>
+                                        <label class="form-check-label" for="perm-@permission.Id">
+                                            <strong>@permission.Name</strong><br />
+                                            <small class="text-muted">@permission.Description</small>
+                                        </label>
                                     </div>
                                 }
                             </div>
                         }
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">Close</button>
-                    <button type="button" class="btn btn-primary" @onclick="SaveRole">Save</button>
-                </div>
+                }
             </div>
-        </div>
-    </div>
+    </ChildContent>
+        <Footer>
+            <button type="button" class="btn btn-secondary" @onclick="CloseModal">Close</button>
+            <button type="button" class="btn btn-primary" @onclick="SaveRole">Save</button>
+        </Footer>
+    </ModalDialog>
 }
 
 @code {
@@ -120,22 +111,10 @@ else
     private List<int> selectedPermissionIds = new();
     private string? errorMessage;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnAuthenticatedAsync()
     {
-        if (firstRender)
-        {
-            // Check if user is authenticated
-            var isAuthenticated = await AuthService.IsAuthenticatedAsync();
-            if (!isAuthenticated)
-            {
-                Navigation.NavigateTo("/login");
-                return;
-            }
-
-            await LoadRoles();
-            await LoadPermissions();
-            StateHasChanged();
-        }
+        await LoadRoles();
+        await LoadPermissions();
     }
 
     private async Task LoadRoles()

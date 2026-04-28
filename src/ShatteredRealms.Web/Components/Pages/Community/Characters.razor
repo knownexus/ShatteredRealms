@@ -33,18 +33,10 @@
         </div>
     </div>
 
-    @if (_loading)
-    {
-        <div class="chars-loading">
-            <div class="chars-spinner"></div>
-            <span>Loading characters…</span>
-        </div>
-    }
-    else if (_error is not null)
-    {
-        <div class="chars-error">@_error</div>
-    }
-    else if (_characters.Count == 0)
+    <LoadingSpinner IsVisible="_loading" Message="Loading characters..." />
+    <AlertBanner Message="@_error" />
+
+    @if (!_loading && _characters.Count == 0)
     {
         <div class="chars-empty">
             <svg class="chars-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -55,14 +47,16 @@
             }
         </div>
     }
-    else
+    else if (!_loading)
     {
         <div class="chars-grid">
             @foreach (var c in _characters)
             {
                 <div class="char-card">
                     <div class="char-card__crest">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        </svg>
                     </div>
                     <div class="char-card__body">
                         <div class="char-card__name">@c.Name</div>
@@ -94,31 +88,55 @@
                         @if (_canEdit || c.UserId == _currentUserId)
                         {
                             <button class="char-action-btn" title="Edit" @onclick="() => ShowEditModal(c)">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                </svg>
                             </button>
                         }
                         @if (_canAssignXp)
                         {
-                            <button class="char-action-btn char-action-btn--gold" title="Assign XP" @onclick="() => ShowXpModal(c)">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                            <button class="char-action-btn char-action-btn--gold" title="Assign XP"
+                                    @onclick="() => ShowXpModal(c)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                                </svg>
                             </button>
                         }
                         @if (_canAssignPosition)
                         {
-                            <button class="char-action-btn char-action-btn--teal" title="Assign Position" @onclick="() => ShowPositionModal(c)">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            <button class="char-action-btn char-action-btn--teal" title="Assign Position"
+                                    @onclick="() => ShowPositionModal(c)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="9" cy="7" r="4"/>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                </svg>
                             </button>
                         }
                         @if (_canViewAny)
                         {
-                            <button class="char-action-btn char-action-btn--info" title="View History" @onclick="() => ShowHistoryModal(c)">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            <button class="char-action-btn char-action-btn--info" title="View History"
+                                    @onclick="() => ShowHistoryModal(c)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <polyline points="12 6 12 12 16 14"/>
+                                </svg>
                             </button>
                         }
                         @if (_canDelete || c.UserId == _currentUserId)
                         {
-                            <button class="char-action-btn char-action-btn--danger" title="Delete" @onclick="() => ShowDeleteConfirm(c)">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                            <button class="char-action-btn char-action-btn--danger" title="Delete"
+                                    @onclick="() => ShowDeleteConfirm(c)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"/>
+                                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                                    <path d="M10 11v6"/>
+                                    <path d="M14 11v6"/>
+                                    <path d="M9 6V4h6v2"/>
+                                </svg>
                             </button>
                         }
                     </div>
@@ -131,230 +149,192 @@
 @* ── Create Modal ─────────────────────────────────────────────────────────── *@
 @if (_showCreate)
 {
-    <div class="modal-backdrop" @onclick="CloseCreateViaBackdrop" @onmousedown="() => _createBackdropDown = true">
-        <div class="modal-panel" @onclick:stopPropagation @onmousedown:stopPropagation>
-            <div class="modal-header">
-                <h2 class="modal-title">New Character</h2>
-                <button class="modal-close" @onclick="CloseCreate">✕</button>
+    <ModalDialog IsVisible="_showCreate" OnClose="CloseCreate" Title="New Character">
+        <ChildContent>
+
+            @if (_createError is not null)
+            {
+                <div class="form-error-banner">@_createError</div>
+            }
+            <div class="form-group">
+                <label class="form-label">Name</label>
+                <input class="form-input" @bind="_createForm.Name" placeholder="Character name" maxlength="128" />
             </div>
-            <div class="modal-body">
-                @if (_createError is not null)
-                {
-                    <div class="form-error-banner">@_createError</div>
-                }
-                <div class="form-group">
-                    <label class="form-label">Name</label>
-                    <input class="form-input" @bind="_createForm.Name" placeholder="Character name" maxlength="128" />
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Nationality</label>
-                    <input class="form-input" @bind="_createForm.Nationality" placeholder="e.g. Norman, Saxon, Viking…" maxlength="128" />
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Faction</label>
-                    <input class="form-input" @bind="_createForm.Faction" placeholder="e.g. Kingdom of England, Norse Clan…" maxlength="128" />
-                </div>
+            <div class="form-group">
+                <label class="form-label">Nationality</label>
+                <input class="form-input" @bind="_createForm.Nationality" placeholder="e.g. Norman, Saxon, Viking..." maxlength="128" />
             </div>
-            <div class="modal-footer">
-                <button class="chars-btn chars-btn--ghost" @onclick="CloseCreate">Cancel</button>
-                <button class="chars-btn chars-btn--primary" @onclick="CreateCharacter" disabled="@_saving">
-                    @(_saving ? "Creating…" : "Create")
-                </button>
+            <div class="form-group">
+                <label class="form-label">Faction</label>
+                <input class="form-input" @bind="_createForm.Faction" placeholder="e.g. Kingdom of England, Norse Clan..." maxlength="128" />
             </div>
-        </div>
-    </div>
+
+        </ChildContent>
+        <Footer>
+            <button class="chars-btn chars-btn--ghost" @onclick="CloseCreate">Cancel</button>
+            <button class="chars-btn chars-btn--primary" @onclick="CreateCharacter" disabled="@_saving">
+                @(_saving ? "Creating..." : "Create")
+            </button>
+        </Footer>
+    </ModalDialog>
 }
 
 @* ── Edit Modal ───────────────────────────────────────────────────────────── *@
 @if (_showEdit && _editTarget is not null)
 {
-    <div class="modal-backdrop" @onclick="CloseEditViaBackdrop" @onmousedown="() => _editBackdropDown = true">
-        <div class="modal-panel" @onclick:stopPropagation @onmousedown:stopPropagation>
-            <div class="modal-header">
-                <h2 class="modal-title">Edit Character</h2>
-                <button class="modal-close" @onclick="CloseEdit">✕</button>
+    <ModalDialog IsVisible="_showEdit && _editTarget is not null" OnClose="CloseEdit" Title="Edit Character">
+        <ChildContent>
+
+            @if (_editError is not null)
+            {
+                <div class="form-error-banner">@_editError</div>
+            }
+            <div class="form-group">
+                <label class="form-label">Name</label>
+                <input class="form-input" @bind="_editForm.Name" placeholder="Character name" maxlength="128" />
             </div>
-            <div class="modal-body">
-                @if (_editError is not null)
-                {
-                    <div class="form-error-banner">@_editError</div>
-                }
+            <div class="form-group">
+                <label class="form-label">Nationality</label>
+                <input class="form-input" @bind="_editForm.Nationality" placeholder="Nationality" maxlength="128" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Faction</label>
+                <input class="form-input" @bind="_editForm.Faction" placeholder="Faction" maxlength="128" />
+            </div>
+            @if (_canEdit)
+            {
                 <div class="form-group">
-                    <label class="form-label">Name</label>
-                    <input class="form-input" @bind="_editForm.Name" placeholder="Character name" maxlength="128" />
+                    <label class="form-label">Level</label>
+                    <input class="form-input" type="number" min="1" @bind="_editAdminForm.Level" />
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Nationality</label>
-                    <input class="form-input" @bind="_editForm.Nationality" placeholder="Nationality" maxlength="128" />
+                    <label class="form-label">Experience</label>
+                    <input class="form-input" type="number" min="0" @bind="_editAdminForm.Experience" />
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Faction</label>
-                    <input class="form-input" @bind="_editForm.Faction" placeholder="Faction" maxlength="128" />
-                </div>
-                @if (_canEdit)
-                {
-                    <div class="form-group">
-                        <label class="form-label">Level</label>
-                        <input class="form-input" type="number" min="1" @bind="_editAdminForm.Level" />
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Experience</label>
-                        <input class="form-input" type="number" min="0" @bind="_editAdminForm.Experience" />
-                    </div>
-                }
-            </div>
-            <div class="modal-footer">
-                <button class="chars-btn chars-btn--ghost" @onclick="CloseEdit">Cancel</button>
-                <button class="chars-btn chars-btn--primary" @onclick="SaveEdit" disabled="@_saving">
-                    @(_saving ? "Saving…" : "Save")
-                </button>
-            </div>
-        </div>
-    </div>
+            }
+
+        </ChildContent>
+        <Footer>
+            <button class="chars-btn chars-btn--ghost" @onclick="CloseEdit">Cancel</button>
+            <button class="chars-btn chars-btn--primary" @onclick="SaveEdit" disabled="@_saving">
+                @(_saving ? "Saving..." : "Save")
+            </button>
+        </Footer>
+    </ModalDialog>
 }
 
 @* ── Assign XP Modal ─────────────────────────────────────────────────────── *@
 @if (_showXp && _xpTarget is not null)
 {
-    <div class="modal-backdrop" @onclick="CloseXpViaBackdrop" @onmousedown="() => _xpBackdropDown = true">
-        <div class="modal-panel modal-panel--sm" @onclick:stopPropagation @onmousedown:stopPropagation>
-            <div class="modal-header">
-                <h2 class="modal-title">Assign XP — @_xpTarget.Name</h2>
-                <button class="modal-close" @onclick="CloseXp">✕</button>
+    <ModalDialog IsVisible="_showXp && _xpTarget is not null" OnClose="CloseXp" Title="@_xpTitle">
+        <ChildContent>
+
+            @if (_xpError is not null)
+            {
+                <div class="form-error-banner">@_xpError</div>
+            }
+            <p class="xp-current">Current XP: <strong>@_xpTarget.Experience</strong> | Level: <strong>@_xpTarget.Level</strong></p>
+            <div class="form-group">
+                <label class="form-label">XP to add</label>
+                <input class="form-input" type="number" @bind="_xpAmount" min="-9999" max="9999" />
             </div>
-            <div class="modal-body">
-                @if (_xpError is not null)
-                {
-                    <div class="form-error-banner">@_xpError</div>
-                }
-                <p class="xp-current">Current XP: <strong>@_xpTarget.Experience</strong> &nbsp;|&nbsp; Level: <strong>@_xpTarget.Level</strong></p>
-                <div class="form-group">
-                    <label class="form-label">XP to add</label>
-                    <input class="form-input" type="number" @bind="_xpAmount" min="-9999" max="9999" />
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Note (optional)</label>
-                    <input class="form-input" @bind="_xpNote" placeholder="e.g. Battle of Hastings event" maxlength="256" />
-                </div>
+            <div class="form-group">
+                <label class="form-label">Note (optional)</label>
+                <input class="form-input" @bind="_xpNote" placeholder="e.g. Battle of Hastings event" maxlength="256" />
             </div>
-            <div class="modal-footer">
-                <button class="chars-btn chars-btn--ghost" @onclick="CloseXp">Cancel</button>
-                <button class="chars-btn chars-btn--primary" @onclick="SubmitXp" disabled="@_saving">
-                    @(_saving ? "Saving…" : "Assign XP")
-                </button>
-            </div>
-        </div>
-    </div>
+        </ChildContent>
+        <Footer>
+            <button class="chars-btn chars-btn--ghost" @onclick="CloseXp">Cancel</button>
+            <button class="chars-btn chars-btn--primary" @onclick="SubmitXp" disabled="@_saving">
+                @(_saving ? "Saving..." : "Assign XP")
+            </button>
+        </Footer>
+    </ModalDialog>
 }
+
 
 @* ── Assign Position Modal ───────────────────────────────────────────────── *@
-@if (_showPosition && _positionTarget is not null)
-{
-    <div class="modal-backdrop" @onclick="ClosePositionViaBackdrop" @onmousedown="() => _positionBackdropDown = true">
-        <div class="modal-panel modal-panel--sm" @onclick:stopPropagation @onmousedown:stopPropagation>
-            <div class="modal-header">
-                <h2 class="modal-title">Assign Position — @_positionTarget.Name</h2>
-                <button class="modal-close" @onclick="ClosePosition">✕</button>
-            </div>
-            <div class="modal-body">
-                @if (_positionError is not null)
+<ModalDialog IsVisible="_showPosition && _positionTarget is not null" OnClose="ClosePosition" Title="@_positionTitle" PanelClass="modal-panel--sm">
+    <ChildContent>
+        @if (_positionError is not null)
+        {
+            <div class="form-error-banner">@_positionError</div>
+        }
+        <div class="form-group">
+            <label class="form-label">Position</label>
+            <select class="form-input" @bind="_selectedPositionId">
+                <option value="">— None —</option>
+                @foreach (var pos in _positions)
                 {
-                    <div class="form-error-banner">@_positionError</div>
+                    <option value="@pos.Id">@pos.Name</option>
                 }
-                <div class="form-group">
-                    <label class="form-label">Position</label>
-                    <select class="form-input" @bind="_selectedPositionId">
-                        <option value="">— None —</option>
-                        @foreach (var pos in _positions)
-                        {
-                            <option value="@pos.Id">@pos.Name</option>
-                        }
-                    </select>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="chars-btn chars-btn--ghost" @onclick="ClosePosition">Cancel</button>
-                <button class="chars-btn chars-btn--primary" @onclick="SubmitPosition" disabled="@_saving">
-                    @(_saving ? "Saving…" : "Assign")
-                </button>
-            </div>
+            </select>
         </div>
-    </div>
-}
+        <footer>
+            <button class="chars-btn chars-btn--ghost" @onclick="ClosePosition">Cancel</button>
+            <button class="chars-btn chars-btn--primary" @onclick="SubmitPosition" disabled="@_saving">
+                @(_saving ? "Saving..." : "Assign")
+            </button>
+        </footer>
+    </ChildContent>
+</ModalDialog>
 
 @* ── History Modal ────────────────────────────────────────────────────────── *@
-@if (_showHistory && _historyTarget is not null)
-{
-    <div class="modal-backdrop" @onclick="CloseHistoryViaBackdrop" @onmousedown="() => _historyBackdropDown = true">
-        <div class="modal-panel modal-panel--lg" @onclick:stopPropagation @onmousedown:stopPropagation>
-            <div class="modal-header">
-                <h2 class="modal-title">History — @_historyTarget.Name</h2>
-                <button class="modal-close" @onclick="CloseHistory">✕</button>
-            </div>
-            <div class="modal-body">
-                @if (_historyLoading)
-                {
-                    <div class="chars-loading"><div class="chars-spinner"></div><span>Loading…</span></div>
-                }
-                else if (_historyError is not null)
-                {
-                    <div class="form-error-banner">@_historyError</div>
-                }
-                else if (_history.Count == 0)
-                {
-                    <p class="history-empty">No history recorded yet.</p>
-                }
-                else
-                {
-                    <div class="history-list">
-                        @foreach (var entry in _history)
-                        {
-                            var parts = entry.Description.Split(" — ", 2);
-                            var mainDesc = parts[0];
-                            var note = parts.Length > 1 ? parts[1] : null;
-                            <div class="history-entry">
-                                <div class="history-entry__meta">
-                                    <span class="history-entry__date">@entry.Date.ToLocalTime().ToString("dd MMM yyyy HH:mm")</span>
-                                    <span class="history-entry__by">@entry.PerformedByName</span>
-                                </div>
-                                <div class="history-entry__desc">@mainDesc</div>
-                                @if (note is not null)
-                                {
-                                    <div class="history-entry__note">@note</div>
-                                }
-                            </div>
-                        }
+<ModalDialog IsVisible="_showHistory && _historyTarget is not null" OnClose="CloseHistory" Title="@_historyTitle" PanelClass="modal-panel--lg">
+    <ChildContent>
+        @if (_historyLoading)
+    {
+        <div class="chars-loading">
+            <div class="chars-spinner"></div><span>Loading...</span></div>
+    }
+    else if (_historyError is not null)
+    {
+        <div class="form-error-banner">@_historyError</div>
+    }
+    else if (_history.Count == 0)
+    {
+        <p class="history-empty">No history recorded yet.</p>
+    }
+    else
+    {
+        <div class="history-list">
+            @foreach (var entry in _history)
+            {
+                var parts = entry.Description.Split(" — ", 2);
+                var mainDesc = parts[0];
+                var note = parts.Length > 1 ? parts[1] : null;
+                <div class="history-entry">
+                    <div class="history-entry__meta">
+                        <span class="history-entry__date">@entry.Date.ToLocalTime().ToString("dd MMM yyyy HH:mm")</span>
+                        <span class="history-entry__by">@entry.PerformedByName</span>
                     </div>
-                }
-            </div>
-            <div class="modal-footer">
-                <button class="chars-btn chars-btn--ghost" @onclick="CloseHistory">Close</button>
-            </div>
+                    <div class="history-entry__desc">@mainDesc</div>
+                    @if (note is not null)
+                    {
+                        <div class="history-entry__note">@note</div>
+                    }
+                </div>
+            }
         </div>
-    </div>
-}
+    }
+    </ChildContent>
+    <Footer>
+        <button class="chars-btn chars-btn--ghost" @onclick="CloseHistory">Close</button>
+    </Footer>
+</ModalDialog>
 
 @* ── Delete Confirm ───────────────────────────────────────────────────────── *@
-@if (_showDelete && _deleteTarget is not null)
-{
-    <div class="modal-backdrop" @onclick="CloseDeleteViaBackdrop" @onmousedown="() => _deleteBackdropDown = true">
-        <div class="modal-panel modal-panel--sm" @onclick:stopPropagation @onmousedown:stopPropagation>
-            <div class="modal-header">
-                <h2 class="modal-title">Delete Character?</h2>
-                <button class="modal-close" @onclick="CloseDelete">✕</button>
-            </div>
-            <div class="modal-body">
-                <p>Permanently delete <strong>@_deleteTarget.Name</strong>? This cannot be undone.</p>
-            </div>
-            <div class="modal-footer">
-                <button class="chars-btn chars-btn--ghost" @onclick="CloseDelete">Cancel</button>
-                <button class="chars-btn chars-btn--danger" @onclick="ConfirmDelete" disabled="@_saving">
-                    @(_saving ? "Deleting…" : "Delete")
-                </button>
-            </div>
-        </div>
-    </div>
-}
+<ModalDialog IsVisible="_showDelete && _deleteTarget is not null" OnClose="CloseDelete" Title="Delete Character?" PanelClass="modal-panel--sm">
+    <ChildContent>
+        <p>Permanently delete <strong>@_deleteTarget?.Name</strong>? This cannot be undone.</p>
+    </ChildContent>
+    <Footer>
+        <button class="chars-btn chars-btn--ghost" @onclick="CloseDelete">Cancel</button>
+        <button class="chars-btn chars-btn--danger" @onclick="ConfirmDelete" disabled="@_saving">
+            @(_saving ? "Deleting..." : "Delete")
+        </button>
+    </Footer>
+</ModalDialog>
 
 @code {
     [SupplyParameterFromQuery(Name = "all")]
@@ -390,31 +370,30 @@
 
     // XP modal
     private bool _showXp;
-    private bool _xpBackdropDown;
     private string? _xpError;
     private CharacterDto? _xpTarget;
     private int _xpAmount;
     private string? _xpNote;
+    private string _xpTitle = "Assign XP";
 
     // Position modal
     private bool _showPosition;
-    private bool _positionBackdropDown;
     private string? _positionError;
     private CharacterDto? _positionTarget;
     private string _selectedPositionId = string.Empty;
     private List<PositionDto> _positions = [];
+    private string _positionTitle = "Assign Position";
 
     // History modal
     private bool _showHistory;
-    private bool _historyBackdropDown;
     private bool _historyLoading;
     private string? _historyError;
     private CharacterDto? _historyTarget;
     private List<CharacterHistoryDto> _history = [];
+    private string _historyTitle = "History";
 
     // Delete confirm
     private bool _showDelete;
-    private bool _deleteBackdropDown;
     private CharacterDto? _deleteTarget;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -531,13 +510,8 @@
 
     // ── XP ──────────────────────────────────────────────────────────────────
 
-    private void ShowXpModal(CharacterDto c) { _xpTarget = c; _xpAmount = 0; _xpNote = null; _xpError = null; _showXp = true; }
+    private void ShowXpModal(CharacterDto c) { _xpTarget = c; _xpTitle = $"Assign XP — {c.Name}"; _xpAmount = 0; _xpNote = null; _xpError = null; _showXp = true; }
     private void CloseXp() => _showXp = false;
-    private void CloseXpViaBackdrop()
-    {
-        if (_xpBackdropDown) { CloseXp(); }
-        _xpBackdropDown = false;
-    }
 
     private async Task SubmitXp()
     {
@@ -558,6 +532,7 @@
     private async Task ShowPositionModal(CharacterDto c)
     {
         _positionTarget = c;
+        _positionTitle = $"Assign Position — {c.Name}";
         _selectedPositionId = c.PositionId?.ToString() ?? string.Empty;
         _positionError = null;
         _showPosition = true;
@@ -571,11 +546,6 @@
     }
 
     private void ClosePosition() => _showPosition = false;
-    private void ClosePositionViaBackdrop()
-    {
-        if (_positionBackdropDown) { ClosePosition(); }
-        _positionBackdropDown = false;
-    }
 
     private async Task SubmitPosition()
     {
@@ -598,6 +568,7 @@
     private async Task ShowHistoryModal(CharacterDto c)
     {
         _historyTarget = c;
+        _historyTitle = $"History — {c.Name}";
         _history = [];
         _historyError = null;
         _historyLoading = true;
@@ -612,21 +583,11 @@
     }
 
     private void CloseHistory() => _showHistory = false;
-    private void CloseHistoryViaBackdrop()
-    {
-        if (_historyBackdropDown) { CloseHistory(); }
-        _historyBackdropDown = false;
-    }
 
     // ── Delete ───────────────────────────────────────────────────────────────
 
     private void ShowDeleteConfirm(CharacterDto c) { _deleteTarget = c; _showDelete = true; }
     private void CloseDelete() => _showDelete = false;
-    private void CloseDeleteViaBackdrop()
-    {
-        if (_deleteBackdropDown) { CloseDelete(); }
-        _deleteBackdropDown = false;
-    }
 
     private async Task ConfirmDelete()
     {

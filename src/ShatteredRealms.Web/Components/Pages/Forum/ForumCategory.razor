@@ -3,9 +3,8 @@
 @using ShatteredRealms.Domain.Shared
 @using ShatteredRealms.Web.Services
 @using ShatteredRealms.Web.Helpers
+@inherits AuthPageBase
 @inject ForumClientService ForumService
-@inject AuthService AuthService
-@inject NavigationManager Navigation
 @rendermode InteractiveServer
 
 <PageTitle>@(_category?.Name ?? "Forum")</PageTitle>
@@ -31,10 +30,7 @@
     }
 </div>
 
-@if (!string.IsNullOrEmpty(_errorMessage))
-{
-    <div class="alert alert-danger">@_errorMessage</div>
-}
+<AlertBanner Message="@_errorMessage" />
 
 @if (_threads == null)
 {
@@ -94,34 +90,25 @@ else
 
 @if (_showModal)
 {
-    <div class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,0.5);">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">New Thread</h5>
-                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
-                </div>
-                <div class="modal-body">
-                    @if (!string.IsNullOrEmpty(_modalError))
-                    {
-                        <div class="alert alert-danger">@_modalError</div>
-                    }
-                    <div class="mb-3">
-                        <label class="form-label">Title</label>
-                        <input @bind="_newThreadTitle" class="form-control" />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Post (Markdown supported)</label>
-                        <textarea @bind="_newThreadContent" class="form-control font-monospace" rows="8"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
-                    <button type="button" class="btn btn-primary" @onclick="CreateThread">Post Thread</button>
-                </div>
+    <ModalDialog IsVisible="true" OnClose="CloseModal" Title="New Thread" PanelClass="modal-panel--lg">
+        <ChildContent>
+            <AlertBanner Message="@_modalError" />
+            <div class="mb-3">
+                <label class="form-label">Title</label>
+                <input @bind="_newThreadTitle" class="form-control" />
             </div>
-        </div>
-    </div>
+            <div class="mb-3">
+                <label class="form-label">Post (Markdown supported)</label>
+                <textarea @bind="_newThreadContent" class="form-control font-monospace" rows="8"></textarea>
+            </div>
+
+
+        </ChildContent>
+        <Footer>
+            <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+            <button type="button" class="btn btn-primary" @onclick="CreateThread">Post Thread</button>
+        </Footer>
+    </ModalDialog>
 }
 
 @code {
@@ -139,21 +126,12 @@ else
 
     private void NavigateToThread(int threadId) => Navigation.NavigateTo($"/forum/thread/{threadId}");
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnAuthenticatedAsync()
     {
-        if (!firstRender) return;
-
-        if (!await AuthService.IsAuthenticatedAsync())
-        {
-            Navigation.NavigateTo("/login");
-            return;
-        }
-
         _canCreateThread = await AuthService.HasPermissionAsync(Claims.Permissions.Forum.Thread.Create);
         _canModerate     = await AuthService.HasPermissionAsync(Claims.Permissions.Forum.Thread.Delete);
 
         await Load();
-        StateHasChanged();
     }
 
     private async Task Load()

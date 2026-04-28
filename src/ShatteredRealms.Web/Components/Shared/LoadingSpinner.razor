@@ -1,0 +1,13 @@
+@if (IsVisible)
+{
+    <div class="loading-wrapper @WrapperClass">
+        <div class="loading-orb"></div>
+        <span>@Message</span>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; } = true;
+    [Parameter] public string Message { get; set; } = "Loading...";
+    [Parameter] public string WrapperClass { get; set; } = "";
+}

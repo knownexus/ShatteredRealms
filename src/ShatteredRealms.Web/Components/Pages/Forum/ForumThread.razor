@@ -3,9 +3,8 @@
 @using ShatteredRealms.Domain.Shared
 @using ShatteredRealms.Web.Services
 @using ShatteredRealms.Web.Helpers
+@inherits AuthPageBase
 @inject ForumClientService ForumService
-@inject AuthService AuthService
-@inject NavigationManager Navigation
 @rendermode InteractiveServer
 
 <PageTitle>@(_thread?.Title ?? "Thread")</PageTitle>
@@ -33,10 +32,7 @@
     </div>
 }
 
-@if (!string.IsNullOrEmpty(_errorMessage))
-{
-    <div class="alert alert-danger">@_errorMessage</div>
-}
+<AlertBanner Message="@_errorMessage" />
 
 @if (_posts == null)
 {
@@ -104,10 +100,7 @@ else
         <div class="card mt-4">
             <div class="card-header"><strong>Post a Reply</strong></div>
             <div class="card-body">
-                @if (!string.IsNullOrEmpty(_replyError))
-                {
-                    <div class="alert alert-danger">@_replyError</div>
-                }
+                <AlertBanner Message="@_replyError" />
                 <textarea @bind="_replyContent" class="form-control font-monospace mb-2" rows="6"
                           placeholder="Write your reply (Markdown supported)..."></textarea>
                 <button class="btn btn-primary" @onclick="SubmitReply">Post Reply</button>
@@ -140,16 +133,8 @@ else
     private int?     _editingPostId;
     private string   _editContent   = string.Empty;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnAuthenticatedAsync()
     {
-        if (!firstRender) return;
-
-        if (!await AuthService.IsAuthenticatedAsync())
-        {
-            Navigation.NavigateTo("/login");
-            return;
-        }
-
         _currentUserId    = await AuthService.GetUserIdAsync();
         _canPost          = await AuthService.HasPermissionAsync(Claims.Permissions.Forum.Post.Create);
         _canEditOwnPost   = await AuthService.HasPermissionAsync(Claims.Permissions.Forum.Post.Update);
@@ -157,7 +142,6 @@ else
         _canModerate      = await AuthService.IsAdminAsync();
 
         await Load();
-        StateHasChanged();
     }
 
     private async Task Load()

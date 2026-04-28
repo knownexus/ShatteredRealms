@@ -1,50 +1,33 @@
 @page "/documents"
 @using ShatteredRealms.Application.DTOs.Documents
+@using ShatteredRealms.Web.Components.Shared
 @using ShatteredRealms.Web.Services
+@inherits AuthPageBase
 @inject DocumentClientService DocumentService
-@inject AuthService AuthService
-@inject NavigationManager Navigation
 @inject IJSRuntime JS
 @rendermode InteractiveServer
 
 <PageTitle>Documents — Shattered Realms</PageTitle>
 
 <div class="documents-page">
-    <div class="documents-header">
-        <div>
-            <h1 class="documents-title">Documents</h1>
-            <p class="documents-subtitle">Community resources, guides, and files</p>
-        </div>
-        @if (_canUpload)
-        {
-            <label class="btn-gold-outline upload-label @(_uploading ? "upload-label--busy" : "")">
-                <span>@(_uploading ? "Uploading…" : "↑ Upload Document")</span>
-                <InputFile OnChange="OnFileSelected" accept=".pdf,.docx" style="display:none" />
-            </label>
-        }
-    </div>
+    <PageHeader Title="Documents" Subtitle="Community resources, guides, and files">
+        <Actions>
+            @if (_canUpload)
+            {
+                <label class="btn-gold-outline upload-label @(_uploading ? "upload-label--busy" : "")">
+                    <span>@(_uploading ? "Uploading..." : "↑ Upload Document")</span>
+                    <InputFile OnChange="OnFileSelected" accept=".pdf,.docx" style="display:none" />
+                </label>
+            }
+        </Actions>
+    </PageHeader>
 
-    @if (!string.IsNullOrEmpty(_error))
-    {
-        <div class="alert alert-danger">@_error</div>
-    }
-    @if (!string.IsNullOrEmpty(_uploadError))
-    {
-        <div class="alert alert-danger">@_uploadError</div>
-    }
-    @if (!string.IsNullOrEmpty(_uploadSuccess))
-    {
-        <div class="alert alert-success">@_uploadSuccess</div>
-    }
+    <AlertBanner Message="@_error" />
+    <AlertBanner Message="@_uploadError" />
+    <AlertBanner Message="@_uploadSuccess" Type="success" />
 
-    @if (_loading)
-    {
-        <div class="documents-loading">
-            <div class="loading-orb"></div>
-            <span>Loading documents…</span>
-        </div>
-    }
-    else if (_documents.Count == 0)
+    <LoadingSpinner IsVisible="_loading" Message="Loading documents..." />
+    @if (_documents.Count == 0)
     {
         <div class="documents-empty">
             <div class="empty-icon">📄</div>
@@ -106,259 +89,60 @@
 
 @if (_showViewer)
 {
-    <div class="viewer-backdrop" @onmousedown="() => _viewerBackdropDown = true" @onclick="CloseViewerViaBackdrop">
-        <div class="viewer-panel" @onmousedown:stopPropagation @onclick:stopPropagation>
-            <div class="viewer-header">
-                <span class="viewer-title">@_viewerTitle</span>
-                <button class="viewer-close" @onclick="CloseViewer">×</button>
-            </div>
-            <div class="viewer-body">
-                @if (_viewerLoading)
-                {
-                    <div class="viewer-loading">
-                        <div class="loading-orb"></div>
-                        <span>Loading document…</span>
-                    </div>
-                }
-                else if (!string.IsNullOrEmpty(_viewerError))
-                {
-                    <div class="viewer-error">
-                        <p>@_viewerError</p>
-                    </div>
-                }
-                else if (_viewerContentType == "application/pdf" && _viewerBlobUrl is not null)
-                {
-                    <iframe class="doc-iframe" src="@_viewerBlobUrl" title="@_viewerTitle"></iframe>
-                }
-                else
-                {
-                    <div class="viewer-no-preview">
-                        <div class="no-preview-icon">📄</div>
-                        <p>Browser preview is not available for this file type.</p>
-                        <a class="btn-download" href="@(_viewerDownloadUrl ?? "")" target="_blank" download="@_viewerTitle">
-                            ↓ Download to view
-                        </a>
-                    </div>
-                }
-            </div>
-        </div>
-    </div>
+    <ModalDialog IsVisible="_showViewer" OnClose="CloseViewer" Title="@_viewerTitle">
+
+
+            @if (_viewerLoading)
+            {
+                <div class="viewer-loading">
+                    <div class="loading-orb"></div>
+                    <span>Loading document...</span>
+                </div>
+            }
+            else if (!string.IsNullOrEmpty(_viewerError))
+            {
+                <div class="viewer-error">
+                    <p>@_viewerError</p>
+                </div>
+            }
+            else if (_viewerContentType == "application/pdf" && _viewerBlobUrl is not null)
+            {
+                <iframe class="doc-iframe" src="@_viewerBlobUrl" title="@_viewerTitle"></iframe>
+            }
+            else
+            {
+                <div class="viewer-no-preview">
+                    <div class="no-preview-icon">📄</div>
+                    <p>Browser preview is not available for this file type.</p>
+                    <a class="btn-download" href="@(_viewerDownloadUrl ?? "")" target="_blank" download="@_viewerTitle">
+                        ↓ Download to view
+                    </a>
+                </div>
+            }
+
+
+    </ModalDialog>
 }
 
 @if (_deleteTarget is not null)
 {
-    <div class="modal-backdrop" @onmousedown="() => _backdropDown = true" @onclick="CancelDeleteViaBackdrop">
-        <div class="modal-panel" @onmousedown:stopPropagation @onclick:stopPropagation>
-            <div class="modal-header">
-                <h2>Delete Document</h2>
-                <button class="modal-close" @onclick="CancelDelete">×</button>
-            </div>
-            <div class="modal-body">
-                <p style="font-family: var(--font-body); color: var(--text-muted);">
-                    Are you sure you want to delete <strong style="color: var(--text)">@_deleteTarget.OriginalFileName</strong>?
-                </p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" @onclick="CancelDelete">Cancel</button>
-                <button class="btn-danger" @onclick="DeleteDocument" disabled="@_deleting">
-                    @(_deleting ? "Deleting…" : "Delete")
-                </button>
-            </div>
-        </div>
-    </div>
+    <ModalDialog IsVisible="_deleteTarget is not null" OnClose="CancelDelete" Title="Delete Document" PanelClass="modal-panel--narrow">
+        <ChildContent>
+
+            <p style="font-family: var(--font-body); color: var(--text-muted);">
+                Are you sure you want to delete <strong style="color: var(--text)">@_deleteTarget.OriginalFileName</strong>?
+            </p>
+        </ChildContent>
+
+        <Footer>
+            <button class="btn-secondary" @onclick="CancelDelete">Cancel</button>
+            <button class="btn-danger" @onclick="DeleteDocument" disabled="@_deleting">
+                @(_deleting ? "Deleting..." : "Delete")
+            </button>
+        </Footer>
+    </ModalDialog>
 }
 
-<style>
-    .documents-page { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem 4rem; }
-
-    .documents-header {
-        display: flex; align-items: flex-end; justify-content: space-between;
-        margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;
-    }
-    .documents-title { font-family: var(--font-heading); font-size: 2rem; color: var(--gold); margin: 0 0 0.25rem; }
-    .documents-subtitle { font-family: var(--font-body); color: var(--text-muted); margin: 0; font-size: 0.95rem; }
-
-    .btn-gold-outline {
-        padding: 0.55rem 1.3rem; border: 1px solid var(--gold);
-        background: transparent; color: var(--gold); border-radius: 6px;
-        font-family: var(--font-heading); font-size: 0.82rem; font-weight: 700;
-        letter-spacing: 0.06em; cursor: pointer; transition: background 0.15s, color 0.15s;
-        display: inline-flex; align-items: center; gap: 0.4rem;
-    }
-    .btn-gold-outline:hover { background: var(--gold); color: #07090f; }
-    .upload-label { cursor: pointer; }
-    .upload-label--busy { opacity: 0.65; pointer-events: none; }
-
-    .alert { padding: 0.75rem 1rem; border-radius: 6px; font-family: var(--font-body); font-size: 0.88rem; margin-bottom: 1rem; }
-    .alert-danger { background: rgba(255,69,58,0.12); border: 1px solid rgba(255,69,58,0.3); color: #ff453a; }
-    .alert-success { background: rgba(52,199,89,0.1); border: 1px solid rgba(52,199,89,0.3); color: #34c759; }
-
-    .documents-loading {
-        display: flex; align-items: center; gap: 1rem;
-        justify-content: center; padding: 4rem;
-        color: var(--text-muted); font-family: var(--font-body);
-    }
-    .loading-orb {
-        width: 22px; height: 22px;
-        border: 2px solid rgba(201,168,76,0.2);
-        border-top-color: var(--gold);
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-    }
-    @@keyframes spin { to { transform: rotate(360deg); } }
-
-    .documents-empty {
-        text-align: center; padding: 5rem 2rem;
-        color: var(--text-muted); font-family: var(--font-body);
-        display: flex; flex-direction: column; align-items: center; gap: 1rem;
-    }
-    .empty-icon { font-size: 3rem; }
-
-    .documents-table-wrap {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        overflow: hidden;
-    }
-    .documents-table {
-        width: 100%; border-collapse: collapse;
-        font-family: var(--font-body); font-size: 0.88rem;
-    }
-    .documents-table thead tr {
-        border-bottom: 1px solid var(--border);
-        background: rgba(255,255,255,0.03);
-    }
-    .documents-table th {
-        padding: 0.85rem 1.25rem; text-align: left;
-        font-family: var(--font-heading); font-size: 0.72rem;
-        letter-spacing: 0.08em; color: var(--text-muted);
-        text-transform: uppercase; font-weight: 600;
-    }
-    .doc-row { border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.1s; }
-    .doc-row:last-child { border-bottom: none; }
-    .doc-row:hover { background: rgba(255,255,255,0.02); }
-    .documents-table td { padding: 0.9rem 1.25rem; color: var(--text); vertical-align: middle; }
-
-    .doc-name { display: flex; align-items: center; gap: 0.6rem; font-weight: 500; max-width: 320px; }
-    .doc-icon { font-size: 1.1rem; flex-shrink: 0; }
-    .doc-type, .doc-size, .doc-uploader, .doc-date { color: var(--text-muted); white-space: nowrap; }
-    .doc-actions { display: flex; align-items: center; gap: 0.6rem; white-space: nowrap; }
-
-    .btn-view {
-        padding: 0.3rem 0.85rem;
-        border: 1px solid rgba(201,168,76,0.3);
-        background: transparent; color: var(--gold);
-        border-radius: 5px; font-family: var(--font-body); font-size: 0.8rem;
-        cursor: pointer; transition: background 0.15s;
-        white-space: nowrap;
-    }
-    .btn-view:hover { background: rgba(201,168,76,0.1); }
-
-    /* Document viewer modal */
-    .viewer-backdrop {
-        position: fixed; inset: 0;
-        background: rgba(0,0,0,0.75);
-        display: flex; align-items: center; justify-content: center;
-        z-index: 1000; padding: 1rem;
-    }
-    .viewer-panel {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        width: min(1100px, 100%);
-        height: min(90vh, 900px);
-        display: flex; flex-direction: column;
-        overflow: hidden;
-    }
-    .viewer-header {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: 0.9rem 1.25rem;
-        border-bottom: 1px solid var(--border);
-        background: rgba(255,255,255,0.02);
-        flex-shrink: 0;
-    }
-    .viewer-title {
-        font-family: var(--font-body); font-size: 0.9rem; color: var(--text);
-        min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    }
-    .viewer-close {
-        background: none; border: none; color: var(--text-muted);
-        font-size: 1.4rem; cursor: pointer; line-height: 1; flex-shrink: 0; padding: 0 0.25rem;
-        transition: color 0.15s;
-    }
-    .viewer-close:hover { color: var(--text); }
-    .viewer-body { flex: 1; min-height: 0; position: relative; }
-
-    .doc-iframe {
-        width: 100%; height: 100%; border: none; display: block;
-        background: #fff;
-    }
-
-    .viewer-loading, .viewer-error, .viewer-no-preview {
-        display: flex; flex-direction: column; align-items: center;
-        justify-content: center; gap: 1rem;
-        height: 100%; padding: 2rem;
-        font-family: var(--font-body); color: var(--text-muted); text-align: center;
-    }
-    .no-preview-icon { font-size: 4rem; }
-
-    .btn-download {
-        padding: 0.3rem 0.85rem;
-        border: 1px solid rgba(201,168,76,0.3);
-        background: rgba(201,168,76,0.08); color: var(--gold);
-        border-radius: 5px; font-family: var(--font-body); font-size: 0.8rem;
-        text-decoration: none; transition: background 0.15s;
-        white-space: nowrap;
-    }
-    .btn-download:hover { background: rgba(201,168,76,0.18); }
-
-    .btn-delete {
-        padding: 0.3rem 0.6rem;
-        border: 1px solid rgba(255,69,58,0.3);
-        background: transparent; color: rgba(255,69,58,0.7);
-        border-radius: 5px; font-size: 1rem; cursor: pointer;
-        transition: all 0.15s; line-height: 1;
-    }
-    .btn-delete:hover { border-color: #ff453a; color: #ff453a; background: rgba(255,69,58,0.1); }
-
-    /* Modal */
-    .modal-backdrop {
-        position: fixed; inset: 0; background: rgba(0,0,0,0.6);
-        display: flex; align-items: center; justify-content: center; z-index: 1000;
-    }
-    .modal-panel {
-        background: var(--surface); border: 1px solid var(--border);
-        border-radius: 12px; width: min(440px, 95vw);
-    }
-    .modal-header {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: 1.25rem 1.75rem; border-bottom: 1px solid var(--border);
-    }
-    .modal-header h2 { font-family: var(--font-heading); font-size: 1.1rem; color: var(--text); margin: 0; }
-    .modal-close { background: none; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer; }
-    .modal-body { padding: 1.5rem 1.75rem; }
-    .modal-footer {
-        display: flex; justify-content: flex-end; gap: 0.75rem;
-        padding: 1rem 1.75rem 1.5rem; border-top: 1px solid var(--border);
-    }
-    .btn-secondary {
-        padding: 0.6rem 1.2rem; background: rgba(255,255,255,0.06);
-        border: 1px solid var(--border); color: var(--text-muted);
-        border-radius: 6px; font-family: var(--font-body); cursor: pointer;
-    }
-    .btn-danger {
-        padding: 0.6rem 1.5rem; background: rgba(255,69,58,0.9);
-        color: #fff; border: none; border-radius: 6px;
-        font-family: var(--font-heading); font-size: 0.85rem; font-weight: 700; cursor: pointer;
-    }
-    .btn-danger:disabled { opacity: 0.55; cursor: not-allowed; }
-
-    @@media (max-width: 700px) {
-        .doc-type, .doc-uploader { display: none; }
-        .documents-table th:nth-child(2),
-        .documents-table th:nth-child(4) { display: none; }
-    }
-</style>
 
 @code {
     private List<DocumentDto> _documents = new();
@@ -372,7 +156,6 @@
 
     private DocumentDto? _deleteTarget;
     private bool _deleting;
-    private bool _backdropDown;
 
     private bool _showViewer;
     private bool _viewerLoading;
@@ -381,23 +164,13 @@
     private string? _viewerContentType;
     private string? _viewerDownloadUrl;
     private string? _viewerError;
-    private bool _viewerBackdropDown;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnAuthenticatedAsync()
     {
-        if (!firstRender) return;
-
-        if (!await AuthService.IsAuthenticatedAsync())
-        {
-            Navigation.NavigateTo("/login");
-            return;
-        }
-
         _canUpload = await AuthService.HasPermissionAsync(Domain.Shared.Claims.Permissions.Documents.Upload);
         _canDelete = await AuthService.HasPermissionAsync(Domain.Shared.Claims.Permissions.Documents.Delete);
 
         await LoadDocuments();
-        StateHasChanged();
     }
 
     private async Task LoadDocuments()
@@ -490,12 +263,6 @@
         }
     }
 
-    private async Task CloseViewerViaBackdrop()
-    {
-        if (_viewerBackdropDown) await CloseViewer();
-        _viewerBackdropDown = false;
-    }
-
     private void ConfirmDelete(DocumentDto doc)
     {
         _deleteTarget = doc;
@@ -503,7 +270,6 @@
     }
 
     private void CancelDelete() => _deleteTarget = null;
-    private void CancelDeleteViaBackdrop() { if (_backdropDown) CancelDelete(); _backdropDown = false; }
 
     private async Task DeleteDocument()
     {

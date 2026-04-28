@@ -1,22 +1,15 @@
 @page "/events/{Id:int}"
 @using ShatteredRealms.Application.DTOs.Events
 @using ShatteredRealms.Web.Services
+@inherits AuthPageBase
 @inject EventClientService EventService
-@inject AuthService AuthService
-@inject NavigationManager Navigation
 @rendermode InteractiveServer
 
 <PageTitle>@(_event?.Title ?? "Event") — Shattered Realms</PageTitle>
 
 <div class="event-detail-page">
-    @if (_loading)
-    {
-        <div class="detail-loading">
-            <div class="loading-orb"></div>
-            <span>Loading event…</span>
-        </div>
-    }
-    else if (!string.IsNullOrEmpty(_error))
+    <LoadingSpinner IsVisible="_loading" Message="Loading event..." />
+    @if (!string.IsNullOrEmpty(_error))
     {
         <div class="detail-error">
             <p>@_error</p>
@@ -53,10 +46,7 @@
                 <div class="event-detail-main">
                     <h1 class="event-detail-title">@_event.Title</h1>
 
-                    @if (!string.IsNullOrEmpty(_actionError))
-                    {
-                        <div class="alert alert-danger">@_actionError</div>
-                    }
+                <AlertBanner Message="@_actionError" />
 
                     <div class="event-detail-meta-row">
                         <div class="meta-item">
@@ -105,7 +95,7 @@
                             @if (_event.IsGoing)
                             {
                                 <button class="btn-going btn-going--active" @onclick="CancelRegistration" disabled="@_toggling">
-                                    @(_toggling ? "Updating…" : "✓ Going — Cancel")
+                                    @(_toggling ? "Updating..." : "✓ Going — Cancel")
                                 </button>
                             }
                             else
@@ -114,7 +104,7 @@
                                 <button class="btn-going" @onclick="Register" disabled="@(_toggling || atCap)">
                                     @if (_toggling)
                                     {
-                                        <span>Updating…</span>
+                                        <span>Updating...</span>
                                     }
                                     else if (atCap)
                                     {
@@ -164,12 +154,9 @@
                             <InputFile OnChange="OnBannerSelected" accept=".jpg,.jpeg,.png,.webp" class="file-input" />
                             @if (_uploadingBanner)
                             {
-                                <div class="upload-status">Uploading…</div>
+                                <div class="upload-status">Uploading...</div>
                             }
-                            @if (!string.IsNullOrEmpty(_bannerError))
-                            {
-                                <div class="alert alert-danger mt-2">@_bannerError</div>
-                            }
+                            <AlertBanner Message="@_bannerError" />
                         </div>
                     }
 
@@ -186,15 +173,12 @@
                             @if (_attendeesLoading)
                             {
                                 <div class="attendees-loading">
-                                    <div class="loading-orb loading-orb--sm"></div>
-                                    <span>Loading…</span>
+                                    <LoadingSpinner IsVisible="true" Message="" WrapperClass="loading-inline" />
+                                    <span>Loading...</span>
                                 </div>
                             }
-                            else if (!string.IsNullOrEmpty(_attendeesError))
-                            {
-                                <div class="alert alert-danger mt-2">@_attendeesError</div>
-                            }
-                            else if (_attendees is not null && _attendees.Count == 0)
+                            <AlertBanner Message="@_attendeesError" />
+                            @if (_attendees is not null && _attendees.Count == 0)
                             {
                                 <p class="attendees-empty">No one has signed up yet.</p>
                             }
@@ -223,342 +207,67 @@
 
 @if (_showEditModal && _event is not null)
 {
-    <div class="modal-backdrop" @onmousedown="() => _backdropDown = true" @onclick="CloseEditModalViaBackdrop">
-        <div class="modal-panel" @onmousedown:stopPropagation @onclick:stopPropagation>
-            <div class="modal-header">
-                <h2>Edit Event</h2>
-                <button class="modal-close" @onclick="CloseEditModal">×</button>
+    <ModalDialog IsVisible="_showEditModal" OnClose="CloseEditModal" Title="Edit Event">
+        <ChildContent>
+
+            <AlertBanner Message="@_editError" />
+            <div class="form-group">
+                <label class="form-label">Title</label>
+                <input class="form-control" @bind="_editForm.Title" />
             </div>
-            <div class="modal-body">
-                @if (!string.IsNullOrEmpty(_editError))
-                {
-                    <div class="alert alert-danger">@_editError</div>
-                }
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" rows="4" @bind="_editForm.Description"></textarea>
+            </div>
+            <div class="form-grid">
                 <div class="form-group">
-                    <label class="form-label">Title</label>
-                    <input class="form-control" @bind="_editForm.Title" />
+                    <label class="form-label">Start</label>
+                    <input class="form-control" type="datetime-local" @bind="_editForm.StartsAt" />
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Description</label>
-                    <textarea class="form-control" rows="4" @bind="_editForm.Description"></textarea>
+                    <label class="form-label">End</label>
+                    <input class="form-control" type="datetime-local" @bind="_editForm.EndsAt" />
                 </div>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label class="form-label">Start</label>
-                        <input class="form-control" type="datetime-local" @bind="_editForm.StartsAt" />
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">End</label>
-                        <input class="form-control" type="datetime-local" @bind="_editForm.EndsAt" />
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Location (optional)</label>
-                        <input class="form-control" @bind="_editForm.Location" placeholder="Place or URL" />
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Capacity cap (optional)</label>
-                        <input class="form-control" type="number" @bind="_editForm.MemberCap" min="1" placeholder="Unlimited" />
-                    </div>
+                <div class="form-group">
+                    <label class="form-label">Location (optional)</label>
+                    <input class="form-control" @bind="_editForm.Location" placeholder="Place or URL" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Capacity cap (optional)</label>
+                    <input class="form-control" type="number" @bind="_editForm.MemberCap" min="1" placeholder="Unlimited" />
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" @onclick="CloseEditModal">Cancel</button>
-                <button class="btn-gold" @onclick="SaveEdit" disabled="@_saving">
-                    @(_saving ? "Saving…" : "Save Changes")
-                </button>
-            </div>
-        </div>
-    </div>
+
+        </ChildContent>
+        <Footer>
+            <button class="btn-secondary" @onclick="CloseEditModal">Cancel</button>
+            <button class="btn-gold" @onclick="SaveEdit" disabled="@_saving">
+                @(_saving ? "Saving..." : "Save Changes")
+            </button>
+        </Footer>
+    </ModalDialog>
 }
 
 @if (_showDeleteConfirm)
 {
-    <div class="modal-backdrop" @onmousedown="() => _backdropDown = true" @onclick="CloseDeleteConfirmViaBackdrop">
-        <div class="modal-panel modal-panel--narrow" @onmousedown:stopPropagation @onclick:stopPropagation>
-            <div class="modal-header">
-                <h2>Delete Event</h2>
-                <button class="modal-close" @onclick="() => _showDeleteConfirm = false">×</button>
-            </div>
-            <div class="modal-body">
-                <p style="font-family: var(--font-body); color: var(--text-muted);">
-                    Are you sure you want to delete <strong style="color: var(--text)">@_event?.Title</strong>? This action cannot be undone.
-                </p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" @onclick="() => _showDeleteConfirm = false">Cancel</button>
-                <button class="btn-danger" @onclick="DeleteEvent" disabled="@_deleting">
-                    @(_deleting ? "Deleting…" : "Delete Event")
-                </button>
-            </div>
-        </div>
-    </div>
+    <ModalDialog IsVisible="_showDeleteConfirm" OnClose="() => _showDeleteConfirm = false" Title="Delete Event" PanelClass="modal-panel--narrow">
+        <ChildContent>
+
+            <p style="font-family: var(--font-body); color: var(--text-muted);">
+                Are you sure you want to delete <strong style="color: var(--text)">@_event?.Title</strong>? This action cannot be undone.
+            </p>
+
+
+        </ChildContent>
+        <Footer>
+            <button class="btn-secondary" @onclick="() => _showDeleteConfirm = false">Cancel</button>
+            <button class="btn-danger" @onclick="DeleteEvent" disabled="@_deleting">
+                @(_deleting ? "Deleting..." : "Delete Event")
+            </button>
+        </Footer>
+    </ModalDialog>
 }
 
-<style>
-    .event-detail-page { min-height: 100vh; }
-
-    .detail-loading {
-        display: flex; align-items: center; gap: 1rem;
-        justify-content: center; padding: 8rem;
-        color: var(--text-muted); font-family: var(--font-body);
-    }
-    .loading-orb {
-        width: 22px; height: 22px;
-        border: 2px solid rgba(201,168,76,0.2);
-        border-top-color: var(--gold);
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-    }
-    @@keyframes spin { to { transform: rotate(360deg); } }
-
-    .detail-error {
-        max-width: 600px; margin: 4rem auto; padding: 2rem;
-        text-align: center; color: var(--text-muted); font-family: var(--font-body);
-    }
-
-    .event-hero {
-        width: 100%; height: 320px;
-        background-size: cover; background-position: center;
-    }
-    .event-hero--placeholder {
-        background: linear-gradient(135deg, #0d1219 0%, #12161e 50%, #0a0e15 100%);
-        position: relative;
-    }
-    .event-hero--placeholder::after {
-        content: '';
-        position: absolute; inset: 0;
-        background: radial-gradient(ellipse at 30% 50%, rgba(201,168,76,0.06) 0%, transparent 70%);
-    }
-
-    .event-detail-body {
-        max-width: 1100px; margin: 0 auto; padding: 2rem 1rem 4rem;
-    }
-
-    .event-detail-header {
-        display: flex; align-items: center; justify-content: space-between;
-        margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;
-    }
-    .event-detail-actions { display: flex; gap: 0.75rem; align-items: center; }
-
-    .btn-back {
-        background: none; border: none; color: var(--text-muted);
-        font-family: var(--font-body); font-size: 0.9rem; cursor: pointer;
-        padding: 0; transition: color 0.15s;
-    }
-    .btn-back:hover { color: var(--gold); }
-
-    .btn-outline {
-        padding: 0.5rem 1.1rem;
-        border: 1px solid var(--border);
-        background: transparent; color: var(--text-muted);
-        border-radius: 6px; font-family: var(--font-body);
-        font-size: 0.85rem; cursor: pointer; transition: border-color 0.15s, color 0.15s;
-    }
-    .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
-
-    .btn-danger-outline {
-        padding: 0.5rem 1.1rem;
-        border: 1px solid rgba(255,69,58,0.4);
-        background: transparent; color: rgba(255,69,58,0.8);
-        border-radius: 6px; font-family: var(--font-body);
-        font-size: 0.85rem; cursor: pointer; transition: all 0.15s;
-    }
-    .btn-danger-outline:hover { border-color: #ff453a; color: #ff453a; background: rgba(255,69,58,0.08); }
-
-    .event-detail-content {
-        display: grid; grid-template-columns: 1fr 280px; gap: 2.5rem; align-items: start;
-    }
-
-    .event-detail-title {
-        font-family: var(--font-heading);
-        font-size: 2rem; color: var(--gold);
-        margin: 0 0 1.5rem;
-        line-height: 1.2;
-    }
-
-    .event-detail-meta-row {
-        display: flex; flex-wrap: wrap; gap: 1.5rem;
-        margin-bottom: 2rem;
-        padding-bottom: 1.5rem;
-        border-bottom: 1px solid var(--border);
-    }
-    .meta-item { display: flex; align-items: flex-start; gap: 0.6rem; }
-    .meta-icon { font-size: 1.1rem; margin-top: 2px; }
-    .meta-label { font-family: var(--font-body); font-size: 0.72rem; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; }
-    .meta-value { font-family: var(--font-body); font-size: 0.95rem; color: var(--text); margin-top: 2px; }
-    .cap-indicator { color: var(--text-muted); }
-
-    .going-section { margin-bottom: 2rem; }
-    .btn-going {
-        padding: 0.75rem 2rem;
-        border: 1px solid var(--gold);
-        background: transparent; color: var(--gold);
-        border-radius: 8px; font-family: var(--font-heading);
-        font-size: 0.9rem; font-weight: 700; letter-spacing: 0.06em;
-        cursor: pointer; transition: all 0.15s;
-    }
-    .btn-going:hover:not(:disabled) { background: var(--gold); color: #07090f; }
-    .btn-going--active {
-        background: rgba(201,168,76,0.12);
-    }
-    .btn-going--active:hover:not(:disabled) { background: rgba(255,69,58,0.12); border-color: rgba(255,69,58,0.5); color: #ff453a; }
-    .btn-going:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    .section-heading {
-        font-family: var(--font-heading); font-size: 1.1rem; color: var(--text);
-        margin: 0 0 1rem; font-weight: 600;
-    }
-    .description-body {
-        font-family: var(--font-body); color: var(--text-muted);
-        line-height: 1.7; white-space: pre-wrap; font-size: 0.95rem;
-    }
-
-    /* Sidebar */
-    .event-detail-sidebar { display: flex; flex-direction: column; gap: 1rem; }
-    .sidebar-card {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 1.25rem;
-    }
-    .sidebar-card-header {
-        font-family: var(--font-heading); font-size: 0.78rem; color: var(--text-muted);
-        letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.9rem;
-    }
-    .capacity-bar-wrap { display: flex; flex-direction: column; gap: 0.5rem; }
-    .capacity-bar {
-        height: 6px; background: rgba(255,255,255,0.08);
-        border-radius: 3px; overflow: hidden;
-    }
-    .capacity-fill {
-        height: 100%; background: linear-gradient(90deg, var(--gold), #a8883c);
-        border-radius: 3px; transition: width 0.3s;
-    }
-    .capacity-label { font-family: var(--font-body); font-size: 0.8rem; color: var(--text-muted); }
-    .capacity-unlimited { font-family: var(--font-body); font-size: 0.85rem; color: var(--text-muted); }
-
-    .attendees-card .sidebar-card-header {
-        display: flex; align-items: center; justify-content: space-between;
-    }
-    .attendee-count-badge {
-        background: rgba(201,168,76,0.15); border: 1px solid rgba(201,168,76,0.3);
-        color: var(--gold); border-radius: 20px; padding: 0.1rem 0.55rem;
-        font-family: var(--font-body); font-size: 0.72rem; font-weight: 600;
-    }
-    .attendees-loading {
-        display: flex; align-items: center; gap: 0.5rem;
-        font-family: var(--font-body); font-size: 0.82rem; color: var(--text-muted);
-        padding: 0.5rem 0;
-    }
-    .loading-orb--sm { width: 14px; height: 14px; border-width: 2px; }
-    .attendees-empty {
-        font-family: var(--font-body); font-size: 0.83rem; color: var(--text-muted);
-        margin: 0; font-style: italic;
-    }
-    .attendees-list {
-        list-style: none; margin: 0; padding: 0;
-        display: flex; flex-direction: column; gap: 0.6rem;
-        max-height: 340px; overflow-y: auto;
-    }
-    .attendee-row {
-        display: flex; align-items: center; gap: 0.65rem;
-    }
-    .attendee-avatar {
-        width: 30px; height: 30px; border-radius: 50%;
-        background: rgba(201,168,76,0.15); border: 1px solid rgba(201,168,76,0.25);
-        color: var(--gold); font-family: var(--font-heading); font-size: 0.75rem;
-        display: flex; align-items: center; justify-content: center;
-        flex-shrink: 0;
-    }
-    .attendee-info { display: flex; flex-direction: column; min-width: 0; }
-    .attendee-name {
-        font-family: var(--font-body); font-size: 0.85rem; color: var(--text);
-        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .attendee-since { font-family: var(--font-body); font-size: 0.72rem; color: var(--text-muted); }
-
-    .file-input {
-        width: 100%; font-family: var(--font-body); font-size: 0.82rem;
-        color: var(--text-muted);
-    }
-    .upload-status {
-        font-family: var(--font-body); font-size: 0.82rem; color: var(--text-muted);
-        margin-top: 0.5rem;
-    }
-    .mt-2 { margin-top: 0.5rem; }
-
-    /* Modal (shared) */
-    .alert { padding: 0.75rem 1rem; border-radius: 6px; font-family: var(--font-body); font-size: 0.88rem; }
-    .alert-danger { background: rgba(255,69,58,0.12); border: 1px solid rgba(255,69,58,0.3); color: #ff453a; }
-
-    .modal-backdrop {
-        position: fixed; inset: 0;
-        background: rgba(0,0,0,0.6);
-        display: flex; align-items: center; justify-content: center;
-        z-index: 1000;
-    }
-    .modal-panel {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        width: min(600px, 95vw);
-        max-height: 90vh;
-        overflow-y: auto;
-    }
-    .modal-panel--narrow { width: min(440px, 95vw); }
-    .modal-header {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: 1.25rem 1.75rem;
-        border-bottom: 1px solid var(--border);
-    }
-    .modal-header h2 { font-family: var(--font-heading); font-size: 1.1rem; color: var(--text); margin: 0; }
-    .modal-close { background: none; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer; }
-    .modal-body { padding: 1.5rem 1.75rem; display: flex; flex-direction: column; gap: 1rem; }
-    .modal-footer {
-        display: flex; justify-content: flex-end; gap: 0.75rem;
-        padding: 1rem 1.75rem 1.5rem;
-        border-top: 1px solid var(--border);
-    }
-
-    .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
-    .form-label { font-family: var(--font-body); font-size: 0.82rem; color: var(--text-muted); letter-spacing: 0.04em; }
-    .form-control {
-        background: rgba(255,255,255,0.04); border: 1px solid var(--border);
-        color: var(--text); border-radius: 6px; padding: 0.55rem 0.8rem;
-        font-family: var(--font-body); font-size: 0.9rem;
-        transition: border-color 0.15s;
-    }
-    .form-control:focus { outline: none; border-color: rgba(201,168,76,0.5); }
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-
-    .btn-secondary {
-        padding: 0.6rem 1.2rem;
-        background: rgba(255,255,255,0.06); border: 1px solid var(--border);
-        color: var(--text-muted); border-radius: 6px;
-        font-family: var(--font-body); cursor: pointer;
-    }
-    .btn-gold {
-        padding: 0.6rem 1.5rem;
-        background: linear-gradient(135deg, #c9a84c, #a8883c);
-        color: #07090f; border: none; border-radius: 6px;
-        font-family: var(--font-heading); font-size: 0.85rem;
-        font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer;
-    }
-    .btn-gold:disabled { opacity: 0.55; cursor: not-allowed; }
-    .btn-danger {
-        padding: 0.6rem 1.5rem;
-        background: rgba(255,69,58,0.9); color: #fff; border: none; border-radius: 6px;
-        font-family: var(--font-heading); font-size: 0.85rem;
-        font-weight: 700; cursor: pointer;
-    }
-    .btn-danger:disabled { opacity: 0.55; cursor: not-allowed; }
-
-    @@media (max-width: 768px) {
-        .event-detail-content { grid-template-columns: 1fr; }
-        .event-hero { height: 200px; }
-        .form-grid { grid-template-columns: 1fr; }
-    }
-</style>
 
 @code {
     [Parameter] public int Id { get; set; }
@@ -588,18 +297,9 @@
 
     private bool _showDeleteConfirm;
     private bool _deleting;
-    private bool _backdropDown;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnAuthenticatedAsync()
     {
-        if (!firstRender) return;
-
-        if (!await AuthService.IsAuthenticatedAsync())
-        {
-            Navigation.NavigateTo("/login");
-            return;
-        }
-
         _canUpdate          = await AuthService.HasPermissionAsync(Domain.Shared.Claims.Permissions.Events.Update);
         _canDelete          = await AuthService.HasPermissionAsync(Domain.Shared.Claims.Permissions.Events.Delete);
         _canRegister        = await AuthService.HasPermissionAsync(Domain.Shared.Claims.Permissions.Events.Register);
@@ -609,8 +309,6 @@
 
         if (_canManageAttendees)
             await LoadAttendees();
-
-        StateHasChanged();
     }
 
     private async Task LoadEvent()
@@ -718,8 +416,6 @@
     }
 
     private void CloseEditModal() => _showEditModal = false;
-    private void CloseEditModalViaBackdrop() { if (_backdropDown) CloseEditModal(); _backdropDown = false; }
-    private void CloseDeleteConfirmViaBackdrop() { if (_backdropDown) _showDeleteConfirm = false; _backdropDown = false; }
 
     private async Task SaveEdit()
     {

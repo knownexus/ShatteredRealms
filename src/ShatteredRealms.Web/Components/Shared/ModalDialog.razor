@@ -1,0 +1,50 @@
+@if (IsVisible)
+{
+    <div class="modal-backdrop" @onmousedown="OnBackdropMouseDown" @onclick="OnBackdropClick">
+        <div class="modal-panel @PanelClass" @onmousedown:stopPropagation @onclick:stopPropagation>
+            <div class="modal-header">
+                <h2>@Title</h2>
+                <button class="modal-close" @onclick="Close">×</button>
+            </div>
+             <div class="modal-body">
+                 @ChildContent
+             </div>
+            @if (Footer != null)
+            {
+                <div class="modal-footer">
+                    @Footer
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? Footer { get; set; }
+    [Parameter] public string PanelClass { get; set; } = "";
+
+    private bool _backdropDown;
+
+    private void OnBackdropMouseDown()
+    {
+        _backdropDown = true;
+    }
+
+    private void OnBackdropClick()
+    {
+        if (_backdropDown)
+        {
+            _ = Close();
+        }
+        _backdropDown = false;
+    }
+
+    private async Task Close()
+    {
+        await OnClose.InvokeAsync();
+    }
+}

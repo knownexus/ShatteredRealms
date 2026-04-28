@@ -3,9 +3,8 @@
 @using ShatteredRealms.Domain.Shared
 @using ShatteredRealms.Web.Services
 @using ShatteredRealms.Web.Helpers
+@inherits AuthPageBase
 @inject ForumClientService ForumService
-@inject AuthService AuthService
-@inject NavigationManager Navigation
 @rendermode InteractiveServer
 
 <PageTitle>Forum</PageTitle>
@@ -18,10 +17,7 @@
     }
 </div>
 
-@if (!string.IsNullOrEmpty(_errorMessage))
-{
-    <div class="alert alert-danger">@_errorMessage</div>
-}
+<AlertBanner Message="@_errorMessage" />
 
 @if (_categories == null)
 {
@@ -62,38 +58,29 @@ else
 
 @if (_showModal)
 {
-    <div class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,0.5);">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">@(_isEdit ? "Edit Category" : "New Category")</h5>
-                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
-                </div>
-                <div class="modal-body">
-                    @if (!string.IsNullOrEmpty(_modalError))
-                    {
-                        <div class="alert alert-danger">@_modalError</div>
-                    }
-                    <div class="mb-3">
-                        <label class="form-label">Name</label>
-                        <input @bind="_categoryName" class="form-control" />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <textarea @bind="_categoryDescription" class="form-control" rows="3"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Sort Order</label>
-                        <input @bind="_categorySortOrder" type="number" class="form-control" />
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
-                    <button type="button" class="btn btn-primary" @onclick="SaveCategory">Save</button>
-                </div>
+    <ModalDialog IsVisible="true" OnClose="CloseModal" Title="@(_isEdit ? "Edit Category" : "New Category")">
+        <ChildContent>
+            <AlertBanner Message="@_modalError" />
+            <div class="mb-3">
+                <label class="form-label">Name</label>
+                <input @bind="_categoryName" class="form-control" />
             </div>
-        </div>
-    </div>
+            <div class="mb-3">
+                <label class="form-label">Description</label>
+                <textarea @bind="_categoryDescription" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Sort Order</label>
+                <input @bind="_categorySortOrder" type="number" class="form-control" />
+            </div>
+
+
+        </ChildContent>
+        <Footer>
+            <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+            <button type="button" class="btn btn-primary" @onclick="SaveCategory">Save</button>
+        </Footer>
+    </ModalDialog>
 }
 
 @code {
@@ -111,19 +98,10 @@ else
 
     private void NavigateToCategory(int id) => Navigation.NavigateTo($"/forum/category/{id}");
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnAuthenticatedAsync()
     {
-        if (!firstRender) return;
-
-        if (!await AuthService.IsAuthenticatedAsync())
-        {
-            Navigation.NavigateTo("/login");
-            return;
-        }
-
         _canManageCategories = await AuthService.HasPermissionAsync(Claims.Permissions.Forum.Category.Create);
         await LoadCategories();
-        StateHasChanged();
     }
 
     private async Task LoadCategories()
