@@ -245,6 +245,9 @@ public static class DomainErrors
         public static readonly Error NotFound = new(
             "Event.NotFound", "Event not found", (int)HttpStatusCode.NotFound);
 
+        public static readonly Error Deleted = new(
+                "Event.Deleted", "Event has been deleted", (int)HttpStatusCode.Gone);
+        
         public static readonly Error CapacityReached = new(
             "Event.CapacityReached", "This event is at full capacity", (int)HttpStatusCode.Conflict);
 
@@ -256,6 +259,9 @@ public static class DomainErrors
 
         public static readonly Error InvalidDates = new(
             "Event.InvalidDates", "Event end time must be after start time", (int)HttpStatusCode.BadRequest);
+
+        public static readonly Error Ended = new(
+            "Event.Ended", "Event has already ended", (int)HttpStatusCode.Forbidden);
     }
 
     public static class Announcement

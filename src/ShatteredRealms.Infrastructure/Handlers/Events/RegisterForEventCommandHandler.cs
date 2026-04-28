@@ -31,10 +31,19 @@ public sealed class RegisterForEventCommandHandler : IRequestHandler<RegisterFor
         {
             return Result.Failure(DomainErrors.Event.NotFound);
         }
+        if(ev.IsDeleted)
+        {
+            return Result.Failure(DomainErrors.Event.Deleted);
+        }
+
+        if(ev.EndsAt < DateTime.UtcNow)
+        {
+            return Result.Failure(DomainErrors.Event.Ended);
+        }
 
         if (ev.Attendees.Any(a => a.UserId == request.UserId))
         {
-            return Result.Success(); // idempotent
+            return Result.Success();
         }
 
         if (ev.MemberCap.HasValue && ev.Attendees.Count >= ev.MemberCap.Value)

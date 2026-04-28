@@ -25,9 +25,16 @@ public sealed class CancelRegistrationCommandHandler : IRequestHandler<CancelReg
         var attendee = await _context.EventAttendee
             .FirstOrDefaultAsync(a => a.EventId == request.EventId && a.UserId == request.UserId, cancellationToken);
 
+        var ev = await _context.Event.FindAsync(request.EventId, cancellationToken);
+        
         if (attendee is null)
         {
             return Result.Failure(DomainErrors.Event.NotRegistered);
+        }
+
+        if (ev?.EndsAt < DateTime.UtcNow)
+        {
+            return Result.Failure(DomainErrors.Event.Ended);
         }
 
         _context.EventAttendee.Remove(attendee);
