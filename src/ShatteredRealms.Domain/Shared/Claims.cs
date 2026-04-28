@@ -53,6 +53,8 @@ public static class Claims
             public const string DeleteOwn        = "Characters.DeleteOwn";
             public const string AssignPosition   = "Characters.AssignPosition";
             public const string AssignExperience = "Characters.AssignExperience";
+            public const string AssignNationality = "Characters.AssignNationality";
+            public const string AssignFaction     = "Characters.AssignFaction";
         }
 
         public static class Roles
@@ -193,16 +195,18 @@ public static class Claims
         , new PermissionDef(Permissions.Users.Update,                "Update any user",                   "Users")
         , new PermissionDef(Permissions.Users.Delete,                "Delete users",                      "Users")
           // index 6-15 - Character
-        , new PermissionDef(Permissions.Characters.CreateOwn,        "Create own characters",             "Characters")
-        , new PermissionDef(Permissions.Characters.Create,           "Create character",                  "Characters")
-        , new PermissionDef(Permissions.Characters.ViewOwn,          "View own characters",               "Characters")
-        , new PermissionDef(Permissions.Characters.View,             "View any character",                "Characters")
-        , new PermissionDef(Permissions.Characters.UpdateOwn,        "Update own character name/nation",  "Characters")
-        , new PermissionDef(Permissions.Characters.Update,           "Update any character",              "Characters")
-        , new PermissionDef(Permissions.Characters.Delete,           "Delete any character",              "Characters")
-        , new PermissionDef(Permissions.Characters.DeleteOwn,        "Delete own character",              "Characters")
-        , new PermissionDef(Permissions.Characters.AssignPosition,   "Assign societal/military position", "Characters")
-        , new PermissionDef(Permissions.Characters.AssignExperience, "Assign experience/level",           "Characters")
+         , new PermissionDef(Permissions.Characters.CreateOwn,        "Create own characters",             "Characters")
+         , new PermissionDef(Permissions.Characters.Create,           "Create character",                  "Characters")
+         , new PermissionDef(Permissions.Characters.ViewOwn,          "View own characters",               "Characters")
+         , new PermissionDef(Permissions.Characters.View,             "View any character",                "Characters")
+         , new PermissionDef(Permissions.Characters.UpdateOwn,        "Update own character name/nation",  "Characters")
+         , new PermissionDef(Permissions.Characters.Update,           "Update any character",              "Characters")
+         , new PermissionDef(Permissions.Characters.Delete,           "Delete any character",              "Characters")
+         , new PermissionDef(Permissions.Characters.DeleteOwn,        "Delete own character",              "Characters")
+         , new PermissionDef(Permissions.Characters.AssignPosition,   "Assign societal/military position", "Characters")
+         , new PermissionDef(Permissions.Characters.AssignExperience, "Assign experience/level",           "Characters")
+         , new PermissionDef(Permissions.Characters.AssignNationality,"Assign character nationality",      "Characters")
+         , new PermissionDef(Permissions.Characters.AssignFaction,    "Assign character faction",          "Characters")
           // index 16-20 - Roles
         , new PermissionDef(Permissions.Roles.Create,                "Create roles",                      "Role")
         , new PermissionDef(Permissions.Roles.View,                  "View roles",                        "Role")
@@ -292,6 +296,8 @@ public static class Claims
           , Permissions.Characters.Update
           , Permissions.Characters.AssignPosition
           , Permissions.Characters.AssignExperience
+          , Permissions.Characters.AssignNationality
+          , Permissions.Characters.AssignFaction
           , Permissions.Forum.Thread.Create
           , Permissions.Forum.Thread.UpdateOwn
           , Permissions.Forum.Thread.DeleteOwn

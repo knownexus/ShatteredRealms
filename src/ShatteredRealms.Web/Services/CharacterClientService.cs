@@ -163,6 +163,32 @@ public class CharacterClientService
         return Result.Failure<CharacterDto>(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to assign position", (int)response.StatusCode));
     }
 
+    public async Task<Result<CharacterDto>> AssignNationalityAsync(int characterId, string nationality)
+    {
+        var response = await _httpClient.PutAsJsonAsync($"api/characters/{characterId}/assign-nationality", new { Nationality = nationality });
+        if (response.IsSuccessStatusCode)
+        {
+            var dto = await response.Content.ReadFromJsonAsync<CharacterDto>();
+            return dto is not null ? Result.Success(dto) : Result.Failure<CharacterDto>(new Error("Error", "Empty response", 500));
+        }
+
+        var p = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        return Result.Failure<CharacterDto>(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to assign nationality", (int)response.StatusCode));
+    }
+
+    public async Task<Result<CharacterDto>> AssignFactionAsync(int characterId, string faction)
+    {
+        var response = await _httpClient.PutAsJsonAsync($"api/characters/{characterId}/assign-faction", new { Faction = faction });
+        if (response.IsSuccessStatusCode)
+        {
+            var dto = await response.Content.ReadFromJsonAsync<CharacterDto>();
+            return dto is not null ? Result.Success(dto) : Result.Failure<CharacterDto>(new Error("Error", "Empty response", 500));
+        }
+
+        var p = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        return Result.Failure<CharacterDto>(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to assign faction", (int)response.StatusCode));
+    }
+
     public async Task<Result<List<PositionDto>>> GetPositionsAsync()
     {
         var response = await _httpClient.GetAsync("api/positions");

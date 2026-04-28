@@ -1,4 +1,4 @@
-.chars-page {
+﻿.chars-page {
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
@@ -771,4 +771,47 @@
     color: #5e7189;
     font-style: italic;
     margin-top: 0.15rem;
+}
+
+/* ── New Action Button Colors ── */
+
+.char-action-btn--purple {
+    color: rgba(140,80,200,0.55);
+    border-color: rgba(140,80,200,0.15);
+}
+.char-action-btn--purple:hover {
+    color: #a76bd6;
+    border-color: rgba(140,80,200,0.4);
+    background: rgba(140,80,200,0.08);
+}
+
+.char-action-btn--orange {
+    color: rgba(230,145,60,0.55);
+    border-color: rgba(230,145,60,0.15);
+}
+.char-action-btn--orange:hover {
+    color: #e6913c;
+    border-color: rgba(230,145,60,0.4);
+    background: rgba(230,145,60,0.08);
+}
+
+/* ── Group Toggle ── */
+
+.char-group__toggle {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 0.25rem;
+    margin-right: 0.5rem;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+}
+.char-group__toggle:hover {
+    background: rgba(255,255,255,0.05);
+}
+.char-group__toggle svg {
+    width: 16px;
+    height: 16px;
 }

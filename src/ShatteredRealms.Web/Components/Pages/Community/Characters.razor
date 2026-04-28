@@ -71,6 +71,10 @@
                     <input type="radio" name="groupBy" value="nation" checked="@(_groupBy == "nation")"
                            @onchange="@(() => OnGroupChanged("nation"))" /> Nation
                 </label>
+                <label class="group-option">
+                    <input type="radio" name="groupBy" value="faction" checked="@(_groupBy == "faction")"
+                           @onchange="@(() => OnGroupChanged("faction"))" /> Faction
+                </label>
             </div>
         </div>
     }
@@ -160,6 +164,25 @@
                                     </svg>
                                 </button>
                             }
+                            @if (_canAssignNationality)
+                            {
+                                <button class="char-action-btn char-action-btn--purple" title="Assign Nationality"
+                                        @onclick="() => ShowNationalityModal(c)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                    </svg>
+                                </button>
+                            }
+                            @if (_canAssignFaction)
+                            {
+                                <button class="char-action-btn char-action-btn--orange" title="Assign Faction"
+                                        @onclick="() => ShowFactionModal(c)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                                    </svg>
+                                </button>
+                            }
                             @if (_canViewAny)
                             {
                                 <button class="char-action-btn char-action-btn--info" title="View History"
@@ -194,8 +217,22 @@
             <div class="chars-groups">
                 @foreach (var group in groups)
                 {
+                    var groupKey = group.Key;
+                    var isExpanded = IsGroupExpanded(groupKey);
                     <div class="char-group">
                         <h3 class="char-group__header">
+                            <button class="char-group__toggle" @onclick="() => ToggleGroup(groupKey)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="char-group__icon">
+                                    @if (isExpanded)
+                                    {
+                                        <polyline points="6 9 12 15 18 9"/>
+                                    }
+                                    else
+                                    {
+                                        <polyline points="9 6 15 12 9 18"/>
+                                    }
+                                </svg>
+                            </button>
                             @if (_groupBy == "user")
                             {
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="char-group__icon">
@@ -210,6 +247,8 @@
                             }
                             @group.Key <span class="char-group__count">@group.Value.Count character(s)</span>
                         </h3>
+                        @if (isExpanded)
+                        {
                         <div class="chars-grid">
                             @foreach (var c in group.Value)
                             {
@@ -266,18 +305,37 @@
                                             </button>
                                         }
                                         @if (_canAssignPosition)
-                                        {
-                                            <button class="char-action-btn char-action-btn--teal" title="Assign Position"
-                                                    @onclick="() => ShowPositionModal(c)">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                                                    <circle cx="9" cy="7" r="4"/>
-                                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                                                </svg>
-                                            </button>
-                                        }
-                                        @if (_canViewAny)
+                                         {
+                                             <button class="char-action-btn char-action-btn--teal" title="Assign Position"
+                                                     @onclick="() => ShowPositionModal(c)">
+                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                                     <circle cx="9" cy="7" r="4"/>
+                                                     <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                                     <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                                 </svg>
+                                             </button>
+                                         }
+                                         @if (_canAssignNationality)
+                                         {
+                                             <button class="char-action-btn char-action-btn--purple" title="Assign Nationality"
+                                                     @onclick="() => ShowNationalityModal(c)">
+                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                                 </svg>
+                                             </button>
+                                         }
+                                         @if (_canAssignFaction)
+                                         {
+                                             <button class="char-action-btn char-action-btn--orange" title="Assign Faction"
+                                                     @onclick="() => ShowFactionModal(c)">
+                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                     <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                                                     <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                                                 </svg>
+                                             </button>
+                                         }
+                                         @if (_canViewAny)
                                         {
                                             <button class="char-action-btn char-action-btn--info" title="View History"
                                                     @onclick="() => ShowHistoryModal(c)">
@@ -304,6 +362,7 @@
                                 </div>
                             }
                         </div>
+                        }
                     </div>
                 }
             </div>
@@ -327,11 +386,23 @@
             </div>
             <div class="form-group">
                 <label class="form-label">Nationality</label>
-                <input class="form-input" @bind="_createForm.Nationality" placeholder="e.g. Norman, Saxon, Viking..." maxlength="128" />
+                <select class="form-input" @bind="_createForm.Nationality">
+                    <option value="">- Select -</option>
+                    @foreach (var opt in NationalityOptions)
+                    {
+                        <option value="@opt">@opt</option>
+                    }
+                </select>
             </div>
             <div class="form-group">
                 <label class="form-label">Faction</label>
-                <input class="form-input" @bind="_createForm.Faction" placeholder="e.g. Kingdom of England, Norse Clan..." maxlength="128" />
+                <select class="form-input" @bind="_createForm.Faction">
+                    <option value="">- Select -</option>
+                    @foreach (var opt in FactionOptions)
+                    {
+                        <option value="@opt">@opt</option>
+                    }
+                </select>
             </div>
 
         </ChildContent>
@@ -344,105 +415,63 @@
     </ModalDialog>
 }
 
-@* ── Edit Modal ───────────────────────────────────────────────────────────── *@
-@if (_showEdit && _editTarget is not null)
+@* ── Assign Nationality Modal ──────────────────────────────── *@
+@if (_showNationality && _nationalityTarget is not null)
 {
-    <ModalDialog IsVisible="_showEdit && _editTarget is not null" OnClose="CloseEdit" Title="Edit Character">
+    <ModalDialog IsVisible="_showNationality && _nationalityTarget is not null" OnClose="CloseNationality" Title="@_nationalityTitle" PanelClass="modal-panel--sm">
         <ChildContent>
-
-            @if (_editError is not null)
+            @if (_nationalityError is not null)
             {
-                <div class="form-error-banner">@_editError</div>
+                <div class="form-error-banner">@_nationalityError</div>
             }
-            <div class="form-group">
-                <label class="form-label">Name</label>
-                <input class="form-input" @bind="_editForm.Name" placeholder="Character name" maxlength="128" />
-            </div>
             <div class="form-group">
                 <label class="form-label">Nationality</label>
-                <input class="form-input" @bind="_editForm.Nationality" placeholder="Nationality" maxlength="128" />
-            </div>
-            <div class="form-group">
-                <label class="form-label">Faction</label>
-                <input class="form-input" @bind="_editForm.Faction" placeholder="Faction" maxlength="128" />
-            </div>
-            @if (_canEdit)
-            {
-                <div class="form-group">
-                    <label class="form-label">Level</label>
-                    <input class="form-input" type="number" min="1" @bind="_editAdminForm.Level" />
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Experience</label>
-                    <input class="form-input" type="number" min="0" @bind="_editAdminForm.Experience" />
-                </div>
-            }
-
-        </ChildContent>
-        <Footer>
-            <button class="chars-btn chars-btn--ghost" @onclick="CloseEdit">Cancel</button>
-            <button class="chars-btn chars-btn--primary" @onclick="SaveEdit" disabled="@_saving">
-                @(_saving ? "Saving..." : "Save")
-            </button>
-        </Footer>
-    </ModalDialog>
-}
-
-@* ── Assign XP Modal ─────────────────────────────────────────────────────── *@
-@if (_showXp && _xpTarget is not null)
-{
-    <ModalDialog IsVisible="_showXp && _xpTarget is not null" OnClose="CloseXp" Title="@_xpTitle">
-        <ChildContent>
-
-            @if (_xpError is not null)
-            {
-                <div class="form-error-banner">@_xpError</div>
-            }
-            <p class="xp-current">Current XP: <strong>@_xpTarget.Experience</strong> | Level: <strong>@_xpTarget.Level</strong></p>
-            <div class="form-group">
-                <label class="form-label">XP to add</label>
-                <input class="form-input" type="number" @bind="_xpAmount" min="-9999" max="9999" />
-            </div>
-            <div class="form-group">
-                <label class="form-label">Note (optional)</label>
-                <input class="form-input" @bind="_xpNote" placeholder="e.g. Battle of Hastings event" maxlength="256" />
+                <select class="form-input" @bind="_selectedNationality">
+                    <option value="">- Select -</option>
+                    @foreach (var opt in NationalityOptions)
+                    {
+                        <option value="@opt">@opt</option>
+                    }
+                </select>
             </div>
         </ChildContent>
         <Footer>
-            <button class="chars-btn chars-btn--ghost" @onclick="CloseXp">Cancel</button>
-            <button class="chars-btn chars-btn--primary" @onclick="SubmitXp" disabled="@_saving">
-                @(_saving ? "Saving..." : "Assign XP")
-            </button>
-        </Footer>
-    </ModalDialog>
-}
-
-
-@* ── Assign Position Modal ───────────────────────────────────────────────── *@
-<ModalDialog IsVisible="_showPosition && _positionTarget is not null" OnClose="ClosePosition" Title="@_positionTitle" PanelClass="modal-panel--sm">
-    <ChildContent>
-        @if (_positionError is not null)
-        {
-            <div class="form-error-banner">@_positionError</div>
-        }
-        <div class="form-group">
-            <label class="form-label">Position</label>
-            <select class="form-input" @bind="_selectedPositionId">
-                <option value="">- None -</option>
-                @foreach (var pos in _positions)
-                {
-                    <option value="@pos.Id">@pos.Name</option>
-                }
-            </select>
-        </div>
-        <footer>
-            <button class="chars-btn chars-btn--ghost" @onclick="ClosePosition">Cancel</button>
-            <button class="chars-btn chars-btn--primary" @onclick="SubmitPosition" disabled="@_saving">
+            <button class="chars-btn chars-btn--ghost" @onclick="CloseNationality">Cancel</button>
+            <button class="chars-btn chars-btn--primary" @onclick="SubmitNationality" disabled="@_saving">
                 @(_saving ? "Saving..." : "Assign")
             </button>
-        </footer>
-    </ChildContent>
-</ModalDialog>
+        </Footer>
+    </ModalDialog>
+}
+
+@* ── Assign Faction Modal ──────────────────────────────── *@
+@if (_showFaction && _factionTarget is not null)
+{
+    <ModalDialog IsVisible="_showFaction && _factionTarget is not null" OnClose="CloseFaction" Title="@_factionTitle" PanelClass="modal-panel--sm">
+        <ChildContent>
+            @if (_factionError is not null)
+            {
+                <div class="form-error-banner">@_factionError</div>
+            }
+            <div class="form-group">
+                <label class="form-label">Faction</label>
+                <select class="form-input" @bind="_selectedFaction">
+                    <option value="">- Select -</option>
+                    @foreach (var opt in FactionOptions)
+                    {
+                        <option value="@opt">@opt</option>
+                    }
+                </select>
+            </div>
+        </ChildContent>
+        <Footer>
+            <button class="chars-btn chars-btn--ghost" @onclick="CloseFaction">Cancel</button>
+            <button class="chars-btn chars-btn--primary" @onclick="SubmitFaction" disabled="@_saving">
+                @(_saving ? "Saving..." : "Assign")
+            </button>
+        </Footer>
+    </ModalDialog>
+}
 
 @* ── History Modal ────────────────────────────────────────────────────────── *@
 <ModalDialog IsVisible="_showHistory && _historyTarget is not null" OnClose="CloseHistory" Title="@_historyTitle" PanelClass="modal-panel--lg">
@@ -572,6 +601,31 @@
     private bool _showDelete;
     private CharacterDto? _deleteTarget;
 
+    // Nationality modal
+    private bool _showNationality;
+    private string? _nationalityError;
+    private CharacterDto? _nationalityTarget;
+    private string _selectedNationality = string.Empty;
+    private string _nationalityTitle = "Assign Nationality";
+
+    // Faction modal
+    private bool _showFaction;
+    private string? _factionError;
+    private CharacterDto? _factionTarget;
+    private string _selectedFaction = string.Empty;
+    private string _factionTitle = "Assign Faction";
+
+    // Grouping
+    private HashSet<string> _expandedGroups = new();
+
+    // Expandable lookup lists
+    private static readonly string[] NationalityOptions = ["French", "Saxon", "Other"];
+    private static readonly string[] FactionOptions = ["Normans", "Saxons", "Other"];
+
+    // Permissions
+    private bool _canAssignNationality;
+    private bool _canAssignFaction;
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
@@ -583,6 +637,8 @@
         _canViewAny        = await AuthService.HasPermissionAsync(Claims.Permissions.Characters.View);
         _canAssignXp       = await AuthService.HasPermissionAsync(Claims.Permissions.Characters.AssignExperience);
         _canAssignPosition = await AuthService.HasPermissionAsync(Claims.Permissions.Characters.AssignPosition);
+        _canAssignNationality = await AuthService.HasPermissionAsync(Claims.Permissions.Characters.AssignNationality);
+        _canAssignFaction = await AuthService.HasPermissionAsync(Claims.Permissions.Characters.AssignFaction);
 
         if (ShowAll && _canViewAny) _viewAll = true;
 
@@ -646,9 +702,12 @@
         if (_groupBy == "none")
             return new Dictionary<string, List<CharacterDto>> { { "All Characters", _characters } };
 
-        var grouped = _groupBy == "user"
-            ? _characters.GroupBy(c => string.IsNullOrEmpty(c.OwnerName) ? "Unknown User" : c.OwnerName)
-            : _characters.GroupBy(c => string.IsNullOrEmpty(c.Nationality) ? "Unknown Nation" : c.Nationality);
+        var grouped = _groupBy switch
+        {
+            "user" => _characters.GroupBy(c => string.IsNullOrEmpty(c.OwnerName) ? "Unknown User" : c.OwnerName),
+            "faction" => _characters.GroupBy(c => string.IsNullOrEmpty(c.Faction) ? "Unknown Faction" : c.Faction),
+            _ => _characters.GroupBy(c => string.IsNullOrEmpty(c.Nationality) ? "Unknown Nation" : c.Nationality)
+        };
 
         return grouped.ToDictionary(g => g.Key, g => g.ToList());
     }
@@ -829,6 +888,72 @@
     {
         _groupBy = value;
         ApplyGrouping();
+    }
+
+    // ── Grouping expand/collapse ───────────────────────────
+
+    private bool IsGroupExpanded(string groupKey) => _expandedGroups.Contains(groupKey);
+
+    private void ToggleGroup(string groupKey)
+    {
+        if (_expandedGroups.Contains(groupKey))
+            _expandedGroups.Remove(groupKey);
+        else
+            _expandedGroups.Add(groupKey);
+    }
+
+    // ── Nationality ───────────────────────────────────────────
+
+    private void ShowNationalityModal(CharacterDto c)
+    {
+        _nationalityTarget = c;
+        _nationalityTitle = $"Assign Nationality - {c.Name}";
+        _selectedNationality = c.Nationality ?? string.Empty;
+        _nationalityError = null;
+        _showNationality = true;
+    }
+
+    private void CloseNationality() => _showNationality = false;
+
+    private async Task SubmitNationality()
+    {
+        if (_nationalityTarget is null) return;
+        _saving = true;
+        _nationalityError = null;
+        var result = await CharacterService.AssignNationalityAsync(_nationalityTarget.Id, _selectedNationality);
+        _saving = false;
+        if (result.IsFailure) { _nationalityError = result.Error.Message; return; }
+
+        var idx = _characters.FindIndex(c => c.Id == _nationalityTarget.Id);
+        if (idx >= 0) _characters[idx] = result.Value;
+        _showNationality = false;
+    }
+
+    // ── Faction ─────────────────────────────────────────────
+
+    private void ShowFactionModal(CharacterDto c)
+    {
+        _factionTarget = c;
+        _factionTitle = $"Assign Faction - {c.Name}";
+        _selectedFaction = c.Faction ?? string.Empty;
+        _factionError = null;
+        _showFaction = true;
+    }
+
+    private void CloseFaction() => _showFaction = false;
+
+    private async Task SubmitFaction()
+    {
+        if (_factionTarget is null) return;
+        _saving = true;
+        _factionError = null;
+        var result = await CharacterService.AssignFactionAsync(_factionTarget.Id, _selectedFaction);
+        _saving = false;
+        if (result.IsFailure) { _factionError = result.Error.Message; return; }
+
+        var idx = _characters.FindIndex(c => c.Id == _factionTarget.Id);
+        if (idx >= 0) _characters[idx] = result.Value;
+        _showFaction = false;
     }
 
 }

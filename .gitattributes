@@ -1,4 +1,1 @@
-* text=lf
-*.cs text eol=lf
-*.json text eol=lf
-*.csproj text eol=lf
+text=auto

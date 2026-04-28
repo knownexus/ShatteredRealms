@@ -25,6 +25,8 @@ public enum TelemetryActionType
     CharacterDeleted          = 32,
     CharacterXpAssigned       = 33,
     CharacterPositionAssigned = 34,
+    CharacterNationalityAssigned = 35,
+    CharacterFactionAssigned     = 36,
 
     // Wiki
     WikiPageCreated     = 40,

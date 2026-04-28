@@ -171,6 +171,38 @@ public sealed class CharactersController : ControllerBase
             : Ok(result.Value);
     }
 
+    [RequirePermission(Claims.Permissions.Characters.AssignNationality)]
+    [HttpPut("{id:int}/assign-nationality")]
+    public async Task<ActionResult<CharacterDto>> AssignNationality(int id, [FromBody] AssignNationalityRequest request, CancellationToken cancellationToken)
+    {
+        var requestingUserId = User.GetUserId();
+        if (string.IsNullOrEmpty(requestingUserId))
+        {
+            return Problem(detail: "User ID cannot be null or empty", statusCode: 400, title: "Invalid User ID");
+        }
+
+        var result = await _mediator.Send(new AssignNationalityCommand(id, request.Nationality, requestingUserId), cancellationToken);
+        return result.IsFailure
+            ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)
+            : Ok(result.Value);
+    }
+
+    [RequirePermission(Claims.Permissions.Characters.AssignFaction)]
+    [HttpPut("{id:int}/assign-faction")]
+    public async Task<ActionResult<CharacterDto>> AssignFaction(int id, [FromBody] AssignFactionRequest request, CancellationToken cancellationToken)
+    {
+        var requestingUserId = User.GetUserId();
+        if (string.IsNullOrEmpty(requestingUserId))
+        {
+            return Problem(detail: "User ID cannot be null or empty", statusCode: 400, title: "Invalid User ID");
+        }
+
+        var result = await _mediator.Send(new AssignFactionCommand(id, request.Faction, requestingUserId), cancellationToken);
+        return result.IsFailure
+            ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)
+            : Ok(result.Value);
+    }
+
     [RequirePermission(Claims.Permissions.Characters.DeleteOwn)]
     [HttpDelete("self/{id:int}")]
     public async Task<IActionResult> DeleteOwn(int id, CancellationToken cancellationToken)
