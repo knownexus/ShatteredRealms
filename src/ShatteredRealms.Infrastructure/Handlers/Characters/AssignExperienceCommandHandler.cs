@@ -51,9 +51,13 @@ public sealed class AssignExperienceCommandHandler : IRequestHandler<AssignExper
 
         await _context.SaveChangesAsync(cancellationToken);
 
+        var telemetryDetails = string.IsNullOrWhiteSpace(request.Note)
+            ? $"+{request.XpToAdd} XP (total: {character.Experience})"
+            : $"+{request.XpToAdd} XP (total: {character.Experience}) — {request.Note}";
+
         await _analytics.TrackAsync(TelemetryActionType.CharacterXpAssigned, request.RequestingUserId, string.Empty,
             targetId: character.Id.ToString(), targetName: character.Name,
-            details: $"+{request.XpToAdd} XP (total: {character.Experience})", cancellationToken: cancellationToken);
+            details: telemetryDetails, cancellationToken: cancellationToken);
 
         return Result.Success(CreateCharacterCommandHandler.MapToDto(character, null));
     }
