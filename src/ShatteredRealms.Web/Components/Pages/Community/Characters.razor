@@ -250,7 +250,7 @@
                         @if (isExpanded)
                         {
                         <div class="chars-grid">
-                            @foreach (var c in group.Value)
+                            @foreach (var character in group.Value)
                             {
                                 <div class="char-card">
                                     <div class="char-card__crest">
@@ -259,35 +259,35 @@
                                         </svg>
                                     </div>
                                     <div class="char-card__body">
-                                        <div class="char-card__name">@c.Name</div>
-                                        <div class="char-card__nationality">@c.Nationality</div>
-                                        @if (!string.IsNullOrEmpty(c.Faction))
+                                        <div class="char-card__name">@character.Name</div>
+                                        <div class="char-card__nationality">@character.Nationality</div>
+                                        @if (!string.IsNullOrEmpty(character.Faction))
                                         {
-                                            <div class="char-card__faction">@c.Faction</div>
+                                            <div class="char-card__faction">@character.Faction</div>
                                         }
-                                        @if (!string.IsNullOrEmpty(c.PositionName))
+                                        @if (!string.IsNullOrEmpty(character.PositionName))
                                         {
-                                            <div class="char-card__position">@c.PositionName</div>
+                                            <div class="char-card__position">@character.PositionName</div>
                                         }
                                         <div class="char-card__stats">
                                             <span class="char-stat">
                                                 <span class="char-stat__label">Level</span>
-                                                <span class="char-stat__value">@c.Level</span>
+                                                <span class="char-stat__value">@character.Level</span>
                                             </span>
                                             <span class="char-stat">
                                                 <span class="char-stat__label">XP</span>
-                                                <span class="char-stat__value">@c.Experience</span>
+                                                <span class="char-stat__value">@character.Experience</span>
                                             </span>
                                         </div>
-                                        @if (!string.IsNullOrEmpty(c.OwnerName) && (_canViewAny || _viewAll))
+                                        @if (!string.IsNullOrEmpty(character.OwnerName) && (_canViewAny || _viewAll))
                                         {
-                                            <div class="char-card__owner">Owner: @c.OwnerName</div>
+                                            <div class="char-card__owner">Owner: @character.OwnerName</div>
                                         }
                                     </div>
                                     <div class="char-card__actions">
-                                        @if (_canEdit || c.UserId == _currentUserId)
+                                        @if (_canEdit || character.UserId == _currentUserId)
                                         {
-                                            <button class="char-action-btn" title="Edit" @onclick="() => ShowEditModal(c)">
+                                            <button class="char-action-btn" title="Edit" @onclick="() => ShowEditModal(character)">
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                                                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -297,7 +297,7 @@
                                         @if (_canAssignXp)
                                         {
                                             <button class="char-action-btn char-action-btn--gold" title="Assign XP"
-                                                    @onclick="() => ShowXpModal(c)">
+                                                    @onclick="() => ShowXpModal(character)">
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                     <polygon
                                                         points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
@@ -307,7 +307,7 @@
                                         @if (_canAssignPosition)
                                          {
                                              <button class="char-action-btn char-action-btn--teal" title="Assign Position"
-                                                     @onclick="() => ShowPositionModal(c)">
+                                                     @onclick="() => ShowPositionModal(character)">
                                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                                                      <circle cx="9" cy="7" r="4"/>
@@ -319,7 +319,7 @@
                                          @if (_canAssignNationality)
                                          {
                                              <button class="char-action-btn char-action-btn--purple" title="Assign Nationality"
-                                                     @onclick="() => ShowNationalityModal(c)">
+                                                     @onclick="() => ShowNationalityModal(character)">
                                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                                                  </svg>
@@ -328,7 +328,7 @@
                                          @if (_canAssignFaction)
                                          {
                                              <button class="char-action-btn char-action-btn--orange" title="Assign Faction"
-                                                     @onclick="() => ShowFactionModal(c)">
+                                                     @onclick="() => ShowFactionModal(character)">
                                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
                                                      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
@@ -338,17 +338,17 @@
                                          @if (_canViewAny)
                                         {
                                             <button class="char-action-btn char-action-btn--info" title="View History"
-                                                    @onclick="() => ShowHistoryModal(c)">
+                                                    @onclick="() => ShowHistoryModal(character)">
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                     <circle cx="12" cy="12" r="10"/>
                                                     <polyline points="12 6 12 12 16 14"/>
                                                 </svg>
                                             </button>
                                         }
-                                        @if (_canDelete || c.UserId == _currentUserId)
+                                        @if (_canDelete || character.UserId == _currentUserId)
                                         {
                                             <button class="char-action-btn char-action-btn--danger" title="Delete"
-                                                    @onclick="() => ShowDeleteConfirm(c)">
+                                                    @onclick="() => ShowDeleteConfirm(character)">
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                     <polyline points="3 6 5 6 21 6"/>
                                                     <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
@@ -529,6 +529,48 @@
         </button>
     </Footer>
 </ModalDialog>
+
+
+
+@* ── Edit Modal ───────────────────────────────────────────────────────────── *@
+@if (_showEdit && _editTarget is not null)
+{
+     <ModalDialog IsVisible = "_showEdit && _editTarget is not null" OnClose = "CloseEdit" Title = "Edit Character" >
+        <ChildContent>
+            @if(_editError is not null)
+            {
+                <div class ="form-error-banner" > @_editError </div>
+            }
+            <div class ="form-group">
+                <label class ="form-label"> Name </label>
+                <input class ="form-input" @bind = "_editForm.Name" placeholder = "Character name" maxlength = "128"/>
+            </div>
+            <div class ="form-group">
+                <label class ="form-label" > Nationality </label>
+                <input class ="form-input" @bind = "_editForm.Nationality" placeholder = "Nationality" maxlength = "128"/>
+            </div>
+            <div class ="form-group">
+                <label class ="form-label"> Faction </label>
+                <input class ="form-input" @bind = "_editForm.Faction" placeholder = "Faction" maxlength = "128"/>
+            </div>
+            @if(_canEdit)
+            {
+                <div class="form-group">
+                    <label class="form-label"> Level </label>
+                    <input class="form-input" type="number" min="1" @bind="_editAdminForm.Level"/>
+                </div>
+                <div class ="form-group">
+                    <label class ="form-label" > Experience </label>
+                    <input class ="form-input" type = "number" min = "0" @bind = "_editAdminForm.Experience"/>
+                </div>
+            }
+        </ChildContent>
+        <Footer>
+            <button class ="chars-btn chars-btn--ghost" @onclick = "CloseEdit"> Cancel </button>
+            <button class ="chars-btn chars-btn--primary" @onclick = "SaveEdit" disabled = "@_saving" >@(_saving ? "Saving..." : "Save") </button>
+         </Footer>
+     </ModalDialog>
+ }
 
 @code {
     [SupplyParameterFromQuery(Name = "all")]
@@ -742,11 +784,11 @@
 
     // ── Edit ────────────────────────────────────────────────────────────────
 
-    private void ShowEditModal(CharacterDto c)
+    private void ShowEditModal(CharacterDto character)
     {
-        _editTarget = c;
-        _editForm = new UpdateCharacterRequest { Name = c.Name, Nationality = c.Nationality, Faction = c.Faction };
-        _editAdminForm = new UpdateCharacterByAdminRequest { Name = c.Name, Nationality = c.Nationality, Faction = c.Faction, Level = c.Level, Experience = c.Experience };
+        _editTarget = character;
+        _editForm = new UpdateCharacterRequest { Name = character.Name, Nationality = character.Nationality, Faction = character.Faction };
+        _editAdminForm = new UpdateCharacterByAdminRequest { Name = character.Name, Nationality = character.Nationality, Faction = character.Faction, Level = character.Level, Experience = character.Experience };
         _editError = null;
         _showEdit = true;
     }
