@@ -218,6 +218,7 @@
         <div class="filter-bar">
             <h2 class="section-title">Event Log</h2>
             <div class="filter-controls">
+                
                 <select class="form-control filter-select" @bind="_filterEventType">
                     <option value="">All types</option>
                     @foreach (var name in Enum.GetNames<TelemetryEventType>())
@@ -296,6 +297,10 @@
                 <button class="btn-secondary" @onclick="PrevPage" disabled="@(_page <= 1)">‹ Prev</button>
                 <span class="page-info">Page @_page of @TotalPages (@_totalCount total)</span>
                 <button class="btn-secondary" @onclick="NextPage" disabled="@(_page >= TotalPages)">Next ›</button>
+                <input class="form-control-number" type="number" min="1" step="1" @bind="@PageSize"/>
+                <button class="btn-gold" @onclick="ApplyFilters">Apply</button>
+
+
             </div>
         }
     </div>
@@ -523,6 +528,8 @@
     .filter-select { min-width: 160px; }
     .filter-input { min-width: 130px; }
 
+    .form-control-number { background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 0.45rem 0.45rem; font-family: var(--font-body); box-sizing: content-box; font-size: 0.85rem; width: 5ch; flex: 0 0 auto;}
+    .form-control-number:focus { outline: none; border-color: rgba(201, 168, 76, 0.5); }
     .form-control { background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 0.45rem 0.7rem; font-family: var(--font-body); font-size: 0.85rem; }
     .form-control:focus { outline: none; border-color: rgba(201,168,76,0.5); }
     .form-group { display: flex; flex-direction: column; gap: 0.35rem; }
@@ -613,7 +620,13 @@
     private string? _rulesError;
 
     private int _page = 1;
-    private const int PageSize = 50;
+
+    private int PageSize
+    {
+        get;
+        set => field = value < 1 ? 1 : value;
+    } = 20;
+
     private int _totalCount;
     private int TotalPages => _totalCount == 0 ? 1 : (int)Math.Ceiling(_totalCount / (double)PageSize);
 
