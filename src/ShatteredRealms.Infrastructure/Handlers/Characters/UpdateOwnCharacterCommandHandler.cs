@@ -24,24 +24,34 @@ public sealed class UpdateOwnCharacterCommandHandler : IRequestHandler<UpdateOwn
     public async Task<Result<CharacterDto>> Handle(UpdateOwnCharacterCommand request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.Name))
+        {
             return Result.Failure<CharacterDto>(DomainErrors.Character.NameRequired);
+        }
 
         if (string.IsNullOrWhiteSpace(request.Nationality))
+        {
             return Result.Failure<CharacterDto>(DomainErrors.Character.NationalityRequired);
+        }
 
         if (string.IsNullOrWhiteSpace(request.Faction))
+        {
             return Result.Failure<CharacterDto>(DomainErrors.Character.FactionRequired);
+        }
 
         var character = await _context.Character
-            .Include(c => c.Owner)
-            .Include(c => c.Position)
-            .FirstOrDefaultAsync(c => c.Id == request.CharacterId, cancellationToken);
+                                      .Include(c => c.Owner)
+                                      .Include(c => c.Position)
+                                      .FirstOrDefaultAsync(c => c.Id == request.CharacterId, cancellationToken);
 
         if (character is null)
+        {
             return Result.Failure<CharacterDto>(DomainErrors.Character.NotFound);
+        }
 
         if (character.UserId != request.RequestingUserId)
+        {
             return Result.Failure<CharacterDto>(DomainErrors.Character.NotOwner);
+        }
 
         character.Name        = request.Name.Trim();
         character.Nationality = request.Nationality.Trim();

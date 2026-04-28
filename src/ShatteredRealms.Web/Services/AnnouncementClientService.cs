@@ -15,7 +15,9 @@ public class AnnouncementClientService
     {
         var response = await _httpClient.GetAsync("api/announcements");
         if (response.IsSuccessStatusCode)
+        {
             return Result.Success(await response.Content.ReadFromJsonAsync<List<AnnouncementDto>>() ?? []);
+        }
 
         var p = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         return Result.Failure<List<AnnouncementDto>>(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to load announcements", (int)response.StatusCode));
@@ -63,7 +65,10 @@ public class AnnouncementClientService
     public async Task<Result> DeleteAsync(int id)
     {
         var response = await _httpClient.DeleteAsync($"api/announcements/{id}");
-        if (response.IsSuccessStatusCode) return Result.Success();
+        if (response.IsSuccessStatusCode)
+        {
+            return Result.Success();
+        }
 
         var p = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         return Result.Failure(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to delete announcement", (int)response.StatusCode));

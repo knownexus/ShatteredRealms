@@ -25,14 +25,18 @@ public sealed class UpdateAnnouncementCommandHandler : IRequestHandler<UpdateAnn
     {
         var announcement = await _context.Announcement.FindAsync([request.Id], cancellationToken);
         if (announcement is null)
+        {
             return Result.Failure<AnnouncementDto>(DomainErrors.Announcement.NotFound);
+        }
 
         if (request.LinkedEventId.HasValue)
         {
             var eventExists = await _context.Event
                 .AnyAsync(e => e.Id == request.LinkedEventId.Value, cancellationToken);
             if (!eventExists)
+            {
                 return Result.Failure<AnnouncementDto>(DomainErrors.Event.NotFound);
+            }
         }
 
         announcement.Title         = request.Title;

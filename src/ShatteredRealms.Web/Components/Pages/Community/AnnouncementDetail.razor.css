@@ -1,0 +1,112 @@
+.ann-detail-page { max-width: 800px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+
+.detail-loading {
+    display: flex; align-items: center; gap: 1rem;
+    justify-content: center; padding: 8rem;
+    color: var(--text-muted); font-family: var(--font-body);
+}
+
+.detail-error {
+    text-align: center; padding: 4rem; color: var(--text-muted);
+    font-family: var(--font-body); display: flex; flex-direction: column;
+    align-items: center; gap: 1rem;
+}
+
+.ann-detail-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 2rem; flex-wrap: wrap; gap: 0.75rem;
+}
+.ann-detail-actions { display: flex; gap: 0.6rem; }
+
+.btn-back {
+    background: none; border: none; color: var(--text-muted);
+    font-family: var(--font-body); font-size: 0.9rem; cursor: pointer;
+    padding: 0; transition: color 0.15s;
+}
+.btn-back:hover { color: var(--gold); }
+
+.btn-outline {
+    padding: 0.45rem 1rem; border: 1px solid var(--border);
+    background: transparent; color: var(--text-muted);
+    border-radius: 6px; font-family: var(--font-body); font-size: 0.83rem;
+    cursor: pointer; transition: border-color 0.15s, color 0.15s;
+}
+.btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+
+.btn-danger-outline {
+    padding: 0.45rem 1rem; border: 1px solid rgba(255,69,58,0.4);
+    background: transparent; color: rgba(255,69,58,0.8);
+    border-radius: 6px; font-family: var(--font-body); font-size: 0.83rem;
+    cursor: pointer; transition: all 0.15s;
+}
+.btn-danger-outline:hover { border-color: #ff453a; color: #ff453a; background: rgba(255,69,58,0.08); }
+
+.alert { padding: 0.75rem 1rem; border-radius: 6px; font-family: var(--font-body); font-size: 0.88rem; margin-bottom: 1.5rem; }
+.alert-danger { background: rgba(255,69,58,0.12); border: 1px solid rgba(255,69,58,0.3); color: #ff453a; }
+
+.ann-detail-header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1.5rem;
+    margin-bottom: 2rem;
+}
+.ann-meta-line {
+    display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+    font-family: var(--font-body); font-size: 0.83rem; color: var(--text-muted);
+    margin-bottom: 0.75rem;
+}
+.ann-sep { opacity: 0.4; }
+.ann-updated { font-style: italic; }
+
+.ann-detail-title {
+    font-family: var(--font-heading); font-size: 1.9rem;
+    color: var(--text); margin: 0 0 1rem; line-height: 1.25;
+}
+
+.ann-event-chip {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.25);
+    color: var(--gold); border-radius: 6px; padding: 0.35rem 0.9rem;
+    font-family: var(--font-body); font-size: 0.82rem; cursor: pointer;
+    transition: background 0.15s;
+}
+.ann-event-chip:hover { background: rgba(201,168,76,0.2); }
+
+.ann-detail-body-text {
+    font-family: var(--font-body); font-size: 1rem;
+    color: var(--text-muted); line-height: 1.75;
+    white-space: pre-wrap;
+}
+
+/* Modal */
+.modal-close { background: none; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer; }
+
+.form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+.form-label { font-family: var(--font-body); font-size: 0.82rem; color: var(--text-muted); letter-spacing: 0.04em; }
+.form-control {
+    background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+    color: var(--text); border-radius: 6px; padding: 0.55rem 0.8rem;
+    font-family: var(--font-body); font-size: 0.9rem; transition: border-color 0.15s;
+}
+.form-control:focus { outline: none; border-color: rgba(201,168,76,0.5); }
+
+.btn-secondary {
+    padding: 0.6rem 1.2rem; background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border); color: var(--text-muted);
+    border-radius: 6px; font-family: var(--font-body); cursor: pointer;
+}
+.btn-gold {
+    padding: 0.6rem 1.5rem; background: linear-gradient(135deg, #c9a84c, #a8883c);
+    color: #07090f; border: none; border-radius: 6px;
+    font-family: var(--font-heading); font-size: 0.85rem;
+    font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer;
+}
+.btn-gold:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn-danger {
+    padding: 0.6rem 1.5rem; background: rgba(255,69,58,0.9);
+    color: #fff; border: none; border-radius: 6px;
+    font-family: var(--font-heading); font-size: 0.85rem; font-weight: 700; cursor: pointer;
+}
+.btn-danger:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.confirm-msg { font-family: var(--font-body); color: var(--text-muted); }
+.confirm-name { color: var(--text); }

@@ -37,7 +37,9 @@ public class WikiClientService(HttpClient http)
         var response = await http.DeleteAsync($"api/wiki/pages/{id}");
 
         if (response.IsSuccessStatusCode)
+        {
             return Result.Success();
+        }
 
         var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
 

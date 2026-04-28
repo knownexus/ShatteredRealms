@@ -24,7 +24,9 @@ public sealed class DeleteEventCommandHandler : IRequestHandler<DeleteEventComma
     {
         var ev = await _context.Event.FirstOrDefaultAsync(e => e.Id == request.Id, cancellationToken);
         if (ev is null)
+        {
             return Result.Failure(DomainErrors.Event.NotFound);
+        }
 
         ev.IsDeleted = true;
         await _context.SaveChangesAsync(cancellationToken);

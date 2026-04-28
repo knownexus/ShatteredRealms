@@ -27,10 +27,14 @@ public sealed class DeleteOwnCharacterCommandHandler : IRequestHandler<DeleteOwn
             .FirstOrDefaultAsync(c => c.Id == request.CharacterId, cancellationToken);
 
         if (character is null)
+        {
             return Result.Failure(DomainErrors.Character.NotFound);
+        }
 
         if (character.UserId != request.RequestingUserId)
+        {
             return Result.Failure(DomainErrors.Character.NotOwner);
+        }
 
         var name = character.Name;
         _context.Character.Remove(character);

@@ -24,21 +24,29 @@ public sealed class UpdateCharacterCommandHandler : IRequestHandler<UpdateCharac
     public async Task<Result<CharacterDto>> Handle(UpdateCharacterCommand request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.Name))
+        {
             return Result.Failure<CharacterDto>(DomainErrors.Character.NameRequired);
+        }
 
         if (string.IsNullOrWhiteSpace(request.Nationality))
+        {
             return Result.Failure<CharacterDto>(DomainErrors.Character.NationalityRequired);
+        }
 
         if (string.IsNullOrWhiteSpace(request.Faction))
+        {
             return Result.Failure<CharacterDto>(DomainErrors.Character.FactionRequired);
+        }
 
         var character = await _context.Character
-            .Include(c => c.Owner)
-            .Include(c => c.Position)
-            .FirstOrDefaultAsync(c => c.Id == request.CharacterId, cancellationToken);
+                                      .Include(c => c.Owner)
+                                      .Include(c => c.Position)
+                                      .FirstOrDefaultAsync(c => c.Id == request.CharacterId, cancellationToken);
 
         if (character is null)
+        {
             return Result.Failure<CharacterDto>(DomainErrors.Character.NotFound);
+        }
 
         character.Name        = request.Name.Trim();
         character.Nationality = request.Nationality.Trim();

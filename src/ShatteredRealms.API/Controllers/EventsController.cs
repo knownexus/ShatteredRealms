@@ -49,7 +49,9 @@ public sealed class EventsController : ControllerBase
     {
         var userId = User.GetUserId();
         if (string.IsNullOrEmpty(userId))
+        {
             return Problem(detail: "User ID cannot be null or empty", statusCode: 400, title: "Invalid User ID");
+        }
 
         var result = await _mediator.Send(new GetMyEventsQuery(userId), cancellationToken);
         return result.IsFailure
@@ -83,11 +85,13 @@ public sealed class EventsController : ControllerBase
     {
         var userId = User.GetUserId();
         if (string.IsNullOrEmpty(userId))
+        {
             return Problem(detail: "User ID cannot be null or empty", statusCode: 400, title: "Invalid User ID");
+        }
 
         var result = await _mediator.Send(
-            new CreateEventCommand(userId, request.Title, request.Description, request.StartsAt, request.EndsAt, request.Location, request.MemberCap),
-            cancellationToken);
+                                          new CreateEventCommand(userId, request.Title, request.Description, request.StartsAt, request.EndsAt, request.Location, request.MemberCap),
+                                          cancellationToken);
 
         return result.IsFailure
             ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)
@@ -123,7 +127,9 @@ public sealed class EventsController : ControllerBase
     {
         var userId = User.GetUserId();
         if (string.IsNullOrEmpty(userId))
+        {
             return Problem(detail: "User ID cannot be null or empty", statusCode: 400, title: "Invalid User ID");
+        }
 
         var result = await _mediator.Send(new RegisterForEventCommand(id, userId), cancellationToken);
         return result.IsFailure
@@ -137,7 +143,9 @@ public sealed class EventsController : ControllerBase
     {
         var userId = User.GetUserId();
         if (string.IsNullOrEmpty(userId))
+        {
             return Problem(detail: "User ID cannot be null or empty", statusCode: 400, title: "Invalid User ID");
+        }
 
         var result = await _mediator.Send(new CancelRegistrationCommand(id, userId), cancellationToken);
         return result.IsFailure
@@ -150,11 +158,15 @@ public sealed class EventsController : ControllerBase
     public async Task<IActionResult> UploadBanner(int id, IFormFile file, CancellationToken cancellationToken)
     {
         if (file.Length > MaxBannerBytes)
+        {
             return Problem(detail: "Banner image must be 5 MB or smaller", statusCode: 400, title: "File Too Large");
+        }
 
         var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
         if (!AllowedBannerExtensions.Contains(ext))
+        {
             return Problem(detail: "Only jpg, png, and webp images are allowed", statusCode: 400, title: "Invalid File Type");
+        }
 
         var relativePath = $"events/{id}/banner{ext}";
 

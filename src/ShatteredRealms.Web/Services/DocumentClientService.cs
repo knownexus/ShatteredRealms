@@ -22,7 +22,9 @@ public class DocumentClientService
     {
         var response = await _httpClient.GetAsync("api/documents");
         if (response.IsSuccessStatusCode)
+        {
             return Result.Success(await response.Content.ReadFromJsonAsync<List<DocumentDto>>() ?? []);
+        }
 
         var p = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         return Result.Failure<List<DocumentDto>>(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to load documents", (int)response.StatusCode));
@@ -64,7 +66,10 @@ public class DocumentClientService
     public async Task<Result> DeleteAsync(int id)
     {
         var response = await _httpClient.DeleteAsync($"api/documents/{id}");
-        if (response.IsSuccessStatusCode) return Result.Success();
+        if (response.IsSuccessStatusCode)
+        {
+            return Result.Success();
+        }
 
         var p = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         return Result.Failure(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to delete document", (int)response.StatusCode));

@@ -24,14 +24,18 @@ public sealed class UpdateEventCommandHandler : IRequestHandler<UpdateEventComma
     public async Task<Result<EventDto>> Handle(UpdateEventCommand request, CancellationToken cancellationToken)
     {
         if (request.EndsAt <= request.StartsAt)
+        {
             return Result.Failure<EventDto>(DomainErrors.Event.InvalidDates);
+        }
 
         var ev = await _context.Event
-            .Include(e => e.Attendees)
-            .FirstOrDefaultAsync(e => e.Id == request.Id, cancellationToken);
+                               .Include(e => e.Attendees)
+                               .FirstOrDefaultAsync(e => e.Id == request.Id, cancellationToken);
 
         if (ev is null)
+        {
             return Result.Failure<EventDto>(DomainErrors.Event.NotFound);
+        }
 
         ev.Title       = request.Title;
         ev.Description = request.Description;

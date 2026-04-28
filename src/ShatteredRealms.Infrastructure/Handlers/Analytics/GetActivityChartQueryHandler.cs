@@ -19,7 +19,9 @@ public sealed class GetActivityChartQueryHandler : IRequestHandler<GetActivityCh
             .Where(e => e.OccurredAt >= request.From && e.OccurredAt <= request.To);
 
         if (request.EventType.HasValue)
+        {
             query = query.Where(e => e.EventType == request.EventType.Value);
+        }
 
         if (!string.IsNullOrEmpty(request.ActorSearch))
         {
@@ -53,7 +55,10 @@ public sealed class GetActivityChartQueryHandler : IRequestHandler<GetActivityCh
             var lookup = dataPoints.ToDictionary(p => p.Date.Date);
             var filled = new List<ActivityDataPoint>();
             for (var d = request.From.Date; d <= request.To.Date; d = d.AddDays(1))
+            {
                 filled.Add(lookup.TryGetValue(d, out var pt) ? pt : new ActivityDataPoint(d, 0));
+            }
+
             dataPoints = filled;
         }
 

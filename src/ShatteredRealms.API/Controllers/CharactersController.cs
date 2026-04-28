@@ -25,7 +25,9 @@ public sealed class CharactersController : ControllerBase
     {
         var userId = User.GetUserId();
         if (string.IsNullOrEmpty(userId))
+        {
             return Problem(detail: "User ID cannot be null or empty", statusCode: 400, title: "Invalid User ID");
+        }
 
         var result = await _mediator.Send(new GetMyCharactersQuery(userId), cancellationToken);
         return result.IsFailure
@@ -79,7 +81,9 @@ public sealed class CharactersController : ControllerBase
     {
         var userId = User.GetUserId();
         if (string.IsNullOrEmpty(userId))
+        {
             return Problem(detail: "User ID cannot be null or empty", statusCode: 400, title: "Invalid User ID");
+        }
 
         var result = await _mediator.Send(new CreateCharacterCommand(userId, request.Name, request.Nationality, request.Faction), cancellationToken);
         return result.IsFailure
@@ -93,7 +97,9 @@ public sealed class CharactersController : ControllerBase
     {
         var requestingUserId = User.GetUserId();
         if (string.IsNullOrEmpty(requestingUserId))
+        {
             return Problem(detail: "User ID cannot be null or empty", statusCode: 400, title: "Invalid User ID");
+        }
 
         var result = await _mediator.Send(new CreateCharacterForUserCommand(targetUserId, request.Name, request.Nationality, request.Faction, requestingUserId), cancellationToken);
         return result.IsFailure
@@ -107,7 +113,9 @@ public sealed class CharactersController : ControllerBase
     {
         var userId = User.GetUserId();
         if (string.IsNullOrEmpty(userId))
+        {
             return Problem(detail: "User ID cannot be null or empty", statusCode: 400, title: "Invalid User ID");
+        }
 
         var result = await _mediator.Send(new UpdateOwnCharacterCommand(id, userId, request.Name, request.Nationality, request.Faction), cancellationToken);
         return result.IsFailure
@@ -131,7 +139,9 @@ public sealed class CharactersController : ControllerBase
     {
         var requestingUserId = User.GetUserId();
         if (string.IsNullOrEmpty(requestingUserId))
+        {
             return Problem(detail: "User ID cannot be null or empty", statusCode: 400, title: "Invalid User ID");
+        }
 
         var result = await _mediator.Send(new AssignExperienceCommand(id, request.Amount, requestingUserId, request.Note), cancellationToken);
         return result.IsFailure
@@ -145,7 +155,9 @@ public sealed class CharactersController : ControllerBase
     {
         var requestingUserId = User.GetUserId();
         if (string.IsNullOrEmpty(requestingUserId))
+        {
             return Problem(detail: "User ID cannot be null or empty", statusCode: 400, title: "Invalid User ID");
+        }
 
         var result = await _mediator.Send(new AssignPositionCommand(id, positionId, requestingUserId), cancellationToken);
         return result.IsFailure
@@ -159,7 +171,9 @@ public sealed class CharactersController : ControllerBase
     {
         var userId = User.GetUserId();
         if (string.IsNullOrEmpty(userId))
+        {
             return Problem(detail: "User ID cannot be null or empty", statusCode: 400, title: "Invalid User ID");
+        }
 
         var result = await _mediator.Send(new DeleteOwnCharacterCommand(id, userId), cancellationToken);
         return result.IsFailure
@@ -173,7 +187,9 @@ public sealed class CharactersController : ControllerBase
     {
         var requestingUserId = User.GetUserId();
         if (string.IsNullOrEmpty(requestingUserId))
+        {
             return Problem(detail: "User ID cannot be null or empty", statusCode: 400, title: "Invalid User ID");
+        }
 
         var result = await _mediator.Send(new DeleteCharacterCommand(id, requestingUserId), cancellationToken);
         return result.IsFailure

@@ -30,7 +30,9 @@ public sealed class AssignPositionCommandHandler : IRequestHandler<AssignPositio
             .FirstOrDefaultAsync(c => c.Id == request.CharacterId, cancellationToken);
 
         if (character is null)
+        {
             return Result.Failure<CharacterDto>(DomainErrors.Character.NotFound);
+        }
 
         if (request.PositionId.HasValue)
         {
@@ -38,7 +40,9 @@ public sealed class AssignPositionCommandHandler : IRequestHandler<AssignPositio
                 .FirstOrDefaultAsync(p => p.Id == request.PositionId.Value, cancellationToken);
 
             if (position is null)
+            {
                 return Result.Failure<CharacterDto>(DomainErrors.Position.NotFound);
+            }
 
             character.PositionId = position.Id;
             character.Position   = position;

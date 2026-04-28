@@ -23,7 +23,9 @@ public sealed class DeleteAnnouncementCommandHandler : IRequestHandler<DeleteAnn
     {
         var announcement = await _context.Announcement.FindAsync([request.Id], cancellationToken);
         if (announcement is null)
+        {
             return Result.Failure(DomainErrors.Announcement.NotFound);
+        }
 
         announcement.IsDeleted = true;
         await _context.SaveChangesAsync(cancellationToken);

@@ -25,7 +25,9 @@ public class EventClientService
     {
         var response = await _httpClient.GetAsync($"api/events?upcomingOnly={upcomingOnly}");
         if (response.IsSuccessStatusCode)
+        {
             return Result.Success(await response.Content.ReadFromJsonAsync<List<EventDto>>() ?? []);
+        }
 
         var p = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         return Result.Failure<List<EventDto>>(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to load events", (int)response.StatusCode));
@@ -48,7 +50,9 @@ public class EventClientService
     {
         var response = await _httpClient.GetAsync("api/events/mine");
         if (response.IsSuccessStatusCode)
+        {
             return Result.Success(await response.Content.ReadFromJsonAsync<List<EventDto>>() ?? []);
+        }
 
         var p = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         return Result.Failure<List<EventDto>>(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to load your events", (int)response.StatusCode));
@@ -58,7 +62,9 @@ public class EventClientService
     {
         var response = await _httpClient.GetAsync($"api/events/{id}/attendees");
         if (response.IsSuccessStatusCode)
+        {
             return Result.Success(await response.Content.ReadFromJsonAsync<List<EventAttendeeDto>>() ?? []);
+        }
 
         var p = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         return Result.Failure<List<EventAttendeeDto>>(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to load attendees", (int)response.StatusCode));
@@ -68,7 +74,11 @@ public class EventClientService
     {
         if (string.IsNullOrWhiteSpace(request.Title) || string.IsNullOrWhiteSpace(request.Description ))
         {
-            Result.Failure<EventDto>(new Error("Error", "Empty Request", (int)HttpStatusCode.BadRequest));
+            return Result.Failure<EventDto>(new Error("Error", "Event Data Missing", (int)HttpStatusCode.BadRequest));
+        }
+        if(request.StartsAt < DateTime.UtcNow || request.EndsAt < request.StartsAt)
+        {
+            return Result.Failure<EventDto>(new Error("Error", "Invalid Event Dates", (int)HttpStatusCode.BadRequest));
         }
         var response = await _httpClient.PostAsJsonAsync("api/events", request);
         if (response.IsSuccessStatusCode)
@@ -97,7 +107,10 @@ public class EventClientService
     public async Task<Result> DeleteAsync(int id)
     {
         var response = await _httpClient.DeleteAsync($"api/events/{id}");
-        if (response.IsSuccessStatusCode) return Result.Success();
+        if (response.IsSuccessStatusCode)
+        {
+            return Result.Success();
+        }
 
         var p = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         return Result.Failure(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to delete event", (int)response.StatusCode));
@@ -106,7 +119,10 @@ public class EventClientService
     public async Task<Result> RegisterAsync(int id)
     {
         var response = await _httpClient.PostAsync($"api/events/{id}/register", null);
-        if (response.IsSuccessStatusCode) return Result.Success();
+        if (response.IsSuccessStatusCode)
+        {
+            return Result.Success();
+        }
 
         var p = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         return Result.Failure(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to register", (int)response.StatusCode));
@@ -115,7 +131,10 @@ public class EventClientService
     public async Task<Result> CancelRegistrationAsync(int id)
     {
         var response = await _httpClient.DeleteAsync($"api/events/{id}/register");
-        if (response.IsSuccessStatusCode) return Result.Success();
+        if (response.IsSuccessStatusCode)
+        {
+            return Result.Success();
+        }
 
         var p = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         return Result.Failure(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to cancel registration", (int)response.StatusCode));
@@ -129,7 +148,10 @@ public class EventClientService
         content.Add(sc, "file", fileName);
 
         var response = await _httpClient.PostAsync($"api/events/{id}/banner", content);
-        if (response.IsSuccessStatusCode) return Result.Success();
+        if (response.IsSuccessStatusCode)
+        {
+            return Result.Success();
+        }
 
         var p = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         return Result.Failure(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to upload banner", (int)response.StatusCode));

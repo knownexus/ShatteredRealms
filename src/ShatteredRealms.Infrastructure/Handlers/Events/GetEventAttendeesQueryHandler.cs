@@ -18,19 +18,21 @@ public sealed class GetEventAttendeesQueryHandler : IRequestHandler<GetEventAtte
     {
         var eventExists = await _context.Event.AnyAsync(e => e.Id == request.EventId, cancellationToken);
         if (!eventExists)
+        {
             return Result.Failure<List<EventAttendeeDto>>(DomainErrors.Event.NotFound);
+        }
 
         var attendees = await _context.EventAttendee
-            .Where(a => a.EventId == request.EventId)
-            .Include(a => a.User)
-            .OrderBy(a => a.RegisteredAt)
-            .Select(a => new EventAttendeeDto
-            {
-                UserId       = a.UserId,
-                UserName     = a.User.UserName ?? string.Empty,
-                RegisteredAt = a.RegisteredAt,
-            })
-            .ToListAsync(cancellationToken);
+                                      .Where(a => a.EventId == request.EventId)
+                                      .Include(a => a.User)
+                                      .OrderBy(a => a.RegisteredAt)
+                                      .Select(a => new EventAttendeeDto
+                                       {
+                                           UserId       = a.UserId,
+                                           UserName     = a.User.UserName ?? string.Empty,
+                                           RegisteredAt = a.RegisteredAt,
+                                       })
+                                      .ToListAsync(cancellationToken);
 
         return Result.Success(attendees);
     }

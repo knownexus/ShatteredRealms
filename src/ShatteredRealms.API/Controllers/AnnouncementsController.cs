@@ -47,11 +47,13 @@ public sealed class AnnouncementsController : ControllerBase
     {
         var authorId = User.GetUserId();
         if (string.IsNullOrEmpty(authorId))
+        {
             return Problem(detail: "User ID cannot be resolved", statusCode: 400, title: "Invalid User");
+        }
 
         var result = await _mediator.Send(
-            new CreateAnnouncementCommand(authorId, request.Title, request.Body, request.LinkedEventId),
-            cancellationToken);
+                                          new CreateAnnouncementCommand(authorId, request.Title, request.Body, request.LinkedEventId),
+                                          cancellationToken);
 
         return result.IsFailure
             ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)

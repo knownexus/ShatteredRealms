@@ -16,7 +16,9 @@ public sealed class FlagTelemetryEventCommandHandler : IRequestHandler<FlagTelem
     {
         var ev = await _context.TelemetryEvent.FindAsync([request.EventId], cancellationToken);
         if (ev is null)
+        {
             return Result.Failure(DomainErrors.Analytics.EventNotFound);
+        }
 
         ev.IsFlagged   = true;
         ev.FlagReason  = request.Reason;
@@ -38,7 +40,9 @@ public sealed class UnflagTelemetryEventCommandHandler : IRequestHandler<UnflagT
     {
         var ev = await _context.TelemetryEvent.FindAsync([request.EventId], cancellationToken);
         if (ev is null)
+        {
             return Result.Failure(DomainErrors.Analytics.EventNotFound);
+        }
 
         ev.IsFlagged   = false;
         ev.FlagReason  = null;

@@ -28,13 +28,19 @@ public sealed class RegisterForEventCommandHandler : IRequestHandler<RegisterFor
             .FirstOrDefaultAsync(e => e.Id == request.EventId, cancellationToken);
 
         if (ev is null)
+        {
             return Result.Failure(DomainErrors.Event.NotFound);
+        }
 
         if (ev.Attendees.Any(a => a.UserId == request.UserId))
+        {
             return Result.Success(); // idempotent
+        }
 
         if (ev.MemberCap.HasValue && ev.Attendees.Count >= ev.MemberCap.Value)
+        {
             return Result.Failure(DomainErrors.Event.CapacityReached);
+        }
 
         _context.EventAttendee.Add(new EventAttendee
         {

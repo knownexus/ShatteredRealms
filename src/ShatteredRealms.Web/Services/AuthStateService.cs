@@ -10,7 +10,10 @@ public class AuthStateService
 
     public void NotifyAuthStateChanged()
     {
-        if (OnAuthStateChanged == null) return;
+        if (OnAuthStateChanged == null)
+        {
+            return;
+        }
 
         foreach (var handler in OnAuthStateChanged.GetInvocationList().Cast<Func<Task>>())
         {

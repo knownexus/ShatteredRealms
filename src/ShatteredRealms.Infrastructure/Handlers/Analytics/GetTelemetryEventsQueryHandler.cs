@@ -18,7 +18,9 @@ public sealed class GetTelemetryEventsQueryHandler : IRequestHandler<GetTelemetr
         var query = _context.TelemetryEvent.AsQueryable();
 
         if (request.EventType.HasValue)
+        {
             query = query.Where(e => e.EventType == request.EventType.Value);
+        }
 
         if (!string.IsNullOrEmpty(request.ActorSearch))
         {
@@ -30,10 +32,14 @@ public sealed class GetTelemetryEventsQueryHandler : IRequestHandler<GetTelemetr
         }
 
         if (request.From.HasValue)
+        {
             query = query.Where(e => e.OccurredAt >= request.From.Value);
+        }
 
         if (request.To.HasValue)
+        {
             query = query.Where(e => e.OccurredAt <= request.To.Value);
+        }
 
         var totalCount = await query.CountAsync(cancellationToken);
 
@@ -72,7 +78,10 @@ public sealed class GetTelemetryEventsQueryHandler : IRequestHandler<GetTelemetr
         {
             foreach (var ev in events)
             {
-                if (ev.IsFlagged) continue;
+                if (ev.IsFlagged)
+                {
+                    continue;
+                }
 
                 foreach (var rule in activeRules)
                 {

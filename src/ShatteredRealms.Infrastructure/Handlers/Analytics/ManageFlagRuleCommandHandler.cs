@@ -67,7 +67,9 @@ public sealed class DeleteFlagRuleCommandHandler : IRequestHandler<DeleteFlagRul
     {
         var rule = await _context.AnalyticsFlagRule.FindAsync([request.RuleId], cancellationToken);
         if (rule is null)
+        {
             return Result.Failure(DomainErrors.Analytics.FlagRuleNotFound);
+        }
 
         _context.AnalyticsFlagRule.Remove(rule);
         await _context.SaveChangesAsync(cancellationToken);
@@ -85,7 +87,9 @@ public sealed class SetFlagRuleActiveCommandHandler : IRequestHandler<SetFlagRul
     {
         var rule = await _context.AnalyticsFlagRule.FindAsync([request.RuleId], cancellationToken);
         if (rule is null)
+        {
             return Result.Failure(DomainErrors.Analytics.FlagRuleNotFound);
+        }
 
         rule.IsActive = request.IsActive;
         await _context.SaveChangesAsync(cancellationToken);

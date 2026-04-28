@@ -34,7 +34,9 @@ public class ForumClientService(HttpClient http)
         var response = await http.DeleteAsync($"api/forum/categories/{id}");
 
         if (response.IsSuccessStatusCode)
+        {
             return Result.Success();
+        }
 
         var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
 
@@ -74,7 +76,9 @@ public class ForumClientService(HttpClient http)
         var response = await http.DeleteAsync($"api/forum/posts/{id}");
 
         if (response.IsSuccessStatusCode)
+        {
             return Result.Success();
+        }
 
         var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
 

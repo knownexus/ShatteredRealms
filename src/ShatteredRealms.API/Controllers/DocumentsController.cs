@@ -53,7 +53,9 @@ public sealed class DocumentsController : ControllerBase
     {
         var result = await _mediator.Send(new DownloadDocumentQuery(id), cancellationToken);
         if (result.IsFailure)
+        {
             return Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title);
+        }
 
         var dto = result.Value;
         var relativePath = Path.Combine("documents", dto.StoredFileName);
@@ -86,18 +88,26 @@ public sealed class DocumentsController : ControllerBase
         CancellationToken cancellationToken)
     {
         if (file is null || file.Length == 0)
+        {
             return Problem(detail: "No file provided", statusCode: 400, title: "Document.NoFile");
+        }
 
         var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
         if (!AllowedExtensions.Contains(ext))
+        {
             return Problem(detail: DomainErrors.Document.InvalidFileType.Message, statusCode: 400, title: DomainErrors.Document.InvalidFileType.Title);
+        }
 
         if (file.Length > MaxFileBytes)
+        {
             return Problem(detail: DomainErrors.Document.FileTooLarge.Message, statusCode: 400, title: DomainErrors.Document.FileTooLarge.Title);
+        }
 
         var uploaderId = User.GetUserId();
         if (string.IsNullOrEmpty(uploaderId))
+        {
             return Problem(detail: "User ID cannot be resolved", statusCode: 400, title: "Invalid User");
+        }
 
         var storedName = $"{Guid.NewGuid()}{ext}";
         var relativePath = Path.Combine("documents", storedName);

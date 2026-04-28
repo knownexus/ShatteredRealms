@@ -27,7 +27,9 @@ public sealed class DeleteCharacterCommandHandler : IRequestHandler<DeleteCharac
             .FirstOrDefaultAsync(c => c.Id == request.CharacterId, cancellationToken);
 
         if (character is null)
+        {
             return Result.Failure(DomainErrors.Character.NotFound);
+        }
 
         var name = character.Name;
         _context.Character.Remove(character);

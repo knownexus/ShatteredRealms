@@ -30,7 +30,10 @@ public sealed class LocalFileStorageService : IFileStorageService
     {
         var fullPath = Path.Combine(_basePath, relativePath);
         if (File.Exists(fullPath))
+        {
             File.Delete(fullPath);
+        }
+
         return Task.CompletedTask;
     }
 

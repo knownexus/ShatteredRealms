@@ -20,7 +20,9 @@ public sealed class SetEventBannerCommandHandler : IRequestHandler<SetEventBanne
             .FirstOrDefaultAsync(e => e.Id == request.EventId, cancellationToken);
 
         if (ev is null)
+        {
             return Result.Failure(DomainErrors.Event.NotFound);
+        }
 
         ev.BannerImagePath = request.RelativePath;
         await _context.SaveChangesAsync(cancellationToken);

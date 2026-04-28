@@ -29,7 +29,9 @@ public sealed class CreateAnnouncementCommandHandler : IRequestHandler<CreateAnn
             var eventExists = await _context.Event
                 .AnyAsync(e => e.Id == request.LinkedEventId.Value, cancellationToken);
             if (!eventExists)
+            {
                 return Result.Failure<AnnouncementDto>(DomainErrors.Event.NotFound);
+            }
         }
 
         var announcement = new Announcement

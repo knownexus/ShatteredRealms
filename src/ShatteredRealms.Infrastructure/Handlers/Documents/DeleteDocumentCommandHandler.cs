@@ -23,7 +23,9 @@ public sealed class DeleteDocumentCommandHandler : IRequestHandler<DeleteDocumen
     {
         var doc = await _context.Document.FindAsync([request.Id], cancellationToken);
         if (doc is null)
+        {
             return Result.Failure(DomainErrors.Document.NotFound);
+        }
 
         doc.IsDeleted = true;
         await _context.SaveChangesAsync(cancellationToken);

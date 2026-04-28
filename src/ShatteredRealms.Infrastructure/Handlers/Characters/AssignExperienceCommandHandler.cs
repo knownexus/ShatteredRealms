@@ -30,7 +30,9 @@ public sealed class AssignExperienceCommandHandler : IRequestHandler<AssignExper
             .FirstOrDefaultAsync(c => c.Id == request.CharacterId, cancellationToken);
 
         if (character is null)
+        {
             return Result.Failure<CharacterDto>(DomainErrors.Character.NotFound);
+        }
 
         character.Experience = Math.Max(0, character.Experience + request.XpToAdd);
 

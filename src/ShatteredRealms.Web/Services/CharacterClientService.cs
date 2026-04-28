@@ -20,7 +20,9 @@ public class CharacterClientService
     {
         var response = await _httpClient.GetAsync("api/characters");
         if (response.IsSuccessStatusCode)
+        {
             return Result.Success(await response.Content.ReadFromJsonAsync<List<CharacterDto>>() ?? []);
+        }
 
         var p = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         return Result.Failure<List<CharacterDto>>(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to load characters", (int)response.StatusCode));
@@ -30,7 +32,9 @@ public class CharacterClientService
     {
         var response = await _httpClient.GetAsync($"api/characters/{characterId}/history");
         if (response.IsSuccessStatusCode)
+        {
             return Result.Success(await response.Content.ReadFromJsonAsync<List<CharacterHistoryDto>>() ?? []);
+        }
 
         var p = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         return Result.Failure<List<CharacterHistoryDto>>(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to load history", (int)response.StatusCode));
@@ -40,7 +44,9 @@ public class CharacterClientService
     {
         var response = await _httpClient.GetAsync("api/characters/self");
         if (response.IsSuccessStatusCode)
+        {
             return Result.Success(await response.Content.ReadFromJsonAsync<List<CharacterDto>>() ?? []);
+        }
 
         var p = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         return Result.Failure<List<CharacterDto>>(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to load characters", (int)response.StatusCode));
@@ -50,7 +56,9 @@ public class CharacterClientService
     {
         var response = await _httpClient.GetAsync($"api/characters/user/{userId}");
         if (response.IsSuccessStatusCode)
+        {
             return Result.Success(await response.Content.ReadFromJsonAsync<List<CharacterDto>>() ?? []);
+        }
 
         var p = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         return Result.Failure<List<CharacterDto>>(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to load characters", (int)response.StatusCode));
@@ -141,7 +149,9 @@ public class CharacterClientService
     {
         var response = await _httpClient.GetAsync("api/positions");
         if (response.IsSuccessStatusCode)
+        {
             return Result.Success(await response.Content.ReadFromJsonAsync<List<PositionDto>>() ?? []);
+        }
 
         var p = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         return Result.Failure<List<PositionDto>>(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to load positions", (int)response.StatusCode));
@@ -150,7 +160,10 @@ public class CharacterClientService
     public async Task<Result> DeleteOwnAsync(int id)
     {
         var response = await _httpClient.DeleteAsync($"api/characters/self/{id}");
-        if (response.IsSuccessStatusCode) return Result.Success();
+        if (response.IsSuccessStatusCode)
+        {
+            return Result.Success();
+        }
 
         var p = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         return Result.Failure(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to delete character", (int)response.StatusCode));
@@ -159,7 +172,10 @@ public class CharacterClientService
     public async Task<Result> DeleteAsync(int id)
     {
         var response = await _httpClient.DeleteAsync($"api/characters/{id}");
-        if (response.IsSuccessStatusCode) return Result.Success();
+        if (response.IsSuccessStatusCode)
+        {
+            return Result.Success();
+        }
 
         var p = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         return Result.Failure(new Error(p?.Title ?? "Error", p?.Detail ?? "Failed to delete character", (int)response.StatusCode));

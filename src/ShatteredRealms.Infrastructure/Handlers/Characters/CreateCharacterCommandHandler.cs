@@ -24,13 +24,19 @@ public sealed class CreateCharacterCommandHandler : IRequestHandler<CreateCharac
     public async Task<Result<CharacterDto>> Handle(CreateCharacterCommand request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.Name))
+        {
             return Result.Failure<CharacterDto>(DomainErrors.Character.NameRequired);
+        }
 
         if (string.IsNullOrWhiteSpace(request.Nationality))
+        {
             return Result.Failure<CharacterDto>(DomainErrors.Character.NationalityRequired);
+        }
 
         if (string.IsNullOrWhiteSpace(request.Faction))
+        {
             return Result.Failure<CharacterDto>(DomainErrors.Character.FactionRequired);
+        }
 
         var character = new Domain.Entities.Character.Character
         {

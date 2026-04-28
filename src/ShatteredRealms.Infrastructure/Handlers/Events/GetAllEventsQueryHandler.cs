@@ -19,26 +19,28 @@ public sealed class GetAllEventsQueryHandler : IRequestHandler<GetAllEventsQuery
         var query = _context.Event.AsQueryable();
 
         if (request.UpcomingOnly)
+        {
             query = query.Where(e => e.EndsAt >= now);
+        }
 
         var events = await query
-            .OrderBy(e => e.StartsAt)
-            .Select(e => new EventDto
-            {
-                Id             = e.Id,
-                Title          = e.Title,
-                Description    = e.Description,
-                StartsAt       = e.StartsAt,
-                EndsAt         = e.EndsAt,
-                Location       = e.Location,
-                BannerImagePath = e.BannerImagePath,
-                MemberCap      = e.MemberCap,
-                CreatedById    = e.CreatedById,
-                CreatedAt      = e.CreatedAt,
-                AttendeeCount  = e.Attendees.Count,
-                IsGoing        = request.CurrentUserId != null && e.Attendees.Any(a => a.UserId == request.CurrentUserId),
-            })
-            .ToListAsync(cancellationToken);
+                          .OrderBy(e => e.StartsAt)
+                          .Select(e => new EventDto
+                           {
+                               Id             = e.Id,
+                               Title          = e.Title,
+                               Description    = e.Description,
+                               StartsAt       = e.StartsAt,
+                               EndsAt         = e.EndsAt,
+                               Location       = e.Location,
+                               BannerImagePath = e.BannerImagePath,
+                               MemberCap      = e.MemberCap,
+                               CreatedById    = e.CreatedById,
+                               CreatedAt      = e.CreatedAt,
+                               AttendeeCount  = e.Attendees.Count,
+                               IsGoing        = request.CurrentUserId != null && e.Attendees.Any(a => a.UserId == request.CurrentUserId),
+                           })
+                          .ToListAsync(cancellationToken);
 
         return Result.Success(events);
     }

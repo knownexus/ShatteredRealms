@@ -1,0 +1,65 @@
+.perms-page { padding-bottom: 4rem; }
+
+.perms-loading {
+    display: flex; align-items: center; gap: 1rem;
+    justify-content: center; padding: 4rem;
+    color: var(--text-muted); font-family: var(--font-body, 'Crimson Pro', Georgia, serif);
+}
+
+.perms-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+    gap: 1.25rem;
+    align-items: start;
+}
+
+.perms-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.15s;
+}
+.perms-card:hover { border-color: rgba(201,168,76,0.25); }
+
+.perms-card-header {
+    padding: 0.85rem 1.25rem;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid var(--border);
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gold);
+}
+
+.perms-card-body { padding: 0.5rem 0; }
+
+.perm-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.65rem 1.25rem;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.perm-row:last-child { border-bottom: none; }
+
+.perm-name {
+    font-family: 'Courier New', monospace;
+    font-size: 0.78rem;
+    color: var(--gold);
+    background: rgba(201,168,76,0.08);
+    border: 1px solid rgba(201,168,76,0.15);
+    border-radius: 4px;
+    padding: 0.1rem 0.45rem;
+    display: inline-block;
+    word-break: break-all;
+}
+
+.perm-desc {
+    font-family: 'Crimson Pro', Georgia, serif;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+}

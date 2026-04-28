@@ -184,7 +184,10 @@ public class AuthService
         try
         {
             var parts = token.Split('.');
-            if (parts.Length != 3) return true;
+            if (parts.Length != 3)
+            {
+                return true;
+            }
 
             var payload = parts[1];
             // base64url → base64
@@ -197,7 +200,10 @@ public class AuthService
 
             var json = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(payload));
             using var doc = System.Text.Json.JsonDocument.Parse(json);
-            if (!doc.RootElement.TryGetProperty("exp", out var expProp)) return true;
+            if (!doc.RootElement.TryGetProperty("exp", out var expProp))
+            {
+                return true;
+            }
 
             var exp = expProp.GetInt64();
             var expiry = DateTimeOffset.FromUnixTimeSeconds(exp);

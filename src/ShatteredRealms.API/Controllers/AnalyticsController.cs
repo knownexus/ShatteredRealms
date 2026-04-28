@@ -56,7 +56,9 @@ public sealed class AnalyticsController : ControllerBase
     {
         var actorId = User.GetUserId();
         if (string.IsNullOrEmpty(actorId))
+        {
             return Problem(detail: "User ID cannot be resolved", statusCode: 400, title: "Invalid User");
+        }
 
         var result = await _mediator.Send(new FlagTelemetryEventCommand(id, actorId, request.Reason), cancellationToken);
         return result.IsFailure
@@ -92,11 +94,13 @@ public sealed class AnalyticsController : ControllerBase
     {
         var actorId = User.GetUserId();
         if (string.IsNullOrEmpty(actorId))
+        {
             return Problem(detail: "User ID cannot be resolved", statusCode: 400, title: "Invalid User");
+        }
 
         var result = await _mediator.Send(
-            new CreateFlagRuleCommand(request.RuleType, request.TargetUserId, request.EventType, request.ActorRole, request.Reason, actorId),
-            cancellationToken);
+                                          new CreateFlagRuleCommand(request.RuleType, request.TargetUserId, request.EventType, request.ActorRole, request.Reason, actorId),
+                                          cancellationToken);
 
         return result.IsFailure
             ? Problem(detail: result.Error.Message, statusCode: result.Error.Code, title: result.Error.Title)

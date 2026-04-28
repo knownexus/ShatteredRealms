@@ -25,7 +25,9 @@ public sealed class CreateEventCommandHandler : IRequestHandler<CreateEventComma
     public async Task<Result<EventDto>> Handle(CreateEventCommand request, CancellationToken cancellationToken)
     {
         if (request.EndsAt <= request.StartsAt)
+        {
             return Result.Failure<EventDto>(DomainErrors.Event.InvalidDates);
+        }
 
         var ev = new Event
         {
