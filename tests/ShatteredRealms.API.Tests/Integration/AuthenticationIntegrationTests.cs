@@ -234,6 +234,29 @@ public class AuthIntegrationTests : IntegrationTestBase
         });
         registerResp.StatusCode.Should().Be(HttpStatusCode.OK);
 
+        // 1.5 Approve (requires admin)
+        var adminLoginResp = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest
+        {
+            Email = "admin@shatteredrealms.com", Password = "TestAdmin@123!"
+        });
+        adminLoginResp.StatusCode.Should().Be(HttpStatusCode.OK);
+        var adminAuth = await adminLoginResp.Content.ReadFromJsonAsync<AuthResponse>();
+
+        // Set admin token
+        client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", adminAuth!.AccessToken);
+
+        // get Newly registered user
+        var users = await client.GetFromJsonAsync<List<UserDto>>($"api/users");
+        var registeredUser = users!.FirstOrDefault(u => u.Email == email);
+        registeredUser.Should().NotBeNull();
+
+        var approveResp = await client.PostAsync($"api/users/{registeredUser.Id}/approve", null);
+        approveResp.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // Clear admin token before new user login
+        client.DefaultRequestHeaders.Authorization = null;
+
         // 2. Login
         var loginResp = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest
         {
